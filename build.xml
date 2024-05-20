@@ -1,0 +1,17 @@
+<project name="compile">
+	<property name="source" location="src" relative="true" />
+	<property name="jarsource" location="." relative="true" />
+
+	<target name="clean">
+		<delete dir="${source}" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${source}"/>
+		<javac srcdir="." destdir="${source}" />
+	</target>
+
+	<target name="bundle" depends="compile">
+		<jar destfile="tradedatacore.jar" basedir="src/" />
+	</target>
+</project>
