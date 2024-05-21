@@ -1,6 +1,6 @@
 package tradedatacorp.warehouse;
 
 public interface WarehouseDataValidator{
-	Object validateData(Object data);
-	Object validateDataCollection(Object data);
+	public Object validateData(Object data);
+	public Object validateDataCollection(Object data);
 }

@@ -1,6 +1,6 @@
 package tradedatacorp.warehouse;
 
 public interface WarehouseStorer{
-	Object storeOne(Object validData);
-	Object store(Object validDataCollection);
+	public Object storeOne(Object validData);
+	public Object store(Object validDataCollection);
 }
