@@ -1,14 +1,25 @@
 <project name="compile">
 	<property name="source" location="src" relative="true" />
 	<property name="jarsource" location="." relative="true" />
+	<property name="docsource" location="docs" relative="true" />
 
 	<target name="clean">
 		<delete dir="${source}" />
+		<delete dir="${docsource}" />
 	</target>
 
 	<target name="compile">
 		<mkdir dir="${source}"/>
 		<javac srcdir="." destdir="${source}" />
+	</target>
+
+	<target name="gendocs">
+		<mkdir dir="${docsource}" />
+		<javadoc sourcepath="${jarsource}" destdir="${docsource}" packagenames="*">
+			<fileset dir="${jarsource}" defaultexcludes="yes">
+				<include name="**/*.java" />
+			</fileset>
+		</javadoc>
 	</target>
 
 	<target name="craft" depends="compile">

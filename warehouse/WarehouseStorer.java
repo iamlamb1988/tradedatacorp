@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 21 MAY 2024
+ */
 package tradedatacorp.warehouse;
 
 public interface WarehouseStorer{
