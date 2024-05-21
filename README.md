@@ -2,6 +2,11 @@
 
 This is a custom Java Library that is used to gather, store, analyze, and produce meaningful stats on data.
 
+## Release Notes
+
+Current Version: 0-M
+This version is incomplete and unstable. Will Upgrade to 0-RC upon reaching minimum viable product status.
+
 ## Introduction
 
 This abstract library behaves as a single "business corporation". A corporation has fundamental information such as a name and Headquarter address.
