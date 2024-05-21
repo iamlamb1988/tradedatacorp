@@ -11,7 +11,7 @@
 		<javac srcdir="." destdir="${source}" />
 	</target>
 
-	<target name="bundle" depends="compile">
-		<jar destfile="tradedatacore.jar" basedir="src/" />
+	<target name="craft" depends="compile">
+		<jar destfile="tradedatacore-V0-M.jar" basedir="src/" />
 	</target>
 </project>
