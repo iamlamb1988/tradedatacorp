@@ -1,19 +1,20 @@
-<project name="compile">
+<project name="tradedatacorp">
 	<property name="source" location="src" relative="true" />
+	<property name="bin" location="bin" relative="true" />
 	<property name="jarsource" location="." relative="true" />
 	<property name="docsource" location="docs" relative="true" />
 
 	<target name="clean">
-		<delete dir="${source}" />
-		<delete dir="${docsource}" />
+		<delete dir="${bin}" />
 	</target>
 
 	<target name="compile">
-		<mkdir dir="${source}"/>
-		<javac srcdir="." destdir="${source}" />
+		<mkdir dir="${bin}"/>
+		<javac srcdir="${source}" destdir="${bin}" />
 	</target>
 
 	<target name="gendocs">
+		<delete dir="${docsource}" />
 		<mkdir dir="${docsource}" />
 		<javadoc sourcepath="${jarsource}" destdir="${docsource}" packagenames="*">
 			<fileset dir="${jarsource}" defaultexcludes="yes">
@@ -23,6 +24,6 @@
 	</target>
 
 	<target name="craft" depends="compile">
-		<jar destfile="tradedatacore-V0-M.jar" basedir="src/" />
+		<jar destfile="tradedatacore-V0-M.jar" basedir="bin/" />
 	</target>
 </project>
