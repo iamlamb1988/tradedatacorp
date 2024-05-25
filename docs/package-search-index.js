@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"tradedatacorp.item"},{"l":"tradedatacorp.warehouse"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"tradedatacorp.item.stick"},{"l":"tradedatacorp.item.stick.info"},{"l":"tradedatacorp.item.stick.primitive"},{"l":"tradedatacorp.item.stick.primitive.mod"},{"l":"tradedatacorp.warehouse"}];updateSearchResults();
