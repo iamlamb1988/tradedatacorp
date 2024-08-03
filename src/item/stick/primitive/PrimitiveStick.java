@@ -9,4 +9,4 @@ import tradedatacorp.item.stick.Stick;
  * Disadvantages: Not as flexible and scalable compared to a generic implementation.
  * At the time of developing, primitives sticks should not have many modifications nor new features.
  */
-public interface PrimitiveStick extends Stick{}
+public abstract interface PrimitiveStick extends Stick{}
