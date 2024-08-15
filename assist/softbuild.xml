@@ -1,0 +1,10 @@
+<project name="softmerge">
+    <target name="clean">
+		<delete dir="${bin}" />
+	</target>
+
+    <target name="compile">
+		<mkdir dir="./bin"/>
+		<javac srcdir="./" destdir="./bin" />
+	</target>
+</project>
