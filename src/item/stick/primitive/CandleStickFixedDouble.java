@@ -1,7 +1,5 @@
 package tradedatacorp.item.stick.primitive;
 
-import tradedatacorp.item.stick.primitive.mod.Modifydbl;
-
 /**
  * Standard Lite information containing basic Candlestick data.
  * This CandleStick data type is more suitable for Crypto currencies for a few reasons.
@@ -9,15 +7,15 @@ import tradedatacorp.item.stick.primitive.mod.Modifydbl;
  * Volumes and prices may need to extend to several decimal places.
  * Unlike the US stockmarket the most decimal points a value may need is 4 or 5. A different CandleStick implementation may be needed for US Stocks.
  */
-public class CandleStickdbl implements Stickdbl, Modifydbl{
-	private double O;
-	private double H;
-	private double L;
-	private double C;
-	private double V;
+public class CandleStickFixedDouble implements StickDouble{
+	public final double O;
+	public final double H;
+	public final double L;
+	public final double C;
+	public final double V;
 
-	//CandleStickdbl Constructors
-	public CandleStickdbl(
+	//CandleStickFixeddbl Constructors
+	public CandleStickFixedDouble(
 		double open,
 		double high,
 		double low,
@@ -46,20 +44,4 @@ public class CandleStickdbl implements Stickdbl, Modifydbl{
 
 	@Override
 	public double getV(){return V;}
-
-	//Modifydbl Inteface methods:
-	@Override
-	public void setO(double open){O=open;}
-
-	@Override
-	public void setH(double high){H=high;}
-
-	@Override
-	public void setL(double low){L=low;}
-
-	@Override
-	public void setC(double close){C=close;}
-
-	@Override
-	public void setV(double volume){V=volume;}
 }
