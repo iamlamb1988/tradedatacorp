@@ -8,6 +8,7 @@ package tradedatacorp.item.stick.primitive;
  * Unlike the US stockmarket the most decimal points a value may need is 4 or 5. A different CandleStick implementation may be needed for US Stocks.
  */
 public interface StickDouble extends PrimitiveStick{
+	public long getUTC();
 	public double getO();
 	public double getH();
 	public double getL();

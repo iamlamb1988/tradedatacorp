@@ -10,20 +10,23 @@ import tradedatacorp.item.stick.primitive.mod.Modifydbl;
  * Unlike the US stockmarket the most decimal points a value may need is 4 or 5. A different CandleStick implementation may be needed for US Stocks.
  */
 public class CandleStickDouble implements StickDouble, Modifydbl{
+	private long UTC;
 	private double O;
 	private double H;
 	private double L;
 	private double C;
 	private double V;
 
-	//CandleStickdbl Constructors
+	//CandleStickDouble Constructors
 	public CandleStickDouble(
+		long utc_timestamp,
 		double open,
 		double high,
 		double low,
 		double close,
 		double volume
 	){
+		UTC=utc_timestamp;
 		O=open;
 		H=high;
 		L=low;
@@ -31,7 +34,10 @@ public class CandleStickDouble implements StickDouble, Modifydbl{
 		V=volume;
 	}
 
-	//Stickdbl Interface methods:
+	//StickDouble Interface methods:
+	@Override
+	public long getUTC(){return UTC;}
+
 	@Override
 	public double getO(){return O;}
 
