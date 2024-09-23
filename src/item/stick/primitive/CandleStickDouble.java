@@ -17,7 +17,7 @@ public class CandleStickDouble implements StickDouble, Modifydbl{
 	private double C;
 	private double V;
 
-	//CandleStickDouble Constructors
+	//CandleStickDouble Constructors:
 	public CandleStickDouble(
 		long utc_timestamp,
 		double open,
@@ -68,4 +68,8 @@ public class CandleStickDouble implements StickDouble, Modifydbl{
 
 	@Override
 	public void setV(double volume){V=volume;}
+
+	//Comparable Interface methods:
+	@Override
+	public int compareTo(StickDouble otherStick){return Long.compare(UTC,otherStick.getUTC());}
 }

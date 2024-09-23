@@ -15,7 +15,7 @@ public class CandleStickFixedDouble implements StickDouble{
 	public final double C;
 	public final double V;
 
-	//CandleStickFixedDouble Constructors
+	//CandleStickFixedDouble Constructors:
 	public CandleStickFixedDouble(
 		long utc_timestamp,
 		double open,
@@ -50,4 +50,8 @@ public class CandleStickFixedDouble implements StickDouble{
 
 	@Override
 	public double getV(){return V;}
+
+	//Comparable Interface methods:
+	@Override
+	public int compareTo(StickDouble otherStick){return Long.compare(UTC,otherStick.getUTC());}
 }
