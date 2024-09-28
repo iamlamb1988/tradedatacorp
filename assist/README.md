@@ -1,30 +1,40 @@
 # Assist with development
 
 This is an assist development directory to ease troubleshooting.
-Because this package is a dependancy for add-on projects, the script should be used to compile all .class files into a single directory in order to get clean error messages and simplify debugging without having to move files.
 
 ## Soft Merge
-UNTESTED but useful
+This feature has been mildly tested for this project only. The script, softmerge.sh creates softlinks from several specified locations into a specified top level directory.
 
-This script is used create soft link of several files by specifiying:
-- First Argument: Destination directory: Where all the soft links will go.
-- Next Arguments: The directory for which all files will be have soft links recursively
-At least 2 arguments are required. There can be as many directories as possible but duplicates are not recommended.
+There are 2 implementation types:
+- Weak: Places on soft links in a single directory.
+- Structured: Creates folder structure relative to original specified path.
 
-Likely to be problems if a Java files have the same name.
+### Flags
+- `d | --destination`: This flag is required and must point to an existing directory prior to command execution. This is where all soft links will be placed.
+- `s | --source`: This flag specifies the source directory containing the original files. At least one valid source is required, and multiple source directories are allowed.
+- `--weak`: Indicates that all soft links will be placed in the same directory (this can be problematic if files contain the same name).
+
+### Weak method
+Usage: ```bash softmerge.sh -d <--destination> -s ..<--source1> -s <--source2> --weak```
+This method will place all soft link files in the directory specified by the -d | --destination flag. The --weak flag indicates this implementation.
+Note: No two files can have the same name across all specified sources; otherwise, they will be overridden without warning.
+
+Example: ```bash softmerge.sh -d weak_merge/ -s ../tradedatacorp/src/ -s ../supercompressor/src/ --weak```
+
+### Structured Method
+Usage: ```bash softmerge.sh -d <--destination> -s ..<--source1> -s <--source2>```
+This method will create subdirectories in the --destination directory for each file.
+Note: No two files can have the same subdirectory path and name (even if they are from completely different projects). This is an edge case that will be handled
+
+EX: ```bash softmerge.sh -d structured_merge/ -s ../tradedatacorp/src/ -s ../supercompressor/src/```
+
+### Additional method
+In development, will handle the case where any duplicate structure is handled.
 
 ## Build
 
-Simple XML file. It should be placed in the same directory to compile all at once.
+Simple XML file. This is a hardcoded file specific to it's directory. It should be placed in the same directory to compile all at once.
+id argument is a second directory with a project that depends on tradedatacorp definitions.
 
-## Examples
-A directory called "merged_java" is created and the softmerge.sh, build.xml script are placed in.
-The script is called as such:
-```bash softmerge.sh . ../tradedatacorp/src /root/supercompressor/src```
-
-The first argument is "." the current directory (That is the merged_java)
-The second argument is the the "src" directory where all .java files are located
-The thrid argument is a second directory with a project that depends on tradedatacorp definitions.
-
-```ant compile```
+```ant -buildfile softbuild.xml```
 Will build a bin directory with the correct file structure of both directories.
