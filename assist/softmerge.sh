@@ -3,8 +3,16 @@
 # $1: Destination directory
 # $2: Source first directory
 
-#Init globals and define functions
+# Init globals and define functions
+# Parallel arrays
+DEST_DIRS=()
 SOURCE_DIRS=()
+
+# Parallel arrays for dirs that require Destination concatenation
+PREFIX_DEST_DIRS=()
+POSTFIX_DEST_DIRS=()
+
+NO_PREFIX_DEST_DIRS=()
 
 #Weak, will not work if any file will have the same name accross any source.
 function create_soft_links() {
@@ -31,10 +39,10 @@ function create_structured_soft_links() {
  	# $1 destination merge dir
 	# $2 source dir containing original files
 
-	dest_abs_dir=$(realpath $1)
-	source_abs_dir=$(realpath $2)
+	local dest_abs_dir=$(realpath $1)
+	local source_abs_dir=$(realpath $2)
 
-	filename_regex='[^\/]*$'
+	local filename_regex='[^\/]*$'
 
 	local file_arr=()
 	readarray -t file_arr < <(find $2 -type f -name '*')
@@ -70,9 +78,26 @@ for ((i=1; i <= $#; i++)); do
 			DESTINATION=$arg
 			i=$next_i
 		;;
+		-pd|--prefix-destination)
+			# Cannot process DESTINATION yet.. (may not exist)
+			arg1=$arg
+			arg2=$((next_i + 1)) # Prefix directory
+			arg2=${!arg2}		 # Source directory
+
+			if [[ -d $arg2 ]]; then
+				prefix_dir=${arg1%/}
+
+				PREFIX_DEST_DIRS+=($prefix_dir)
+				POSTFIX_DEST_DIRS+=($(realpath $arg2))
+			else
+				echo "$arg2 not a directory... skipping prefix."
+			fi
+
+			next_i=$((i+2))
+		;;
 		-s|--source)
 			if [[ -d $arg ]]; then
-				SOURCE_DIRS+=($(realpath $arg))
+				NO_PREFIX_DEST_DIRS+=($(realpath $arg))
 			else
 				echo "$arg not a directory... skipping."
 			fi
@@ -90,18 +115,40 @@ if [[ ! -d $DESTINATION ]]; then
 	exit 1
 fi
 
+#0.3 Add non prefix directories
+for src in "${NO_PREFIX_DEST_DIRS[@]}"; do
+	DEST_DIRS+=("$DESTINATION")
+	SOURCE_DIRS+=("$src")
+done
+
+#0.4 Add prefixed directories
+for ((i=0; i < ${#PREFIX_DEST_DIRS[@]}; i++)); do
+	destination="$DESTINATION/${PREFIX_DEST_DIRS[$i]}"
+	mkdir -p "$destination"
+
+	DEST_DIRS+=("$destination")
+	SOURCE_DIRS+=("${POSTFIX_DEST_DIRS[$i]}")
+done
+
 #1. Execute
-if [[ "$IS_WEAK" -eq 1 ]]; then
-	echo "Weak method creating soft links."
-	for d in "${SOURCE_DIRS[@]}"; do
-		echo "calling weak function..."
-		create_soft_links $DESTINATION $d
-	done
-else
-	echo "Creating structured soft links."
-	for d in "${SOURCE_DIRS[@]}"; do
-		create_structured_soft_links $DESTINATION $d
-	done
-fi
+for ((i=0; i < ${#SOURCE_DIRS[@]}; i++)); do
+	echo "DEBUG: SOURCE: ${SOURCE_DIRS[$i]}"
+	echo "DEBUG: DEST  : ${DEST_DIRS[$i]}"
+
+	create_structured_soft_links "${DEST_DIRS[$i]}" "${SOURCE_DIRS[$i]}" 
+done
+
+# if [[ "$IS_WEAK" -eq 1 ]]; then
+# 	echo "Weak method creating soft links."
+# 	for d in "${SOURCE_DIRS[@]}"; do
+# 		echo "calling weak function..."
+# 		create_soft_links $DESTINATION $d
+# 	done
+# else
+# 	echo "Creating structured soft links."
+# 	for d in "${SOURCE_DIRS[@]}"; do
+# 		create_structured_soft_links $DESTINATION $d
+# 	done
+# fi
 
 exit 0
