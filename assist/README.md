@@ -3,33 +3,34 @@
 This is an assist development directory to ease troubleshooting.
 
 ## Soft Merge
-This feature has been mildly tested for this project only. The script, softmerge.sh creates softlinks from several specified locations into a specified top level directory.
-
-There are 2 implementation types:
-- Weak: Places on soft links in a single directory.
-- Structured: Creates folder structure relative to original specified path.
+The script, softmerge.sh creates softlinks from several specified locations into a specified top level directory.
 
 ### Flags
 - `d | --destination`: This flag is required and must point to an existing directory prior to command execution. This is where all soft links will be placed.
-- `s | --source`: This flag specifies the source directory containing the original files. At least one valid source is required, and multiple source directories are allowed.
-- `--weak`: Indicates that all soft links will be placed in the same directory (this can be problematic if files contain the same name).
+- `pd | --prefix-destination`: Two paremeter flag, the first parameter will be the prefix directory of --destination (will be created at destination location if it does not exist). The second parameter is the source directory.
+- `s | --source`: The source directory will be have shortcuts at destination with no prefix.
 
-### Weak method
-Usage: ```bash softmerge.sh -d <--destination> -s ..<--source1> -s <--source2> --weak```
-This method will place all soft link files in the directory specified by the -d | --destination flag. The --weak flag indicates this implementation.
-Note: No two files can have the same name across all specified sources; otherwise, they will be overridden without warning.
+### Usage
+Usage: ```bash softmerge.sh -d <--destination> -pd <prefix-dir1> <source1> -pd <prefix-dir2> <source2>```
+Will create directories and softlinks from all sources as such:
+"<--destination>/<prefix-dir1>/<source1>"
+"<--destination>/<prefix-dir2>/<source2>"
 
-Example: ```bash softmerge.sh -d weak_merge/ -s ../tradedatacorp/src/ -s ../supercompressor/src/ --weak```
+Example: ```bash softmerge.sh -d merged -pd tradesrc tradedatacorp/src -pd compsrc supercompressor/src```
+Will create directories and softlinks from all sources as such:
+NOTE: "<sourceN>" is ont part of the path, only it's recursive contents.
+"merged/tradesrc/<dir structure from tradedatacorp/src>"
+"merged/compsrc/<dir structure from supercompressor/src>"
 
-### Structured Method
-Usage: ```bash softmerge.sh -d <--destination> -s ..<--source1> -s <--source2>```
-This method will create subdirectories in the --destination directory for each file.
-Note: No two files can have the same subdirectory path and name (even if they are from completely different projects). This is an edge case that will be handled
+You may use the same prefix for each source, be cautios if a separate source happens to have same file name with same directory structure, one of those links will be overriden with no warning or indication. Giving each source a separate prefix will guarantee each link is created and preserved.
 
-EX: ```bash softmerge.sh -d structured_merge/ -s ../tradedatacorp/src/ -s ../supercompressor/src/```
+Also use -s to place a source directly at destination with no prefix.
+Usage: ```bash softmerge.sh -d <--destination> -s <source1> -pd <prefix-dir2> <source2>```
+Similar result, using -s instead of -dp for source1 and prefix1. Prefix1 is empty.
+"merged/<dir structure from tradedatacorp/src>"
+"merged/compsrc/<dir structure from supercompressor/src>"
 
-### Additional method
-In development, will handle the case where any duplicate structure is handled.
+Example: ```bash softmerge.sh -d merged -s tradedatacorp/src -pd compsrc supercompressor/src```
 
 ## Build
 
@@ -38,3 +39,4 @@ id argument is a second directory with a project that depends on tradedatacorp d
 
 ```ant -buildfile softbuild.xml```
 Will build a bin directory with the correct file structure of both directories.
+Will be modified to allow user to speficy destination of compiled class files.

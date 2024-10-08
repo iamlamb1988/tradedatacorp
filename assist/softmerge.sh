@@ -1,8 +1,5 @@
 #!bin/bash
 
-# $1: Destination directory
-# $2: Source first directory
-
 # Init globals and define functions
 # Parallel arrays
 DEST_DIRS=()
@@ -13,27 +10,6 @@ PREFIX_DEST_DIRS=()
 POSTFIX_DEST_DIRS=()
 
 NO_PREFIX_DEST_DIRS=()
-
-#Weak, will not work if any file will have the same name accross any source.
-function create_soft_links() {
-	# $1 destination merge dir
-	# $2 source dir containing original files
-	dest=$(realpath $1)
-	src=$(realpath $2)
-
-	local file_arr=()
-	readarray -t file_arr < <(find $src -type f -name '*')
-
-	filename_regex='[^\/]*$'
-
-	for f in "${file_arr[@]}"; do
-		# echo "ln -s $f $dest"
-		if [[ "$f" =~ $filename_regex ]]; then
-			filename="${BASH_REMATCH[0]}"
-		fi
-		ln -s $f $dest/$filename
-	done
-}
 
 function create_structured_soft_links() {
  	# $1 destination merge dir
@@ -103,9 +79,6 @@ for ((i=1; i <= $#; i++)); do
 			fi
 			i=$next_i
 		;;
-		--weak)
-			IS_WEAK=1
-		;;
 	esac
 done
 
@@ -131,24 +104,10 @@ for ((i=0; i < ${#PREFIX_DEST_DIRS[@]}; i++)); do
 done
 
 #1. Execute
+echo "Source dir count: ${#SOURCE_DIRS[@]}"
 for ((i=0; i < ${#SOURCE_DIRS[@]}; i++)); do
-	echo "DEBUG: SOURCE: ${SOURCE_DIRS[$i]}"
-	echo "DEBUG: DEST  : ${DEST_DIRS[$i]}"
-
+	echo "Creating soft link(s) from ${SOURCE_DIRS[$i]} to ${DEST_DIRS[$i]}"
 	create_structured_soft_links "${DEST_DIRS[$i]}" "${SOURCE_DIRS[$i]}" 
 done
-
-# if [[ "$IS_WEAK" -eq 1 ]]; then
-# 	echo "Weak method creating soft links."
-# 	for d in "${SOURCE_DIRS[@]}"; do
-# 		echo "calling weak function..."
-# 		create_soft_links $DESTINATION $d
-# 	done
-# else
-# 	echo "Creating structured soft links."
-# 	for d in "${SOURCE_DIRS[@]}"; do
-# 		create_structured_soft_links $DESTINATION $d
-# 	done
-# fi
 
 exit 0
