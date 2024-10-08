@@ -37,6 +37,16 @@ Example: ```bash softmerge.sh -d merged -s tradedatacorp/src -pd compsrc superco
 Simple XML file. This is a hardcoded file specific to it's directory. It should be placed in the same directory to compile all at once.
 id argument is a second directory with a project that depends on tradedatacorp definitions.
 
+### Generic Build
+-Dsrc is the single source dir containing all soft links.
+-Dbin is the destination where .class files will be generated.
+
+Ant tool executes ./ current directory relative to the actual location of file instead of pwd. When specifiying location of file and destination of file.
+```ant -buildfile tradedatacorp/assist/softbuild.xml -Dsrc=$(pwd)/merged -Dbin=$(pwd)/bin compile```
+
+To clean, must also specify bin
+```ant -buildfile tradedatacorp/assist/softbuild.xml -Dbin=$(pwd)/bin clean```
+
+### Simple Build.
+Will need to actually copy and move the assist directory to location of merged links. Default files will be ./src and ./bin
 ```ant -buildfile softbuild.xml```
-Will build a bin directory with the correct file structure of both directories.
-Will be modified to allow user to speficy destination of compiled class files.

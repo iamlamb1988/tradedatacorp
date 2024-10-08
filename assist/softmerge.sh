@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 # Init globals and define functions
 # Parallel arrays
