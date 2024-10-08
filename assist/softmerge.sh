@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# author Bruce Lamb
+# since 21 OCT 2024
+
 # Init globals and define functions
-# Parallel arrays
+# Parallel arrays Soft Link locations to be stored.
 DEST_DIRS=()
 SOURCE_DIRS=()
 
