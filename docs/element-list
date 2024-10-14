@@ -4,4 +4,6 @@ tradedatacorp.item.stick.primitive
 tradedatacorp.item.stick.primitive.mod
 tradedatacorp.smelter
 tradedatacorp.smelter.filesmelter
+tradedatacorp.smelter.lexical
+tradedatacorp.smelter.lexical.binary
 tradedatacorp.warehouse
