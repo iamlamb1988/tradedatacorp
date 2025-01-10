@@ -5,14 +5,26 @@
 package tradedatacorp.smelter.lexical.binary;
 
 import tradedatacorp.smelter.lexical.Lexical;
+import java.util.Collection;
 
-//TODO: H1 is fixed bit length values, H2 is dependant length values based on H1
+//The purpose of a Lexical is to encode and decode binary to data objects
+//Generic Type RefineT represents a singular datatype
 public interface BinaryLexical<RefinedT> extends Lexical{
-    public byte[][] getH(String name, String interval);
+    //Get Binary Header
+    public boolean[][] getBinaryHeader();
+    public boolean[] getBinaryHeaderFlat();
 
-    public boolean[] toBits(RefinedT Data);
-    public byte[][] toBytesWithRemainder(RefinedT Data);
+    //Get Binary Data from Data instances
+    public boolean[][] getBinaryData(RefinedT singleData);
+    public boolean[] getBinaryDataFlat(RefinedT singleData);
+    public boolean[][][] getBinaryDataPoints(RefinedT[] dataArray);
+    public boolean[][][] getBinaryDataPoints(Collection dataCollection);
+    public boolean[] getBinaryDataPointsFlat(RefinedT[] dataArray);
+    public boolean[] getBinaryDataPointsFlat(Collection dataCollection);
 
-    public RefinedT toRefined(boolean[] bitL);
-    public RefinedT toRefined(byte[][] byteL);
+    //Get Data instance from Binary
+    public RefinedT getRefinedData(boolean[][] singleBinaryData);
+    public RefinedT getRefinedDataFlat(boolean[] singleFlatBinaryData);
+    public RefinedT[] getRefinedDataArray(boolean[][][] BinaryDataArray);
+    public RefinedT[] getRefinedDataArrayFlat(boolean[] BinaryFlatDataArray);
 }
