@@ -5,6 +5,9 @@
 package tradedatacorp.smelter.lexical.binary;
 
 public class BinaryTools{
+    public static final byte ZED=(byte)0;
+    public static final byte ONE=(byte)1;
+    public static final byte NEG_ONE=(byte)-1;
     public static final double LOG10_BASE2 = Math.log10(2);
 
     //Gets the minimum number of bits to represent this unsigned value
@@ -12,13 +15,25 @@ public class BinaryTools{
 
     public static int toUnsignedInt(boolean[] bin){
         int r=(bin[0] ? 1 : 0);
-        for(byte i=(byte)1;i<bin.length;++i){r = 2*r + (bin[i] ? 1 : 0);}
+        for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}
+        return r;
+    }
+
+    public static int to2sCompInt(boolean[] bin){
+        int r=(bin[0] ? -1 : 0);
+        for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}
         return r;
     }
 
     public static long toUnsignedLong(boolean[] bin){
         long r=(bin[0] ? 1 : 0);
-        for(byte i=(byte)1;i<bin.length;++i){r = 2*r + (bin[i] ? 1 : 0);}
+        for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}
+        return r;
+    }
+
+    public static long to2sCompLong(boolean[] bin){
+        long r=(bin[0] ? -1 : 0);
+        for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}
         return r;
     }
 
