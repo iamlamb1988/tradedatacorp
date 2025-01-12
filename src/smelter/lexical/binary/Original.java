@@ -74,7 +74,7 @@ public class Original implements BinaryLexical<StickDouble>{
         t_h2_sym_len = (byte)(8*symbol.length());
 
         //Set the H2 sizes and values
-        h2_sym_len = BinaryTools.unsignedIntToBoolArray(t_h2_sym_len,(byte)7);
+        h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_sym_len,(byte)7);
         h2_sym = BinaryTools.stringTo8BitCharArray(symbol);
         h2_data_ct = new boolean[]{false};
     }
