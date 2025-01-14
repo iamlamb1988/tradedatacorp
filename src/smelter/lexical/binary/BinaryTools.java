@@ -61,6 +61,12 @@ public class BinaryTools{
         return to2sCompLong(bin1) == to2sCompLong(bin2);
     }
 
+    public static boolean[] genClone(boolean[] originalBin){
+        boolean[] r = new boolean[originalBin.length];
+        for(byte i=(byte)(r.length-1);i>=0;--i){r[i]=originalBin[i];}
+        return r;
+    }
+
     public static boolean[] genBoolArrayFromUnsignedInt(int val, byte bit_size){
         boolean[] r = new boolean[bit_size];
         for(byte i=(byte)(bit_size-1); i>=0; --i){
@@ -77,19 +83,6 @@ public class BinaryTools{
             val = val >>> 1;
         }
         return r;
-    }
-
-    public static void set2sCompNegate(boolean[] bin){
-        byte index_preserved=-1; //msb index to preserve for
-
-        for(byte i=(byte)(bin.length-1); i>=0; --i){
-            if(bin[i]){
-                index_preserved=i;
-                break;
-            }
-        }
-
-        for(byte i=(byte)(index_preserved-1); i>=0; --i){bin[i]=!bin[i];}
     }
 
     public static boolean[] gen2sCompNegate(boolean[] bin){
@@ -109,6 +102,33 @@ public class BinaryTools{
         return r;
     }
 
+    public static void setUnsignedIntToBoolArray(int val, boolean[] boolArray){
+        for(byte i=(byte)(boolArray.length-1); i>=0; --i){
+            boolArray[i] = ((val & 1) == 1 ? true : false);
+            val = val >>> 1;
+        }
+    }
+
+    public static void setUnsignedLongToBoolArray(long val, boolean[] boolArray){
+        for(byte i=(byte)(boolArray.length-1); i>=0; --i){
+            boolArray[i] = ((val & 1) == 1 ? true : false);
+            val = val >>> 1;
+        }
+    }
+
+    public static void set2sCompNegate(boolean[] bin){
+        byte index_preserved=-1; //msb index to preserve for
+
+        for(byte i=(byte)(bin.length-1); i>=0; --i){
+            if(bin[i]){
+                index_preserved=i;
+                break;
+            }
+        }
+
+        for(byte i=(byte)(index_preserved-1); i>=0; --i){bin[i]=!bin[i];}
+    }
+
     public static boolean[] genUnsignedIntToMinimumBoolArray(int value){
         return genBoolArrayFromUnsignedInt(
             value,
@@ -125,22 +145,6 @@ public class BinaryTools{
             for(byte j=0;j<binChar.length;++j){
                 r[eight_i + j] = binChar[j];
             }
-        }
-        return r;
-    }
-
-    public static void setIntToBoolArray(int val, boolean[] boolArray){
-        for(byte i=(byte)(boolArray.length-1); i>=0; --i){
-            boolArray[i] = ((val & 1) == 1 ? true : false);
-            val = val >>> 1;
-        }
-    }
-
-    public static boolean[] longToBoolArray(long val, byte bit_size){
-        boolean[] r = new boolean[bit_size];
-        for(byte i=(byte)(bit_size-1); i>=0; --i){
-            r[i] = ((val & 1) == 1 ? true : false);
-            val = val >>> 1;
         }
         return r;
     }

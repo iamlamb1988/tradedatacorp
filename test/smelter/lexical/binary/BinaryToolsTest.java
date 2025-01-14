@@ -53,11 +53,26 @@ public class BinaryToolsTest{
     @Nested
     @DisplayName("Binary Array Comparisons")
     class SmallArrayComparisonTest{
+        boolean[] three = new boolean[]{F,T,T}; //011 == 3 signed and 2sComp
         boolean[] seven = new boolean[]{T,T,T}; // 111 = 7 signed == -1 2sComp
         boolean[] another_seven = new boolean[]{F,T,T,T}; // 0111 = 7 signed and 2sComp
-        boolean[] three = new boolean[]{F,T,T}; //011 == 3 signed and 2sComp
         boolean[] empty1 = new boolean[0];
         boolean[] empty2 = new boolean[0];
+
+        @Test
+        public void testCompareClones(){
+            boolean[] cloned_three = BinaryTools.genClone(three);
+            boolean[] cloned_seven = BinaryTools.genClone(seven);
+
+            assertTrue(BinaryTools.isEqualBoolArray(three,cloned_three));
+            assertTrue(BinaryTools.isEqualBoolArray(seven,cloned_seven));
+
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(three,cloned_three));
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(seven,cloned_seven));
+
+            assertTrue(BinaryTools.isEqual2sCompIntValue(three,cloned_three));
+            assertTrue(BinaryTools.isEqual2sCompIntValue(seven,cloned_seven));
+        }
 
         @Test
         public void testCompareSeven(){
@@ -168,6 +183,100 @@ public class BinaryToolsTest{
             assertEquals(12,BinaryTools.to2sCompInt(generated_twelve));
             assertEquals(12,BinaryTools.toUnsignedInt(twelve));
             assertEquals(12,BinaryTools.to2sCompInt(twelve));
+        }
+    }
+
+    @Nested
+    @DisplayName("Small Array Set Mutations")
+    class SmallArraySetMutations{
+        boolean[] three_3bit = new boolean[]{F,T,T};
+        boolean[] negative_three_3bit = new boolean[]{T,F,T};
+
+        @Test
+        public void testThreeMutations(){
+            boolean[] three_bits = new boolean[3];
+            //pre flight check
+            assertEquals(3,BinaryTools.to2sCompInt(three_3bit));
+            assertEquals(3,BinaryTools.toUnsignedInt(three_3bit));
+
+            assertEquals(-3,BinaryTools.to2sCompInt(negative_three_3bit));
+            assertEquals(5,BinaryTools.toUnsignedInt(negative_three_3bit));
+
+            //Mutation and inspection
+            BinaryTools.setUnsignedIntToBoolArray(3,three_bits);
+
+            assertTrue(BinaryTools.isEqualBoolArray(three_3bit,three_bits));
+            assertTrue(BinaryTools.isEqual2sCompIntValue(three_3bit,three_bits));
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(three_3bit,three_bits));
+
+            assertEquals(3,BinaryTools.to2sCompInt(three_bits));
+            assertEquals(3,BinaryTools.toUnsignedInt(three_bits));
+
+            //Mutation and inspection
+            BinaryTools.setUnsignedIntToBoolArray(5,three_bits);
+
+            assertTrue(BinaryTools.isEqualBoolArray(negative_three_3bit,three_bits));
+            assertTrue(BinaryTools.isEqual2sCompIntValue(negative_three_3bit,three_bits));
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(negative_three_3bit,three_bits));
+
+            assertEquals(-3,BinaryTools.to2sCompInt(three_bits));
+            assertEquals(5,BinaryTools.toUnsignedInt(three_bits));
+        }
+    }
+
+    @Nested
+    @DisplayName("Small Array Negation Mutations")
+    class SmallArrayMutations{
+        boolean[] negative_twelve = new boolean[]{T,F,T,F,F}; //10100 == 20 unsigned == -12 2sComp
+        boolean[] negative_five = new boolean[]{T,T,T,F,T,T}; //111011 == -5 2s comp == 59 unsigned
+
+        boolean[] five = new boolean[]{F,F,F,T,F,T}; //000101 == 5 2s comp and unsigned
+        boolean[] twelve = new boolean[]{F,T,T,F,F};
+
+        @Test
+        public void testNegativeFiveMutation(){
+            boolean[] six_bits = BinaryTools.genClone(negative_five);
+
+            //preflight check of successful clone
+            assertTrue(BinaryTools.isEqualBoolArray(negative_five,six_bits));
+            assertTrue(BinaryTools.isEqual2sCompIntValue(negative_five,six_bits));
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(negative_five,six_bits));
+
+            assertEquals(-5,BinaryTools.to2sCompInt(six_bits));
+            assertEquals(59,BinaryTools.toUnsignedInt(six_bits));
+
+            //Mutation and inspection
+            BinaryTools.set2sCompNegate(six_bits); //Mutation: negates the existing array (from -5 to 5)
+
+            assertTrue(BinaryTools.isEqualBoolArray(five,six_bits));
+            assertTrue(BinaryTools.isEqual2sCompIntValue(five,six_bits));
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(five,six_bits));
+
+            assertEquals(5,BinaryTools.to2sCompInt(six_bits));
+            assertEquals(5,BinaryTools.toUnsignedInt(six_bits));
+        }
+
+        @Test
+        public void testNegativeTwelveMutation(){
+            boolean[] five_bits = BinaryTools.genClone(negative_twelve);
+
+            //preflight check of successful clone
+            assertTrue(BinaryTools.isEqualBoolArray(negative_twelve,five_bits));
+            assertTrue(BinaryTools.isEqual2sCompIntValue(negative_twelve,five_bits));
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(negative_twelve,five_bits));
+
+            assertEquals(-12,BinaryTools.to2sCompInt(five_bits));
+            assertEquals(20,BinaryTools.toUnsignedInt(five_bits));
+
+            //Mutation and inspection
+            BinaryTools.set2sCompNegate(five_bits); //Mutation: negates the existing array (from -12 to 12)
+
+            assertTrue(BinaryTools.isEqualBoolArray(twelve,five_bits));
+            assertTrue(BinaryTools.isEqual2sCompIntValue(twelve,five_bits));
+            assertTrue(BinaryTools.isEqualUnsignedIntValue(twelve,five_bits));
+
+            assertEquals(12,BinaryTools.to2sCompInt(five_bits));
+            assertEquals(12,BinaryTools.toUnsignedInt(five_bits));
         }
     }
 }
