@@ -279,4 +279,37 @@ public class BinaryToolsTest{
             assertEquals(12,BinaryTools.toUnsignedInt(five_bits));
         }
     }
+
+    @Nested
+    @DisplayName("Small strings to 8 bit chars")
+    class SmallStringsWith8bitChar{
+        String cat1 = "cat";
+        String cat2 = "Cat";
+        String cat3 = "CAT";
+
+        byte ascii_A = (byte)'A';
+        byte ascii_a = (byte)'a';
+        byte ascii_C = (byte)'C';
+        byte ascii_c = (byte)'c';
+        byte ascii_T = (byte)'T';
+        byte ascii_t = (byte)'t';
+
+        @Test
+        public void testChars(){
+            assertEquals(65,(byte)'A');
+            assertEquals(97,(byte)'a');
+            assertEquals(67,(byte)'C');
+            assertEquals(99,(byte)'c');
+            assertEquals(84,(byte)'T');
+            assertEquals(116,(byte)'t');
+        }
+
+        @Test
+        public void testCats(){
+            boolean[] cat1_8bitCharBin = BinaryTools.genBoolArrayFrom8BitCharString(cat1); // cat
+            String another_cat1 = BinaryTools.genStringFrom8BitBoolCharRep(cat1_8bitCharBin);
+
+            assertEquals(cat1,another_cat1);
+        }
+    }
 }

@@ -136,16 +136,50 @@ public class BinaryTools{
         );
     }
 
-    public static boolean[] stringTo8BitCharArray(String asciiString){
-        boolean[] r = new boolean[8*asciiString.length()];
+    public static boolean[] genBoolArrayFrom8BitCharString(String asciiString){
         byte EIGHT_BITS = (byte)8;
+
+        boolean[] r = new boolean[EIGHT_BITS*asciiString.length()];
+        boolean[] binChar = new boolean[EIGHT_BITS];
+
         for(int i=0; i<asciiString.length(); ++i){
-            boolean[] binChar = genBoolArrayFromUnsignedInt((byte)asciiString.charAt(i),EIGHT_BITS);
-            byte eight_i = (byte)(8*i);
-            for(byte j=0;j<binChar.length;++j){
-                r[eight_i + j] = binChar[j];
+            setUnsignedIntToBoolArray((byte)asciiString.charAt(i),binChar);
+            byte shift_i = (byte)(8*i);
+            for(byte j=0; j<binChar.length; ++j){
+                r[shift_i + j] = binChar[j];
             }
         }
         return r;
+    }
+
+    public static String genStringFrom8BitBoolCharRep(boolean[] EightBitCharBool){
+        StringBuilder strBldr = new StringBuilder();
+        boolean[] charBin = new boolean[8];
+        int fullCharCount = (EightBitCharBool.length >>> 3); // Full 8 bits, the last character may not be 8 bits
+        int remainingBits = EightBitCharBool.length - (fullCharCount << 3);
+
+        //Handle all full characters
+        for(int i=0; i<fullCharCount; ++i){
+            for(int j=7; j>=0; --j){
+                charBin[j] = EightBitCharBool[i*8+j];
+            }
+            strBldr.append((char)toUnsignedInt(charBin));
+        }
+
+        //Handle last character
+        if(remainingBits>0){
+            //Fill in MSB 0's
+            for(int i=7-remainingBits; i>=0; --i){
+                charBin[i]=false;
+            }
+
+            //Fill in minimum rep
+            for(int i=remainingBits, j=fullCharCount; i<8; ++i, ++j){
+                charBin[j]=EightBitCharBool[i];
+            }
+            strBldr.append((char)toUnsignedInt(charBin));
+        }
+
+        return strBldr.toString();
     }
 }
