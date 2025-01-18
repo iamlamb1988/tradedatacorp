@@ -76,7 +76,7 @@ public class Original implements BinaryLexical<StickDouble>{
         t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
 
         //Set H2 translated values (these are already known)
-        t_h2_sym_len = (byte)(8*symbol.length());
+        t_h2_sym_len = (byte)(symbol.length() << 3);
 
         //Set the H2 sizes and values
         h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_sym_len,(byte)7);
@@ -86,7 +86,27 @@ public class Original implements BinaryLexical<StickDouble>{
 
     // BinaryLexical Overrides
     //Get Binary Header
-    public boolean[][] getBinaryHeader(){return null;}
+    @Override
+    public boolean[][] getBinaryHeader(){
+	boolean[][] h1 = getBinaryHeader1();
+	boolean[][] h2 = getBinaryHeader2();
+
+	boolean[][] h = new boolean[h1.length + h2.length][];
+	int headerIndex = 0;
+
+	for(boolean[] binField : h1){
+	    h[headerIndex] = BinaryTools.genClone(binField);
+	    ++headerIndex;
+	}
+
+	for(boolean[] binField : h2){
+	    h[headerIndex] = BinaryTools.genClone(binField);
+	    ++headerIndex;
+	}
+
+	return h;
+    }
+
     public boolean[] getBinaryHeaderFlat(){return null;}
 
     //Get Binary Data from Data instances
@@ -103,39 +123,31 @@ public class Original implements BinaryLexical<StickDouble>{
     public StickDouble[] getRefinedDataArray(boolean[][][] BinaryDataArray){return null;}
     public StickDouble[] getRefinedDataArrayFlat(boolean[] BinaryFlatDataArray){return null;}
 
+    // Original methods
     //Get methods
     public boolean[][] getBinaryHeader1(){
-        boolean[][] h=new boolean[9][];
+        boolean[][] h1=new boolean[9][];
 
-        h[0] = new boolean[1]; // h1_byid
-        h[0][0]=false;
+        h1[0] = BinaryTools.genClone(h1_byid); //h1_biid
+        h1[1] = BinaryTools.genClone(h1_int); // h1_int
+        h1[2] = BinaryTools.genClone(h1_ct_len); // h1_ct_len
+        h1[3] = BinaryTools.genClone(h1_data_len); // h1_data_len
+        h1[4] = BinaryTools.genClone(h1_h_gap); // h1_h_gap
+        h1[5] = BinaryTools.genClone(h1_pw_len); // h1_pw_len
+        h1[6] = BinaryTools.genClone(h1_vw_len); // h1_vw_len
+        h1[7] = BinaryTools.genClone(h1_pf_len); // h1_pf_len
+        h1[8] = BinaryTools.genClone(h1_vf_len); // h1_vf_len
 
-        h[1] = new boolean[h1_int.length]; // h1_int
-        for(byte i=0; i<h1_int.length; ++i){h[1][i]=h1_int[i];}
-
-        h[2] = new boolean[h1_ct_len.length]; // h1_ct_len
-        for(byte i=0; i<h1_ct_len.length; ++i){h[2][i]=h1_ct_len[i];}
-
-        h[3] = new boolean[h1_data_len.length]; // h1_data_len
-        for(byte i=0; i<h1_data_len.length; ++i){h[3][i]=h1_data_len[i];}
-
-        h[4] = new boolean[h1_h_gap.length]; // h1_h_gap
-        for(byte i=0; i<h1_h_gap.length; ++i){h[4][i]=h1_h_gap[i];}
-
-        h[5] = new boolean[h1_pw_len.length]; // h1_pw_len
-        for(byte i=0; i<h1_pw_len.length; ++i){h[5][i]=h1_pw_len[i];}
-
-        h[6] = new boolean[h1_vw_len.length]; // h1_vw_len
-        for(byte i=0; i<h1_vw_len.length; ++i){h[6][i]=h1_vw_len[i];}
-
-        h[7] = new boolean[h1_pf_len.length]; // h1_pf_len
-        for(byte i=0; i<h1_pf_len.length; ++i){h[7][i]=h1_pf_len[i];}
-
-        h[8] = new boolean[h1_vf_len.length]; // h1_vf_len
-        for(byte i=0; i<h1_vf_len.length; ++i){h[8][i]=h1_vf_len[i];}
-
-        return h;
+        return h1;
     }
 
-    public boolean[][] getBinaryHeader2(){return null;}
+    public boolean[][] getBinaryHeader2(){
+	boolean[][] h2=new boolean[3][];
+
+	h2[0] = BinaryTools.genClone(h2_sym_len); //h2_sym_len
+	h2[1] = BinaryTools.genClone(h2_sym); //h2_sym
+	h2[2] = BinaryTools.genClone(h2_data_ct); //h2_data_ct
+
+	return h2;
+    }
 }
