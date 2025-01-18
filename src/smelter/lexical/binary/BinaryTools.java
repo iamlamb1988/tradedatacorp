@@ -136,6 +136,22 @@ public class BinaryTools{
         );
     }
 
+    public static boolean[] genConcatenatedBoolArrays(boolean[]... binArrays){
+        int sizeR=0;
+        int intIndex=0;
+
+        for(boolean[] binArr : binArrays){sizeR+=binArr.length;}
+
+        boolean[] r = new boolean[sizeR];
+        boolean[] arr;
+        for(boolean[] binArr : binArrays){
+            for(int i=0; i<binArr.length; ++i, ++intIndex){
+                r[intIndex]=binArr[i];
+            }
+        }
+        return r;
+    }
+
     public static boolean[] genBoolArrayFrom8BitCharString(String asciiString){
         byte EIGHT_BITS = (byte)8;
 
@@ -156,26 +172,10 @@ public class BinaryTools{
         StringBuilder strBldr = new StringBuilder();
         boolean[] charBin = new boolean[8];
         int fullCharCount = (EightBitCharBool.length >>> 3); // Full 8 bits, the last character may not be 8 bits
-        int remainingBits = EightBitCharBool.length - (fullCharCount << 3);
 
-        //Handle all full characters
         for(int i=0; i<fullCharCount; ++i){
             for(int j=7; j>=0; --j){
                 charBin[j] = EightBitCharBool[i*8+j];
-            }
-            strBldr.append((char)toUnsignedInt(charBin));
-        }
-
-        //Handle last character
-        if(remainingBits>0){
-            //Fill in MSB 0's
-            for(int i=7-remainingBits; i>=0; --i){
-                charBin[i]=false;
-            }
-
-            //Fill in minimum rep
-            for(int i=remainingBits, j=fullCharCount; i<8; ++i, ++j){
-                charBin[j]=EightBitCharBool[i];
             }
             strBldr.append((char)toUnsignedInt(charBin));
         }

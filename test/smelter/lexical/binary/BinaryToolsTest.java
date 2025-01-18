@@ -294,6 +294,13 @@ public class BinaryToolsTest{
         byte ascii_T = (byte)'T';
         byte ascii_t = (byte)'t';
 
+        boolean[] bin_A = new boolean[]{F,T,F,F,F,F,F,T}; //65
+        boolean[] bin_a = new boolean[]{F,T,T,F,F,F,F,T}; //97
+        boolean[] bin_C = new boolean[]{F,T,F,F,F,F,T,T}; //67
+        boolean[] bin_c = new boolean[]{F,T,T,F,F,F,T,T}; //99
+        boolean[] bin_T = new boolean[]{F,T,F,T,F,T,F,F}; //84
+        boolean[] bin_t = new boolean[]{F,T,T,T,F,T,F,F}; //116
+
         @Test
         public void testChars(){
             assertEquals(65,(byte)'A');
@@ -302,14 +309,46 @@ public class BinaryToolsTest{
             assertEquals(99,(byte)'c');
             assertEquals(84,(byte)'T');
             assertEquals(116,(byte)'t');
+
+            assertEquals(65,BinaryTools.toUnsignedInt(bin_A));
+            assertEquals(97,BinaryTools.toUnsignedInt(bin_a));
+            assertEquals(67,BinaryTools.toUnsignedInt(bin_C));
+            assertEquals(99,BinaryTools.toUnsignedInt(bin_c));
+            assertEquals(84,BinaryTools.toUnsignedInt(bin_T));
+            assertEquals(116,BinaryTools.toUnsignedInt(bin_t));
         }
 
         @Test
-        public void testCats(){
+        public void testCat1(){
             boolean[] cat1_8bitCharBin = BinaryTools.genBoolArrayFrom8BitCharString(cat1); // cat
+            boolean[] another_cat1_8bitCharBin = BinaryTools.genConcatenatedBoolArrays(bin_c, bin_a, bin_t);
             String another_cat1 = BinaryTools.genStringFrom8BitBoolCharRep(cat1_8bitCharBin);
 
             assertEquals(cat1,another_cat1);
+            assertEquals(8*3,cat1_8bitCharBin.length);
+            assertTrue(BinaryTools.isEqualBoolArray(cat1_8bitCharBin,another_cat1_8bitCharBin));
+        }
+
+        @Test
+        public void testCat2(){
+            boolean[] cat2_8bitCharBin = BinaryTools.genBoolArrayFrom8BitCharString(cat2); // Cat
+            boolean[] another_cat2_8bitCharBin = BinaryTools.genConcatenatedBoolArrays(bin_C, bin_a, bin_t);
+            String another_cat2 = BinaryTools.genStringFrom8BitBoolCharRep(cat2_8bitCharBin);
+
+            assertEquals(cat2,another_cat2);
+            assertEquals(8*3,cat2_8bitCharBin.length);
+            assertTrue(BinaryTools.isEqualBoolArray(cat2_8bitCharBin,another_cat2_8bitCharBin));
+        }
+
+        @Test
+        public void testCat3(){
+            boolean[] cat3_8bitCharBin = BinaryTools.genBoolArrayFrom8BitCharString(cat3); // CAT
+            boolean[] another_cat3_8bitCharBin = BinaryTools.genConcatenatedBoolArrays(bin_C, bin_A, bin_T);
+            String another_cat3 = BinaryTools.genStringFrom8BitBoolCharRep(cat3_8bitCharBin);
+
+            assertEquals(cat3,another_cat3);
+            assertEquals(8*3,cat3_8bitCharBin.length);
+            assertTrue(BinaryTools.isEqualBoolArray(cat3_8bitCharBin,another_cat3_8bitCharBin));
         }
     }
 }
