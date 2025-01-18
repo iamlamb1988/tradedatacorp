@@ -66,9 +66,14 @@ public class Original implements BinaryLexical<StickDouble>{
 
         // Set translated and binary H1 values where applicable
         t_h1_int=Integer.parseUnsignedInt(interval);
+        BinaryTools.setUnsignedIntToBoolArray(t_h1_int,h1_int);
+
         t_h1_data_len = h1_data_len.length;
         t_h1_ct_len = 1; // 1 bit required to represent 0.
-        t_h1_pw_len = t_h1_vw_len = t_h1_pf_len = t_h1_pf_len = 31; //Shortcut, Fix this later
+        t_h1_pw_len = (byte)BinaryTools.toUnsignedInt(h1_pw_len);
+        t_h1_vw_len = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
+        t_h1_pf_len = (byte)BinaryTools.toUnsignedInt(h1_pf_len);
+        t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
 
         //Set H2 translated values (these are already known)
         t_h2_sym_len = (byte)(8*symbol.length());

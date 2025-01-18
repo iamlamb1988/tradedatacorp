@@ -103,15 +103,15 @@ public class BinaryTools{
     }
 
     public static void setUnsignedIntToBoolArray(int val, boolean[] boolArray){
-        for(byte i=(byte)(boolArray.length-1); i>=0; --i){
-            boolArray[i] = ((val & 1) == 1 ? true : false);
+        for(int i=boolArray.length-1; i>=0; --i){
+            boolArray[i] = (val & 1) == 1;
             val = val >>> 1;
         }
     }
 
     public static void setUnsignedLongToBoolArray(long val, boolean[] boolArray){
-        for(byte i=(byte)(boolArray.length-1); i>=0; --i){
-            boolArray[i] = ((val & 1) == 1 ? true : false);
+        for(int i=boolArray.length-1; i>=0; --i){
+            boolArray[i] = (val & 1) == 1;
             val = val >>> 1;
         }
     }
