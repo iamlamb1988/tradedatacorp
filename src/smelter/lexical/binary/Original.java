@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 20 JAN 2025
+ */
 package tradedatacorp.smelter.lexical.binary;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
@@ -88,26 +92,27 @@ public class Original implements BinaryLexical<StickDouble>{
     //Get Binary Header
     @Override
     public boolean[][] getBinaryHeader(){
-	boolean[][] h1 = getBinaryHeader1();
-	boolean[][] h2 = getBinaryHeader2();
+        boolean[][] h1 = genBinaryHeader1Ref();
+        boolean[][] h2 = genBinaryHeader2Ref();
 
-	boolean[][] h = new boolean[h1.length + h2.length][];
-	int headerIndex = 0;
+        boolean[][] h = new boolean[h1.length + h2.length][];
+        int headerIndex = 0;
 
-	for(boolean[] binField : h1){
-	    h[headerIndex] = BinaryTools.genClone(binField);
-	    ++headerIndex;
-	}
+        for(boolean[] binField : h1){
+            h[headerIndex] = BinaryTools.genClone(binField);
+            ++headerIndex;
+        }
 
-	for(boolean[] binField : h2){
-	    h[headerIndex] = BinaryTools.genClone(binField);
-	    ++headerIndex;
-	}
+        for(boolean[] binField : h2){
+            h[headerIndex] = BinaryTools.genClone(binField);
+            ++headerIndex;
+        }
 
-	return h;
+        return h;
     }
 
-    public boolean[] getBinaryHeaderFlat(){return null;}
+    @Override
+    public boolean[] getBinaryHeaderFlat(){return BinaryTools.genConcatenatedBoolArrays(getBinaryHeader());}
 
     //Get Binary Data from Data instances
     public boolean[][] getBinaryData(StickDouble singleData){return null;}
@@ -125,7 +130,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
     // Original methods
     //Get methods
-    public boolean[][] getBinaryHeader1(){
+    public boolean[][] genBinaryHeader1(){
         boolean[][] h1=new boolean[9][];
 
         h1[0] = BinaryTools.genClone(h1_byid); //h1_biid
@@ -141,13 +146,42 @@ public class Original implements BinaryLexical<StickDouble>{
         return h1;
     }
 
-    public boolean[][] getBinaryHeader2(){
-	boolean[][] h2=new boolean[3][];
+    private boolean[][] genBinaryHeader1Ref(){
+        boolean[][] h1=new boolean[9][];
 
-	h2[0] = BinaryTools.genClone(h2_sym_len); //h2_sym_len
-	h2[1] = BinaryTools.genClone(h2_sym); //h2_sym
-	h2[2] = BinaryTools.genClone(h2_data_ct); //h2_data_ct
+        h1[0] = h1_byid;
+        h1[1] = h1_int;
+        h1[2] = h1_ct_len;
+        h1[3] = h1_data_len;
+        h1[4] = h1_h_gap;
+        h1[5] = h1_pw_len;
+        h1[6] = h1_vw_len;
+        h1[7] = h1_pf_len;
+        h1[8] = h1_vf_len;
 
-	return h2;
+        return h1;
     }
+
+    public boolean[][] genBinaryHeader2(){
+        boolean[][] h2=new boolean[3][];
+
+        h2[0] = BinaryTools.genClone(h2_sym_len); //h2_sym_len
+        h2[1] = BinaryTools.genClone(h2_sym); //h2_sym
+        h2[2] = BinaryTools.genClone(h2_data_ct); //h2_data_ct
+
+        return h2;
+    }
+
+    private boolean[][] genBinaryHeader2Ref(){
+        boolean[][] h2=new boolean[3][];
+
+        h2[0] = h2_sym_len;
+        h2[1] = h2_sym;
+        h2[2] = h2_data_ct;
+
+        return h2;
+    }
+
+    public String getSymbol(){return symbol;}
+    public String getInterval(){return interval;}
 }

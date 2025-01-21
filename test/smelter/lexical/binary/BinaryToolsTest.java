@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 20 JAN 2025
+ */
 package tradedatacorp.smelter.lexical.binary;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
