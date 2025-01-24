@@ -58,26 +58,28 @@ public class Original implements BinaryLexical<StickDouble>{
         //Set the H1 sizes and some values
         h1_byid = new boolean[]{false};
         h1_int = new boolean[25];
-        h1_data_len = new boolean[9];
         h1_ct_len = new boolean[26];
+        h1_data_len = new boolean[9];
         h1_h_gap = new boolean[3];
 
         h1_pw_len = new boolean[]{true,true,true,true,true};
         h1_vw_len = new boolean[]{true,true,true,true,true};
 
-        h1_pf_len = new boolean[]{true,true,true,true,true};
-        h1_vf_len = new boolean[]{true,true,true,true,true};
+        h1_pf_len = new boolean[]{false,true,true,true,true};
+        h1_vf_len = new boolean[]{false,true,true,true,true};
 
         // Set translated and binary H1 values where applicable
         t_h1_int=Integer.parseUnsignedInt(interval);
         BinaryTools.setUnsignedIntToBoolArray(t_h1_int,h1_int);
 
-        t_h1_data_len = h1_data_len.length;
         t_h1_ct_len = 1; // 1 bit required to represent 0.
         t_h1_pw_len = (byte)BinaryTools.toUnsignedInt(h1_pw_len);
         t_h1_vw_len = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
         t_h1_pf_len = (byte)BinaryTools.toUnsignedInt(h1_pf_len);
         t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
+
+        t_h1_data_len = 44 + 4*(t_h1_pw_len + t_h1_pf_len) + t_h1_vw_len + t_h1_vf_len;
+        BinaryTools.setUnsignedIntToBoolArray(t_h1_data_len,h1_data_len);
 
         //Set H2 translated values (these are already known)
         t_h2_sym_len = (byte)(symbol.length() << 3);
@@ -115,7 +117,36 @@ public class Original implements BinaryLexical<StickDouble>{
     public boolean[] getBinaryHeaderFlat(){return BinaryTools.genConcatenatedBoolArrays(getBinaryHeader());}
 
     //Get Binary Data from Data instances
-    public boolean[][] getBinaryData(StickDouble singleData){return null;}
+    @Override
+    public boolean[][] getBinaryData(StickDouble singleData){
+        boolean[][] binData = new boolean[11][];
+
+        int[] tmpWholeFractionInts = new int[2];
+
+        binData[0] = BinaryTools.genBoolArrayFromUnsignedLong(singleData.getUTC(),(byte)44); //UTC
+
+        splitWholeFraction(singleData.getO(),tmpWholeFractionInts);
+        binData[1] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //Open Whole
+        binData[2] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //Open Fraction
+
+        splitWholeFraction(singleData.getH(),tmpWholeFractionInts);
+        binData[3] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //High Whole
+        binData[4] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //High Fraction
+
+        splitWholeFraction(singleData.getL(),tmpWholeFractionInts);
+        binData[5] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //Low Whole
+        binData[6] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //Low Fraction
+
+        splitWholeFraction(singleData.getC(),tmpWholeFractionInts);
+        binData[7] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //Close Whole
+        binData[8] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //Close Fraction
+
+        splitWholeFraction(singleData.getV(),tmpWholeFractionInts);
+        binData[9] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_vw_len); //Close Whole
+        binData[10] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_vf_len); //Close Fraction
+
+        return binData;
+    }
     public boolean[] getBinaryDataFlat(StickDouble singleData){return null;}
     public boolean[][][] getBinaryDataPoints(StickDouble[] dataArray){return null;}
     public boolean[][][] getBinaryDataPoints(Collection dataCollection){return null;}
@@ -136,7 +167,7 @@ public class Original implements BinaryLexical<StickDouble>{
         h1[0] = BinaryTools.genClone(h1_byid); //h1_biid
         h1[1] = BinaryTools.genClone(h1_int); // h1_int
         h1[2] = BinaryTools.genClone(h1_ct_len); // h1_ct_len
-        h1[3] = BinaryTools.genClone(h1_data_len); // h1_data_len
+        h1[3] = BinaryTools.genClone(h1_data_len); // c
         h1[4] = BinaryTools.genClone(h1_h_gap); // h1_h_gap
         h1[5] = BinaryTools.genClone(h1_pw_len); // h1_pw_len
         h1[6] = BinaryTools.genClone(h1_vw_len); // h1_vw_len
@@ -182,6 +213,28 @@ public class Original implements BinaryLexical<StickDouble>{
         return h2;
     }
 
+    //This will need to be sped up
+    private void splitWholeFraction(double value, int[] valueParts){
+        int whole = (int)Math.abs(value);
+        valueParts[0] = whole;
+
+        //Initial fraction digit
+        double dec = (value - whole)*10;
+        int fraction = (int)dec;
+        int next_digit=0;
+
+        //Remaining digits
+        while(dec > 0){
+            dec *= 10;
+            next_digit = ((int)dec);
+            dec -= next_digit;
+            fraction = fraction*10 + next_digit;
+        }
+        valueParts[1] = fraction;
+    }
+
     public String getSymbol(){return symbol;}
     public String getInterval(){return interval;}
+
+    public boolean getByID(){return t_h1_byid;}
 }
