@@ -29,7 +29,14 @@ public class OriginalTest{
             5 +  //h1_vw_len
             4 +  //h1_pf_len
             4;   //h1_vf_len
+
+        int h2_len = 
+            7 +  //h2_sym_len (the only fixed h2 header)
+            48 + //h2_sym characters "BTCUSD" x 8 bits
+            1 +  //h2_data_ct 1 bit to represent the value 0
+            6;   //h2_h_gap (only need to add 6 to make the total header divisible by 8)
         
+        int h_len = h1_len + h2_len;
         int data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
 
         boolean[][] generatedHeader1 = first_lexical.genBinaryHeader1();
@@ -116,7 +123,57 @@ public class OriginalTest{
             @Test
             public void testDefault_Sybmbol(){
                 boolean[] bin_h2_sym = generatedHeader2[1];
-                assertEquals(6*8,bin_h2_sym.length); //BTCUSD has 6 characters
+                byte ascii_B = (byte)'B';
+                byte ascii_T = (byte)'T';
+                byte ascii_C = (byte)'C';
+                byte ascii_U = (byte)'U';
+                byte ascii_S = (byte)'S';
+                byte ascii_D = (byte)'D';
+
+                boolean[] bin_B = BinaryTools.genSubset(0,8,bin_h2_sym);
+                boolean[] bin_T = BinaryTools.genSubset(8,8,bin_h2_sym);
+                boolean[] bin_C = BinaryTools.genSubset(16,8,bin_h2_sym);
+                boolean[] bin_U = BinaryTools.genSubset(24,8,bin_h2_sym);
+                boolean[] bin_S = BinaryTools.genSubset(32,8,bin_h2_sym);
+                boolean[] bin_D = BinaryTools.genSubset(40,8,bin_h2_sym);
+
+                assertEquals(6*8,bin_h2_sym.length); //BTCUSD has 6 characters (each are 8 bits)
+
+                assertEquals(66,ascii_B);
+                assertEquals(84,ascii_T);
+                assertEquals(67,ascii_C);
+                assertEquals(85,ascii_U);
+                assertEquals(83,ascii_S);
+                assertEquals(68,ascii_D);
+
+                assertEquals(ascii_B,BinaryTools.toUnsignedInt(bin_B));
+                assertEquals(ascii_T,BinaryTools.toUnsignedInt(bin_T));
+                assertEquals(ascii_C,BinaryTools.toUnsignedInt(bin_C));
+                assertEquals(ascii_U,BinaryTools.toUnsignedInt(bin_U));
+                assertEquals(ascii_S,BinaryTools.toUnsignedInt(bin_S));
+                assertEquals(ascii_D,BinaryTools.toUnsignedInt(bin_D));
+            }
+
+            @Test
+            public void testDefault_DataCount(){
+                boolean[] bin_h2_data_ct = generatedHeader2[2];
+
+                assertEquals(0,BinaryTools.toUnsignedInt(bin_h2_data_ct));
+                assertEquals(1,bin_h2_data_ct.length); //should match h1_data_ct_len
+            }
+
+            @Test
+            public void testDefault_gap(){
+                boolean[] bin_h2_h_gap = generatedHeader2[3];;
+                int  exptected_total_length = 
+                    first_lexical.H1_TOTAL_LEN +
+                    7 +
+                    48 +
+                    1 +
+                    6; //This is the gap, With
+                int expected_gap_bit_length = 6; //2 more bits to get a total of 
+
+                assertEquals(expected_gap_bit_length,bin_h2_h_gap.length);
             }
         }
 
@@ -128,9 +185,24 @@ public class OriginalTest{
 
         @Test
         public void testDefaultHeader1(){
-            assertEquals(82,first_lexical.H1_TOTAL_LEN);
+            assertEquals(82,h1_len);
+            assertEquals(h1_len,first_lexical.H1_TOTAL_LEN);
             assertEquals(first_lexical.H1_TOTAL_LEN,flatHeader1.length);
             assertEquals(flatHeader1.length,first_lexical.H1_TOTAL_LEN);
+        }
+
+        @Test
+        public void testDefaultHeader2(){
+            assertEquals(62,h2_len);
+            assertEquals(h2_len,first_lexical.getHeader2BitLength());
+        }
+
+        @Test
+        public void testDefaultHeader(){
+            assertEquals(144,h1_len+h2_len);
+            assertEquals(144,h_len);
+            assertEquals(h_len,first_lexical.getHeaderBitLength());
+            assertEquals(0,h_len%8);
         }
     }
 }

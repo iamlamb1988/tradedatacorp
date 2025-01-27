@@ -151,6 +151,41 @@ public class BinaryToolsTest{
     }
 
     @Nested
+    @DisplayName("Small Boolean Array Clones and subsets")
+    class SmallArrayClonesAndSubsets{
+        boolean[] boolArray1 = new boolean[]{F,T,F,T,T}; //01011 = 7 unsigned
+
+        @Test
+        public void testClone(){
+            boolean[] arrayClone = BinaryTools.genClone(boolArray1);
+
+            assertTrue(BinaryTools.isEqualBoolArray(boolArray1,arrayClone));
+        }
+
+        @Test
+        public void testRightSubsets(){
+            boolean[] manual_right_subset = new boolean[]{F,T,T}; //Indexes 2 - 4
+
+            //Inclusive: 2 - 4
+            assertTrue(BinaryTools.isEqualBoolArray(manual_right_subset,BinaryTools.genRightSubset(2,boolArray1)));
+        }
+
+        @Test
+        public void testLeftSubsets(){
+            boolean[] manual_left_subset = new boolean[]{F,T,F}; //Indexes 0 - 2
+
+            //Exclusive 3 index, subset left of index 0, 1, and 2.
+            assertTrue(BinaryTools.isEqualBoolArray(manual_left_subset,BinaryTools.genLeftSubset(3,boolArray1)));
+        }
+
+        @Test
+        public void testMiddleSubsets(){
+            //manual subset indexes: 1 - 2
+            assertTrue(BinaryTools.isEqualBoolArray(new boolean[]{T,F,T},BinaryTools.genSubsetFromIndexes(1,3,boolArray1)));
+        }
+    }
+
+    @Nested
     @DisplayName("Small Array Negations")
     class SmallArrayNegations{
         boolean[] negative_twelve = new boolean[]{T,F,T,F,F}; //10100 == 20 unsigned == -12 2sComp

@@ -74,7 +74,7 @@ public class Original implements BinaryLexical<StickDouble>{
         h1_vw_len = new boolean[]{true,true,true,true,true};
         h1_vf_len = new boolean[]{true,true,true,true};
 
-        H1_TOTAL_LEN = 
+        H1_TOTAL_LEN =
             h1_byid.length +
             h1_int.length +
             h1_ct_len.length +
@@ -274,6 +274,9 @@ public class Original implements BinaryLexical<StickDouble>{
         }
         valueParts[1] = fraction;
     }
+
+    public int getHeaderBitLength(){return h_total_len;}
+    public int getHeader2BitLength(){return h2_total_len;}
 
     public String getSymbol(){return symbol;}
     public String getInterval(){return interval;}

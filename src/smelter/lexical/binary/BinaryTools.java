@@ -63,7 +63,31 @@ public class BinaryTools{
 
     public static boolean[] genClone(boolean[] originalBin){
         boolean[] r = new boolean[originalBin.length];
-        for(byte i=(byte)(r.length-1);i>=0;--i){r[i]=originalBin[i];}
+        for(byte i=(byte)(r.length-1);i>=0;--i){r[i] = originalBin[i];}
+        return r;
+    }
+
+    public static boolean[] genSubset(int inclusiveStartIndex, int subsetLength, boolean[] bin){
+        boolean[] r = new boolean[subsetLength];
+        for(int i=0; i<subsetLength; ++i){r[i] = bin[inclusiveStartIndex+i];}
+        return r;
+    }
+
+    public static boolean[] genSubsetFromIndexes(int inclusiveStartIndex, int inclusiveEndIndex, boolean[] bin){
+        boolean[] r = new boolean[inclusiveEndIndex - inclusiveStartIndex + 1];
+        for(int i=0; i<r.length; ++i){r[i] = bin[inclusiveStartIndex+i];}
+        return r;
+    }
+
+    public static boolean[] genLeftSubset(int exclusiveRightIndex, boolean[] bin){
+        boolean[] r = new boolean[exclusiveRightIndex];
+        for(int i=0; i<exclusiveRightIndex; ++i){r[i] = bin[i];}
+        return r;
+    }
+
+    public static boolean[] genRightSubset(int inclusiveLeftIndex, boolean[] bin){
+        boolean[] r = new boolean[bin.length-inclusiveLeftIndex];
+        for(int i=0; i<r.length; ++i){r[i] = bin[inclusiveLeftIndex+i];}
         return r;
     }
 
