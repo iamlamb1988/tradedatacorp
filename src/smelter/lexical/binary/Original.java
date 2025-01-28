@@ -187,7 +187,15 @@ public class Original implements BinaryLexical<StickDouble>{
 
         return binData;
     }
-    public boolean[] getBinaryDataFlat(StickDouble singleData){return null;}
+
+    @Override
+    public boolean[] getBinaryDataFlat(StickDouble singleData){
+        boolean[] binData = new boolean[t_h1_data_len];
+        // boolean[] 
+
+        return binData;
+    }
+
     public boolean[][][] getBinaryDataPoints(StickDouble[] dataArray){return null;}
     public boolean[][][] getBinaryDataPoints(Collection dataCollection){return null;}
     public boolean[] getBinaryDataPointsFlat(StickDouble[] dataArray){return null;}

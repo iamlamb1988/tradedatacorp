@@ -15,10 +15,11 @@ import org.junit.jupiter.api.Test;
 import tradedatacorp.smelter.lexical.binary.Original;
 
 public class OriginalTest{
+    Original first_lexical = new Original("BTCUSD","60");
+
     @Nested
     @DisplayName("Constructor Test")
     public class SmallConstructorTest{
-        Original first_lexical = new Original("BTCUSD","60");
         int h1_len =
             1 +  //h1_byid
             25 + //h1_int 
@@ -203,6 +204,15 @@ public class OriginalTest{
             assertEquals(144,h_len);
             assertEquals(h_len,first_lexical.getHeaderBitLength());
             assertEquals(0,h_len%8);
+        }
+    }
+
+    @Nested
+    @DisplayName("Passing in small data. State of Lexical is preserved")
+    public class SmallInterfaceTest{
+        @Test
+        public void testSingleDataStick(){
+            
         }
     }
 }

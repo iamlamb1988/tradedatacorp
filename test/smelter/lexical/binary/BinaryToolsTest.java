@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import tradedatacorp.smelter.lexical.binary.BinaryTools;
+import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 public class BinaryToolsTest{
     final boolean T = true;
@@ -163,7 +164,7 @@ public class BinaryToolsTest{
         }
 
         @Test
-        public void testRightSubsets(){
+        public void testGenRightSubsets(){
             boolean[] manual_right_subset = new boolean[]{F,T,T}; //Indexes 2 - 4
 
             //Inclusive: 2 - 4
@@ -171,7 +172,7 @@ public class BinaryToolsTest{
         }
 
         @Test
-        public void testLeftSubsets(){
+        public void testGenLeftSubsets(){
             boolean[] manual_left_subset = new boolean[]{F,T,F}; //Indexes 0 - 2
 
             //Exclusive 3 index, subset left of index 0, 1, and 2.
@@ -179,9 +180,14 @@ public class BinaryToolsTest{
         }
 
         @Test
-        public void testMiddleSubsets(){
+        public void testGenMiddleSubsets(){
             //manual subset indexes: 1 - 2
             assertTrue(BinaryTools.isEqualBoolArray(new boolean[]{T,F,T},BinaryTools.genSubsetFromIndexes(1,3,boolArray1)));
+        }
+
+        @Test
+        public void testSetSubset(){
+            CandleStickFixedDouble stick = new CandleStickFixedDouble(3600,5,3,7,6,.5);
         }
     }
 

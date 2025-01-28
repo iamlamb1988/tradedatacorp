@@ -126,6 +126,30 @@ public class BinaryTools{
         return r;
     }
 
+    public static void setSubsetUnsignedInt(
+        int inclusiveStartIndex,
+        int bitLength,
+        int value,
+        boolean[] bin
+    ){
+        for(int i=bitLength-1; i>0; --i){
+            bin[i+inclusiveStartIndex] = ((value & 1) == 1 ? true : false);
+            value = value >>> 1;
+        }
+    }
+
+    public static void setSubsetUnsignedLong(
+        int inclusiveStartIndex,
+        int bitLength,
+        long value,
+        boolean[] bin
+    ){
+        for(int i=bitLength-1; i>0; --i){
+            bin[i+inclusiveStartIndex] = ((value & 1) == 1 ? true : false);
+            value = value >>> 1;
+        }
+    }
+
     public static void setUnsignedIntToBoolArray(int val, boolean[] boolArray){
         for(int i=boolArray.length-1; i>=0; --i){
             boolArray[i] = (val & 1) == 1;
