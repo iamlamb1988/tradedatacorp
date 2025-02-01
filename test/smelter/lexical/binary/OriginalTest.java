@@ -13,9 +13,41 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import tradedatacorp.smelter.lexical.binary.Original;
+import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 public class OriginalTest{
     Original first_lexical = new Original("BTCUSD","60");
+
+    @Nested
+    @DisplayName("Split Fraction and Decimal")
+    public class FractionAndDecimal{
+        @Test
+        public void test(){
+            int[] val = new int[3];
+            double pi = 3.14;
+            double e = 2.718;
+            
+            Original.splitWholeFraction(pi,5,val); //Set to check up to 5 decimal places
+
+            assertEquals(3,val[0]);
+            assertEquals(14000,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
+
+            Original.splitWholeFractionTrim(pi,5,val); //Set to check up to 5 decimal places
+            assertEquals(3,val[0]);
+            assertEquals(14,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
+
+
+            Original.splitWholeFraction(e,5,val);
+
+            assertEquals(2,val[0]);
+            assertEquals(71800,val[1]);
+
+            Original.splitWholeFractionTrim(e,5,val);
+
+            assertEquals(2,val[0]);
+            assertEquals(718,val[1]);
+        }
+    }
 
     @Nested
     @DisplayName("Constructor Test")
@@ -36,7 +68,7 @@ public class OriginalTest{
             48 + //h2_sym characters "BTCUSD" x 8 bits
             1 +  //h2_data_ct 1 bit to represent the value 0
             6;   //h2_h_gap (only need to add 6 to make the total header divisible by 8)
-        
+
         int h_len = h1_len + h2_len;
         int data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
 
@@ -212,7 +244,65 @@ public class OriginalTest{
     public class SmallInterfaceTest{
         @Test
         public void testSingleDataStick(){
-            
+            CandleStickFixedDouble stick = new CandleStickFixedDouble(1000,3,9,1,5,1.25);
+            boolean[][] inflatedBin = first_lexical.getBinaryData(stick);
+
+            boolean[] utcBin = inflatedBin[0];
+            boolean[] openWholeBin = inflatedBin[1];
+            boolean[] openFractionBin = inflatedBin[2];
+            boolean[] highWholeBin = inflatedBin[3];
+            boolean[] highFractionBin = inflatedBin[4];
+            boolean[] lowWholeBin = inflatedBin[5];
+            boolean[] lowFractionBin = inflatedBin[6];
+            boolean[] closeWholeBin = inflatedBin[7];
+            boolean[] closeFractionBin = inflatedBin[8];
+            boolean[] volumeWholeBin = inflatedBin[9];
+            boolean[] volumeFractionBin = inflatedBin[10];
+
+            //Check Stick
+            assertEquals(3,stick.getO());
+            assertEquals(9,stick.getH());
+            assertEquals(1,stick.getL());
+            assertEquals(5,stick.getC());
+            assertEquals(1.25,stick.getV());
+
+            assertEquals(44,utcBin.length);
+            assertEquals(1000,BinaryTools.toUnsignedLong(utcBin));
+
+            //Open
+            assertEquals(31,openWholeBin.length);
+            assertEquals(3,BinaryTools.toUnsignedInt(openWholeBin));
+
+            assertEquals(15,openFractionBin.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(openFractionBin));
+
+            //High
+            assertEquals(31,highWholeBin.length);
+            assertEquals(9,BinaryTools.toUnsignedInt(highWholeBin));
+
+            assertEquals(15,highFractionBin.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(highFractionBin));
+
+            //Low
+            assertEquals(31,lowWholeBin.length);
+            assertEquals(1,BinaryTools.toUnsignedInt(lowWholeBin));
+
+            assertEquals(15,lowFractionBin.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(lowFractionBin));
+
+            //Close
+            assertEquals(31,closeWholeBin.length);
+            assertEquals(5,BinaryTools.toUnsignedInt(closeWholeBin));
+
+            assertEquals(15,closeFractionBin.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(closeFractionBin));
+
+            //Volume
+            assertEquals(31,volumeWholeBin.length);
+            assertEquals(1,BinaryTools.toUnsignedInt(volumeWholeBin));
+
+            assertEquals(15,volumeFractionBin.length);
+            assertEquals(25,BinaryTools.toUnsignedInt(volumeFractionBin));
         }
     }
 }

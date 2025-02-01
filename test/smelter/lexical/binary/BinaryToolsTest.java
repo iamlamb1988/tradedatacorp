@@ -187,7 +187,31 @@ public class BinaryToolsTest{
 
         @Test
         public void testSetSubset(){
-            CandleStickFixedDouble stick = new CandleStickFixedDouble(3600,5,3,7,6,.5);
+            boolean[] mutableBin = new boolean[]{F,F,F,F,F};
+
+            BinaryTools.setSubsetUnsignedInt(
+                1, //Inclusive Index 1 of the mutableBin
+                3, //3 bits (Indexes 1, 2, and 3)
+                7, //The value of the intermediate 3 bits: 111
+                mutableBin
+            ); //Should be modified to 01110 = 15
+
+            assertTrue(BinaryTools.isEqualBoolArray(new boolean[]{F,T,T,T,F},mutableBin));
+            assertEquals(14,BinaryTools.toUnsignedInt(mutableBin));
+
+            BinaryTools.setUnsignedIntToBoolArray(0,mutableBin);
+            assertEquals(0,BinaryTools.toUnsignedInt(mutableBin));
+
+            BinaryTools.setSubsetUnsignedInt(
+                0,
+                4,
+                15,
+                mutableBin //1111
+            ); //Should be 11110 = 30 unsigned = -2 2sComp
+
+            assertTrue(BinaryTools.isEqualBoolArray(new boolean[]{T,T,T,T,F},mutableBin));
+            assertEquals(30,BinaryTools.toUnsignedInt(mutableBin));
+            assertEquals(-2,BinaryTools.to2sCompInt(mutableBin));
         }
     }
 

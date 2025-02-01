@@ -20,6 +20,10 @@ public class Original implements BinaryLexical<StickDouble>{
     private int h2_total_len;
     private int h_total_len;
 
+    //Cache/memoization variables for speedy reference
+    private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
+    private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
+
     //Binary Lexical H1
     private boolean[] h1_byid;
     private boolean[] h1_int;
@@ -99,6 +103,9 @@ public class Original implements BinaryLexical<StickDouble>{
         t_h1_vw_len = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
         t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
 
+        base10PriceMaxFractionDigit =  (int)Math.ceil(Math.log10(t_h1_pf_len));
+        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(t_h1_vf_len));
+
         t_h1_data_len = 44 + 4*(t_h1_pw_len + t_h1_pf_len) + t_h1_vw_len + t_h1_vf_len;
         BinaryTools.setUnsignedIntToBoolArray(t_h1_data_len,h1_data_len);
 
@@ -161,29 +168,29 @@ public class Original implements BinaryLexical<StickDouble>{
     public boolean[][] getBinaryData(StickDouble singleData){
         boolean[][] binData = new boolean[11][];
 
-        int[] tmpWholeFractionInts = new int[2];
+        int[] tmpWholeFractionInts = new int[3];
 
         binData[0] = BinaryTools.genBoolArrayFromUnsignedLong(singleData.getUTC(),(byte)44); //UTC
 
-        splitWholeFraction(singleData.getO(),tmpWholeFractionInts);
-        binData[1] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //Open Whole
-        binData[2] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //Open Fraction
+        splitWholeFraction(singleData.getO(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        binData[1] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //Open Whole
+        binData[2] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //Open Fraction
 
-        splitWholeFraction(singleData.getH(),tmpWholeFractionInts);
-        binData[3] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //High Whole
-        binData[4] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //High Fraction
+        splitWholeFraction(singleData.getH(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        binData[3] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //High Whole
+        binData[4] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //High Fraction
 
-        splitWholeFraction(singleData.getL(),tmpWholeFractionInts);
-        binData[5] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //Low Whole
-        binData[6] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //Low Fraction
+        splitWholeFraction(singleData.getL(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        binData[5] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //Low Whole
+        binData[6] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //Low Fraction
 
-        splitWholeFraction(singleData.getC(),tmpWholeFractionInts);
-        binData[7] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len); //Close Whole
-        binData[8] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len); //Close Fraction
+        splitWholeFraction(singleData.getC(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        binData[7] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //Close Whole
+        binData[8] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //Close Fraction
 
-        splitWholeFraction(singleData.getV(),tmpWholeFractionInts);
-        binData[9] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_vw_len); //Close Whole
-        binData[10] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_vf_len); //Close Fraction
+        splitWholeFraction(singleData.getV(),base10VolumeMaxFractionDigit,tmpWholeFractionInts);
+        binData[9] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_vw_len);  //Volume Whole
+        binData[10] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_vf_len); //Volume Fraction
 
         return binData;
     }
@@ -191,7 +198,7 @@ public class Original implements BinaryLexical<StickDouble>{
     @Override
     public boolean[] getBinaryDataFlat(StickDouble singleData){
         boolean[] binData = new boolean[t_h1_data_len];
-        // boolean[] 
+        int[] tmpWholeFractionInts = new int[2];
 
         return binData;
     }
@@ -264,23 +271,29 @@ public class Original implements BinaryLexical<StickDouble>{
     }
 
     //This will need to be sped up
-    private void splitWholeFraction(double value, int[] valueParts){
+    public static void splitWholeFraction(double value, int maxDigits, int[] valueParts){
         int whole = (int)Math.abs(value);
         valueParts[0] = whole;
 
         //Initial fraction digit
-        double dec = (value - whole)*10;
-        int fraction = (int)dec;
-        int next_digit=0;
-
-        //Remaining digits
-        while(dec > 0){
-            dec *= 10;
-            next_digit = ((int)dec);
-            dec -= next_digit;
-            fraction = fraction*10 + next_digit;
-        }
+        double dec = value - whole;
+        int fraction = (int)(Math.pow(10,maxDigits)*dec);
         valueParts[1] = fraction;
+        valueParts[2] = maxDigits;
+    }
+
+    public static void splitWholeFractionTrim(double value, int maxDigits, int[] valueParts){
+        splitWholeFraction(value,maxDigits,valueParts);
+        int trimmedFraction = valueParts[1];
+        while(maxDigits>0){
+            if(trimmedFraction % 10 == 0){
+                trimmedFraction /= 10;
+                --maxDigits;
+            }
+            else break;
+        }
+        valueParts[1] = trimmedFraction;
+        valueParts[2] = maxDigits;
     }
 
     public int getHeaderBitLength(){return h_total_len;}

@@ -91,7 +91,7 @@ public class BinaryTools{
         return r;
     }
 
-    public static boolean[] genBoolArrayFromUnsignedInt(int val, byte bit_size){
+    public static boolean[] genBoolArrayFromUnsignedInt(int val, int bit_size){
         boolean[] r = new boolean[bit_size];
         for(byte i=(byte)(bit_size-1); i>=0; --i){
             r[i] = ((val & 1) == 1 ? true : false);
@@ -100,7 +100,7 @@ public class BinaryTools{
         return r;
     }
 
-    public static boolean[] genBoolArrayFromUnsignedLong(long val, byte bit_size){
+    public static boolean[] genBoolArrayFromUnsignedLong(long val, int bit_size){
         boolean[] r = new boolean[bit_size];
         for(byte i=(byte)(bit_size-1); i>=0; --i){
             r[i] = ((val & 1) == 1 ? true : false);
@@ -132,7 +132,7 @@ public class BinaryTools{
         int value,
         boolean[] bin
     ){
-        for(int i=bitLength-1; i>0; --i){
+        for(int i=bitLength-1; i>=0; --i){
             bin[i+inclusiveStartIndex] = ((value & 1) == 1 ? true : false);
             value = value >>> 1;
         }
@@ -144,7 +144,7 @@ public class BinaryTools{
         long value,
         boolean[] bin
     ){
-        for(int i=bitLength-1; i>0; --i){
+        for(int i=bitLength-1; i>=0; --i){
             bin[i+inclusiveStartIndex] = ((value & 1) == 1 ? true : false);
             value = value >>> 1;
         }
