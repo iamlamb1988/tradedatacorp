@@ -276,8 +276,7 @@ public class Original implements BinaryLexical<StickDouble>{
         valueParts[0] = whole;
 
         //Initial fraction digit
-        double dec = value - whole;
-        int fraction = (int)(Math.pow(10,maxDigits)*dec);
+        int fraction = (int)Math.round(Math.pow(10,maxDigits)*(value - whole));
         valueParts[1] = fraction;
         valueParts[2] = maxDigits;
     }

@@ -25,10 +25,13 @@ public class OriginalTest{
         public void test(){
             int[] val = new int[3];
             double pi = 3.14;
+            double pi2 = 3.1400; 
             double e = 2.718;
+            double num = 13.0061;
             
             Original.splitWholeFraction(pi,5,val); //Set to check up to 5 decimal places
 
+            //pi
             assertEquals(3,val[0]);
             assertEquals(14000,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
 
@@ -36,7 +39,18 @@ public class OriginalTest{
             assertEquals(3,val[0]);
             assertEquals(14,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
 
+            //pi2
+            Original.splitWholeFraction(pi2,5,val);
 
+            assertEquals(3,val[0]);
+            assertEquals(14000,val[1]);
+
+            Original.splitWholeFractionTrim(pi2,5,val);
+
+            assertEquals(3,val[0]);
+            assertEquals(14,val[1]);
+
+            //e
             Original.splitWholeFraction(e,5,val);
 
             assertEquals(2,val[0]);
@@ -46,6 +60,17 @@ public class OriginalTest{
 
             assertEquals(2,val[0]);
             assertEquals(718,val[1]);
+
+            //num
+            Original.splitWholeFraction(num,5,val);
+
+            assertEquals(13,val[0]);
+            assertEquals(610,val[1]);
+
+            Original.splitWholeFractionTrim(num,5,val);
+
+            assertEquals(13,val[0]);
+            assertEquals(61,val[1]);
         }
     }
 
