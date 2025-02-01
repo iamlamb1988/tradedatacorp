@@ -282,8 +282,12 @@ public class Original implements BinaryLexical<StickDouble>{
     }
 
     public static void splitWholeFractionTrim(double value, int maxDigits, int[] valueParts){
-        splitWholeFraction(value,maxDigits,valueParts);
-        int trimmedFraction = valueParts[1];
+        int whole = (int)Math.abs(value);
+        valueParts[0] = whole;
+
+        //Initial fraction digit
+        int fraction = (int)Math.round(Math.pow(10,maxDigits)*(value - whole));
+        int trimmedFraction = fraction;
         while(maxDigits>0){
             if(trimmedFraction % 10 == 0){
                 trimmedFraction /= 10;
