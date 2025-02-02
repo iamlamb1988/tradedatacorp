@@ -17,6 +17,26 @@ import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 public class OriginalTest{
     Original first_lexical = new Original("BTCUSD","60");
+    int expected_h1_len =
+    1 +  //h1_byid
+    25 + //h1_int 
+    26 + //h1_ct_len
+    9 +  //h1_data_len
+    3 +  //h1_h_gap_len
+    6 +  //h1_utc_len
+    5 +  //h1_pw_len
+    5 +  //h1_vw_len
+    4 +  //h1_pf_len
+    4;   //h1_vf_len
+
+int expected_h2_len = 
+    7 +  //h2_sym_len (the only fixed h2 header)
+    48 + //h2_sym characters "BTCUSD" x 8 bits
+    1 +  //h2_data_ct_len 1 bit to represent the value 0
+    0;   //h2_h_gap (only need to add 0 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
+
+    int expected_h_len = expected_h1_len + expected_h2_len;
+    int expected_data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
 
     @Nested
     @DisplayName("Split Fraction and Decimal")
@@ -77,27 +97,6 @@ public class OriginalTest{
     @Nested
     @DisplayName("Constructor Test")
     public class SmallConstructorTest{
-        int expected_h1_len =
-            1 +  //h1_byid
-            25 + //h1_int 
-            26 + //h1_ct_len
-            9 +  //h1_data_len
-            3 +  //h1_h_gap_len
-            6 +  //h1_utc_len
-            5 +  //h1_pw_len
-            5 +  //h1_vw_len
-            4 +  //h1_pf_len
-            4;   //h1_vf_len
-
-        int expected_h2_len = 
-            7 +  //h2_sym_len (the only fixed h2 header)
-            48 + //h2_sym characters "BTCUSD" x 8 bits
-            1 +  //h2_data_ct_len 1 bit to represent the value 0
-            0;   //h2_h_gap (only need to add 0 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
-
-        int expected_h_len = expected_h1_len + expected_h2_len;
-        int expected_data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
-
         boolean[][] generatedHeader1 = first_lexical.genBinaryHeader1();
         boolean[] flatHeader1 = BinaryTools.genConcatenatedBoolArrays(generatedHeader1);
         boolean[][] generatedHeader2 = first_lexical.genBinaryHeader2();
@@ -275,14 +274,31 @@ public class OriginalTest{
     @Nested
     @DisplayName("Passing in small data. State of Lexical is preserved")
     public class SmallInterfaceTest{
+        CandleStickFixedDouble stick1 = new CandleStickFixedDouble(
+            1000, //UTC
+            3,    //Open
+            9,    //High
+            1,    //Low
+            5,    //Clse
+            1.25  //Volume
+        );
+
+        CandleStickFixedDouble stick2 = new CandleStickFixedDouble(
+            2000,     //UTC
+            4.125,    //Open
+            9.0059,   //High
+            1.00,     //Low
+            5.100,    //Clse
+            1.25      //Volume
+        );
+
         @Test
-        public void testSingleDataStick(){
-            CandleStickFixedDouble stick = new CandleStickFixedDouble(1000,3,9,1,5,1.25);
+        public void testSingleDataStick1(){
             assertEquals(5,first_lexical.getBase10PriceDigits());  //15 bits => 2^15 => 32768 (base10) => 5 digits
             assertEquals(5,first_lexical.getBase10VolumeDigits()); //15 bits => 2^15 => 32768 (base10) => 5 digits
 
-            boolean[][] inflatedBin = first_lexical.getBinaryData(stick); //Core Interface Function to test
-            boolean[] flatInflatedBin = first_lexical.getBinaryDataFlat(stick);
+            boolean[][] inflatedBin = first_lexical.getBinaryData(stick1); //Core Interface Function to test
+            boolean[] flatInflatedBin = first_lexical.getBinaryDataFlat(stick1);
             boolean[] manuallyFlatInflatedBin = BinaryTools.genConcatenatedBoolArrays(inflatedBin);
 
             assertTrue(BinaryTools.isEqualBoolArray(flatInflatedBin,manuallyFlatInflatedBin));
@@ -300,11 +316,11 @@ public class OriginalTest{
             boolean[] volumeFractionBin = inflatedBin[10];
 
             //Check Stick
-            assertEquals(3,stick.getO());
-            assertEquals(9,stick.getH());
-            assertEquals(1,stick.getL());
-            assertEquals(5,stick.getC());
-            assertEquals(1.25,stick.getV());
+            assertEquals(3,stick1.getO());
+            assertEquals(9,stick1.getH());
+            assertEquals(1,stick1.getL());
+            assertEquals(5,stick1.getC());
+            assertEquals(1.25,stick1.getV());
 
             assertEquals(44,utcBin.length);
             assertEquals(1000,BinaryTools.toUnsignedLong(utcBin));
@@ -343,6 +359,39 @@ public class OriginalTest{
 
             assertEquals(15,volumeFractionBin.length);
             assertEquals(25000,BinaryTools.toUnsignedInt(volumeFractionBin)); //5 Decimal Digits
+
+            //Total Data length
+            assertEquals(274,expected_data_len); //44 + 4*31 + 4*15 + 31 + 15
+            assertEquals(expected_data_len,first_lexical.getDataBitLength());
+        }
+
+        @Test
+        public void testMultipleSticksOneElement(){
+            CandleStickFixedDouble[] singleElementStickArray = new CandleStickFixedDouble[]{stick1};
+
+            boolean[][] singleInflatedBin = first_lexical.getBinaryData(stick1);
+            boolean[][][] inflatedBinArray = first_lexical.getBinaryDataPoints(singleElementStickArray);
+            boolean[] singleFlatBin = first_lexical.getBinaryDataFlat(stick1);
+            boolean[] flatBinArray = first_lexical.getBinaryDataPointsFlat(singleElementStickArray);
+
+            boolean[] manuallySingleFlattenedBin = BinaryTools.genConcatenatedBoolArrays(singleInflatedBin);
+            boolean[] manuallySingleFlattenedBinArray = BinaryTools.genConcatenatedBoolArrays(inflatedBinArray[0]);
+
+            //ALL 4 single arrays must be equal (length and values)
+            assertTrue(BinaryTools.isEqualBoolArray(manuallySingleFlattenedBin,manuallySingleFlattenedBinArray));
+            assertTrue(BinaryTools.isEqualBoolArray(flatBinArray,manuallySingleFlattenedBin));
+            assertTrue(BinaryTools.isEqualBoolArray(singleFlatBin,flatBinArray));
+
+            //Extra confirmation
+            assertEquals(274,expected_data_len); //Only one data point
+            assertEquals(expected_data_len,first_lexical.getDataBitLength());
+            assertEquals(expected_data_len,flatBinArray.length);
+        }
+
+        //TODO
+        @Test
+        public void testMultipleSticksTwoELements(){
+            
         }
     }
 }

@@ -256,9 +256,100 @@ public class Original implements BinaryLexical<StickDouble>{
         return binData;
     }
 
-    public boolean[][][] getBinaryDataPoints(StickDouble[] dataArray){return null;}
+    @Override
+    public boolean[][][] getBinaryDataPoints(StickDouble[] dataArray){
+        boolean[][][] r = new boolean[dataArray.length][][];
+        boolean[][] binData;
+        int[] tmpWholeFractionInts = new int[3];
+
+        int rIndex=0;
+        for(StickDouble singleData : dataArray){
+            binData = new boolean[11][]; //This is a singular element of r
+
+            binData[0] = BinaryTools.genBoolArrayFromUnsignedLong(singleData.getUTC(),t_h1_utc_len); //UTC
+
+            splitWholeFraction(singleData.getO(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            binData[1] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //Open Whole
+            binData[2] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //Open Fraction
+
+            splitWholeFraction(singleData.getH(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            binData[3] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //High Whole
+            binData[4] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //High Fraction
+
+            splitWholeFraction(singleData.getL(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            binData[5] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //Low Whole
+            binData[6] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //Low Fraction
+
+            splitWholeFraction(singleData.getC(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            binData[7] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //Close Whole
+            binData[8] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_pf_len);  //Close Fraction
+
+            splitWholeFraction(singleData.getV(),base10VolumeMaxFractionDigit,tmpWholeFractionInts);
+            binData[9] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_vw_len);  //Volume Whole
+            binData[10] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[1],t_h1_vf_len); //Volume Fraction
+
+            r[rIndex] = binData;
+        }
+
+        return r;
+    }
+
     public boolean[][][] getBinaryDataPoints(Collection dataCollection){return null;}
-    public boolean[] getBinaryDataPointsFlat(StickDouble[] dataArray){return null;}
+
+    @Override
+    public boolean[] getBinaryDataPointsFlat(StickDouble[] dataArray){
+        boolean[] r = new boolean[t_h1_data_len * dataArray.length];
+        int[] tmpWholeFractionInts = new int[3];
+        int nextIndex = 0;
+
+        for(StickDouble singleData : dataArray){
+            BinaryTools.setSubsetUnsignedLong(nextIndex,t_h1_utc_len,singleData.getUTC(),r);
+            nextIndex+=t_h1_utc_len;
+
+            //Open
+            splitWholeFraction(singleData.getO(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
+            nextIndex+=t_h1_pw_len;
+
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
+            nextIndex+=t_h1_pf_len;
+
+            //High
+            splitWholeFraction(singleData.getH(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
+            nextIndex+=t_h1_pw_len;
+
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
+            nextIndex+=t_h1_pf_len;
+
+            //Low
+            splitWholeFraction(singleData.getL(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
+            nextIndex+=t_h1_pw_len;
+
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
+            nextIndex+=t_h1_pf_len;
+
+            //Close
+            splitWholeFraction(singleData.getC(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
+            nextIndex+=t_h1_pw_len;
+
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
+            nextIndex+=t_h1_pf_len;
+
+            //Volume
+            splitWholeFraction(singleData.getV(),base10VolumeMaxFractionDigit,tmpWholeFractionInts);
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_vw_len,tmpWholeFractionInts[0],r);
+            nextIndex+=t_h1_vw_len;
+
+            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_vf_len,tmpWholeFractionInts[1],r);
+            nextIndex+=t_h1_vf_len;
+        }
+
+        return r;
+    }
+
     public boolean[] getBinaryDataPointsFlat(Collection dataCollection){return null;}
 
     //Get Data instance from Binary
@@ -366,4 +457,5 @@ public class Original implements BinaryLexical<StickDouble>{
     public String getInterval(){return interval;}
 
     public boolean getByID(){return t_h1_byid;}
+    public int getDataBitLength(){return t_h1_data_len;}
 }
