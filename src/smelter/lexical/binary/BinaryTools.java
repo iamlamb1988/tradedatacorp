@@ -21,7 +21,7 @@ public class BinaryTools{
 
     public static int to2sCompInt(boolean[] bin){
         int r=(bin[0] ? -1 : 0);
-        for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}
+        for(byte i=(byte)1; i<bin.length; ++i){r = (r << 1) | (bin[i] ? 1 : 0);}
         return r;
     }
 

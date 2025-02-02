@@ -31,11 +31,12 @@ public class Original implements BinaryLexical<StickDouble>{
     private boolean[] h1_data_len;
     private boolean[] h1_h_gap_len;
 
-    private boolean[] h1_pw_len; //price (ohlc) bit length
-    private boolean[] h1_vw_len; //volume bit length
+    private boolean[] h1_utc_len; //UTC bit length;
+    private boolean[] h1_pw_len;  //price (ohlc) bit length
+    private boolean[] h1_vw_len;  //volume bit length
 
-    private boolean[] h1_pf_len; //price (ohlc) bit length
-    private boolean[] h1_vf_len; //volume bit length
+    private boolean[] h1_pf_len;  //price (ohlc) bit length
+    private boolean[] h1_vf_len;  //volume bit length
 
     //Binary Lexical H2
     private boolean[] h2_sym_len;
@@ -50,6 +51,7 @@ public class Original implements BinaryLexical<StickDouble>{
     private int t_h1_ct_len;
     private byte t_h1_h_gap_len;
 
+    private byte t_h1_utc_len;
     private byte t_h1_pw_len; //price (ohlc)
     private byte t_h1_vw_len; //volume
 
@@ -72,6 +74,8 @@ public class Original implements BinaryLexical<StickDouble>{
         h1_data_len = new boolean[9]; //Value set AFTER h1_(pv)(wf)_len values set
         h1_h_gap_len = new boolean[3]; //Value set AFTER ALL h2 sizes
 
+        h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(44,6); //44 bits default, fixed 6 bits
+
         h1_pw_len = new boolean[]{true,true,true,true,true};
         h1_pf_len = new boolean[]{true,true,true,true};
 
@@ -84,6 +88,7 @@ public class Original implements BinaryLexical<StickDouble>{
             h1_ct_len.length +
             h1_data_len.length +
             h1_h_gap_len.length +
+            h1_utc_len.length +
             h1_pw_len.length +
             h1_pf_len.length +
             h1_vw_len.length +
@@ -97,14 +102,15 @@ public class Original implements BinaryLexical<StickDouble>{
         t_h1_ct_len = 1; // 1 bit required to represent 0. Minimum bits required to represent current count
         BinaryTools.setUnsignedIntToBoolArray(0,h1_ct_len); //Initially 0 Sticks
 
+        t_h1_utc_len = (byte)BinaryTools.toUnsignedInt(h1_utc_len);
         t_h1_pw_len = (byte)BinaryTools.toUnsignedInt(h1_pw_len);
         t_h1_pf_len = (byte)BinaryTools.toUnsignedInt(h1_pf_len);
 
         t_h1_vw_len = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
         t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
 
-        base10PriceMaxFractionDigit =  (int)Math.ceil(Math.log10(t_h1_pf_len));
-        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(t_h1_vf_len));
+        base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
+        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
 
         t_h1_data_len = 44 + 4*(t_h1_pw_len + t_h1_pf_len) + t_h1_vw_len + t_h1_vf_len;
         BinaryTools.setUnsignedIntToBoolArray(t_h1_data_len,h1_data_len);
@@ -125,6 +131,9 @@ public class Original implements BinaryLexical<StickDouble>{
             t_h1_h_gap_len = (byte)(8 - remainder);
             BinaryTools.setUnsignedIntToBoolArray(t_h1_h_gap_len,h1_h_gap_len);
             h2_h_gap = BinaryTools.genBoolArrayFromUnsignedInt(0,t_h1_h_gap_len);
+        }else{
+            h2_h_gap = new boolean[0];
+            t_h1_h_gap_len = 0; //h2_h_gap.length
         }
 
         //set remaining dependent initial values
@@ -170,7 +179,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         int[] tmpWholeFractionInts = new int[3];
 
-        binData[0] = BinaryTools.genBoolArrayFromUnsignedLong(singleData.getUTC(),(byte)44); //UTC
+        binData[0] = BinaryTools.genBoolArrayFromUnsignedLong(singleData.getUTC(),t_h1_utc_len); //UTC
 
         splitWholeFraction(singleData.getO(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
         binData[1] = BinaryTools.genBoolArrayFromUnsignedInt(tmpWholeFractionInts[0],t_h1_pw_len);  //Open Whole
@@ -198,7 +207,51 @@ public class Original implements BinaryLexical<StickDouble>{
     @Override
     public boolean[] getBinaryDataFlat(StickDouble singleData){
         boolean[] binData = new boolean[t_h1_data_len];
-        int[] tmpWholeFractionInts = new int[2];
+        int[] tmpWholeFractionInts = new int[3];
+        int nextIndex = 0;
+
+        BinaryTools.setSubsetUnsignedLong(nextIndex,t_h1_utc_len,singleData.getUTC(),binData);
+        nextIndex+=t_h1_utc_len;
+
+        //Open
+        splitWholeFraction(singleData.getO(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],binData);
+        nextIndex+=t_h1_pw_len;
+
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],binData);
+        nextIndex+=t_h1_pf_len;
+
+        //High
+        splitWholeFraction(singleData.getH(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],binData);
+        nextIndex+=t_h1_pw_len;
+
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],binData);
+        nextIndex+=t_h1_pf_len;
+
+        //Low
+        splitWholeFraction(singleData.getL(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],binData);
+        nextIndex+=t_h1_pw_len;
+
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],binData);
+        nextIndex+=t_h1_pf_len;
+
+        //Close
+        splitWholeFraction(singleData.getC(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],binData);
+        nextIndex+=t_h1_pw_len;
+
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],binData);
+        nextIndex+=t_h1_pf_len;
+
+        //Volume
+        splitWholeFraction(singleData.getV(),base10VolumeMaxFractionDigit,tmpWholeFractionInts);
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_vw_len,tmpWholeFractionInts[0],binData);
+        nextIndex+=t_h1_vw_len;
+
+        BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_vf_len,tmpWholeFractionInts[1],binData);
+        nextIndex+=t_h1_vf_len;
 
         return binData;
     }
@@ -217,33 +270,35 @@ public class Original implements BinaryLexical<StickDouble>{
     // Original methods
     //Get methods
     public boolean[][] genBinaryHeader1(){
-        boolean[][] h1=new boolean[9][];
+        boolean[][] h1=new boolean[10][];
 
         h1[0] = BinaryTools.genClone(h1_byid); //h1_biid
         h1[1] = BinaryTools.genClone(h1_int); // h1_int
         h1[2] = BinaryTools.genClone(h1_ct_len); // h1_ct_len
         h1[3] = BinaryTools.genClone(h1_data_len); // h1_data_len
         h1[4] = BinaryTools.genClone(h1_h_gap_len); // h1_h_gap_len
-        h1[5] = BinaryTools.genClone(h1_pw_len); // h1_pw_len
-        h1[6] = BinaryTools.genClone(h1_pf_len); // h1_pf_len
-        h1[7] = BinaryTools.genClone(h1_vw_len); // h1_vw_len
-        h1[8] = BinaryTools.genClone(h1_vf_len); // h1_vf_len
+        h1[5] = BinaryTools.genClone(h1_utc_len); //h1_utc_len
+        h1[6] = BinaryTools.genClone(h1_pw_len); // h1_pw_len
+        h1[7] = BinaryTools.genClone(h1_pf_len); // h1_pf_len
+        h1[8] = BinaryTools.genClone(h1_vw_len); // h1_vw_len
+        h1[9] = BinaryTools.genClone(h1_vf_len); // h1_vf_len
 
         return h1;
     }
 
     private boolean[][] genBinaryHeader1Ref(){
-        boolean[][] h1=new boolean[9][];
+        boolean[][] h1=new boolean[10][];
 
         h1[0] = h1_byid;
         h1[1] = h1_int;
         h1[2] = h1_ct_len;
         h1[3] = h1_data_len;
         h1[4] = h1_h_gap_len;
-        h1[5] = h1_pw_len;
-        h1[6] = h1_pf_len;
-        h1[7] = h1_vw_len;
-        h1[8] = h1_vf_len;
+        h1[5] = h1_utc_len;
+        h1[6] = h1_pw_len;
+        h1[7] = h1_pf_len;
+        h1[8] = h1_vw_len;
+        h1[9] = h1_vf_len;
 
         return h1;
     }
@@ -270,6 +325,11 @@ public class Original implements BinaryLexical<StickDouble>{
         return h2;
     }
 
+    //The number of digits that represent the number of digits needed to represent the highest possible value for the bit length
+    public int getBase10PriceDigits(){return base10PriceMaxFractionDigit;}
+    public int getBase10VolumeDigits(){return base10VolumeMaxFractionDigit;}
+
+    //Set methods
     //This will need to be sped up
     public static void splitWholeFraction(double value, int maxDigits, int[] valueParts){
         int whole = (int)Math.abs(value);

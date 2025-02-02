@@ -77,25 +77,26 @@ public class OriginalTest{
     @Nested
     @DisplayName("Constructor Test")
     public class SmallConstructorTest{
-        int h1_len =
+        int expected_h1_len =
             1 +  //h1_byid
             25 + //h1_int 
-            9 +  //h1_data_len
             26 + //h1_ct_len
-            3 +  //h1_h_gap
+            9 +  //h1_data_len
+            3 +  //h1_h_gap_len
+            6 +  //h1_utc_len
             5 +  //h1_pw_len
             5 +  //h1_vw_len
             4 +  //h1_pf_len
             4;   //h1_vf_len
 
-        int h2_len = 
+        int expected_h2_len = 
             7 +  //h2_sym_len (the only fixed h2 header)
             48 + //h2_sym characters "BTCUSD" x 8 bits
-            1 +  //h2_data_ct 1 bit to represent the value 0
-            6;   //h2_h_gap (only need to add 6 to make the total header divisible by 8)
+            1 +  //h2_data_ct_len 1 bit to represent the value 0
+            0;   //h2_h_gap (only need to add 0 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
 
-        int h_len = h1_len + h2_len;
-        int data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
+        int expected_h_len = expected_h1_len + expected_h2_len;
+        int expected_data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
 
         boolean[][] generatedHeader1 = first_lexical.genBinaryHeader1();
         boolean[] flatHeader1 = BinaryTools.genConcatenatedBoolArrays(generatedHeader1);
@@ -103,7 +104,7 @@ public class OriginalTest{
         boolean[] flatHeader2 = BinaryTools.genConcatenatedBoolArrays(generatedHeader2);
 
         @Nested
-        @DisplayName("Test Default Constructor Header 1 values independantly")
+        @DisplayName("Test Default Constructor Header 1 values independently")
         public class DefaultHeader1Test{
             @Test
             public void testDefault_ByID(){
@@ -129,47 +130,54 @@ public class OriginalTest{
             @Test
             public void testDefault_IndividualDataBitLength(){
                 boolean[] bin_h1_data_len = generatedHeader1[3];
-                assertEquals(9,bin_h1_data_len.length);  // 9 bits to represent a single databoint
-                assertEquals(data_len,BinaryTools.toUnsignedInt(bin_h1_data_len));
+                assertEquals(9,bin_h1_data_len.length);  // 9 bits to represent a single datapoint
+                assertEquals(expected_data_len,BinaryTools.toUnsignedInt(bin_h1_data_len));
             }
 
             @Test
-            public void testDefault_Gap(){
+            public void testDefaultGap(){
                 boolean[] bin_h1_gap = generatedHeader1[4];
                 assertEquals(3,bin_h1_gap.length);
                 //Value not applicable yet...
             }
 
             @Test
+            public void testDefaultUTC(){
+                boolean[] bin_h1_utc_len = generatedHeader1[5];
+                assertEquals(6,bin_h1_utc_len.length);
+                assertEquals(44,BinaryTools.toUnsignedInt(bin_h1_utc_len));
+            }
+
+            @Test
             public void testDefault_StickOHLC_Whole(){
-                boolean[] bin_h1_pw_len = generatedHeader1[5];
+                boolean[] bin_h1_pw_len = generatedHeader1[6];
                 assertEquals(5,bin_h1_pw_len.length);
                 assertEquals(31,BinaryTools.toUnsignedInt(bin_h1_pw_len));
             }
 
             @Test
             public void testDefault_StickOHLC_Fraction(){
-                boolean[] bin_h1_pf_len = generatedHeader1[6];
+                boolean[] bin_h1_pf_len = generatedHeader1[7];
                 assertEquals(4,bin_h1_pf_len.length);
                 assertEquals(15,BinaryTools.toUnsignedInt(bin_h1_pf_len));
             }
             @Test
             public void testDefault_StickVolume_Whole(){
-                boolean[] bin_h1_vw_len = generatedHeader1[7];
+                boolean[] bin_h1_vw_len = generatedHeader1[8];
                 assertEquals(5,bin_h1_vw_len.length);
                 assertEquals(31,BinaryTools.toUnsignedInt(bin_h1_vw_len));
             }
 
             @Test
             public void testDefault_StickVolume_Fraction(){
-                boolean[] bin_h1_vf_len = generatedHeader1[8];
+                boolean[] bin_h1_vf_len = generatedHeader1[9];
                 assertEquals(4,bin_h1_vf_len.length);
                 assertEquals(15,BinaryTools.toUnsignedInt(bin_h1_vf_len));
             }
         }
 
         @Nested
-        @DisplayName("Test Default Constructor Header 2 values independantly")
+        @DisplayName("Test Default Constructor Header 2 values independently")
         public class DefaultHeader2Test{
             @Test
             public void testDefault_SymbolBitLength(){
@@ -221,15 +229,15 @@ public class OriginalTest{
             }
 
             @Test
-            public void testDefault_gap(){
+            public void testDefaultGap(){
                 boolean[] bin_h2_h_gap = generatedHeader2[3];;
                 int  exptected_total_length = 
                     first_lexical.H1_TOTAL_LEN +
                     7 +
                     48 +
                     1 +
-                    6; //This is the gap, With
-                int expected_gap_bit_length = 6; //2 more bits to get a total of 
+                    0; //This is the gap, With
+                int expected_gap_bit_length = 0; //2 more bits to get a total of 
 
                 assertEquals(expected_gap_bit_length,bin_h2_h_gap.length);
             }
@@ -243,24 +251,24 @@ public class OriginalTest{
 
         @Test
         public void testDefaultHeader1(){
-            assertEquals(82,h1_len);
-            assertEquals(h1_len,first_lexical.H1_TOTAL_LEN);
+            assertEquals(88,expected_h1_len);
+            assertEquals(expected_h1_len,first_lexical.H1_TOTAL_LEN);
             assertEquals(first_lexical.H1_TOTAL_LEN,flatHeader1.length);
             assertEquals(flatHeader1.length,first_lexical.H1_TOTAL_LEN);
         }
 
         @Test
         public void testDefaultHeader2(){
-            assertEquals(62,h2_len);
-            assertEquals(h2_len,first_lexical.getHeader2BitLength());
+            assertEquals(56,expected_h2_len);
+            assertEquals(expected_h2_len,first_lexical.getHeader2BitLength());
         }
 
         @Test
         public void testDefaultHeader(){
-            assertEquals(144,h1_len+h2_len);
-            assertEquals(144,h_len);
-            assertEquals(h_len,first_lexical.getHeaderBitLength());
-            assertEquals(0,h_len%8);
+            assertEquals(144,expected_h1_len + expected_h2_len); // 88 + 56 = 144
+            assertEquals(144,expected_h_len);
+            assertEquals(expected_h_len,first_lexical.getHeaderBitLength());
+            assertEquals(0,expected_h_len%8);
         }
     }
 
@@ -270,7 +278,14 @@ public class OriginalTest{
         @Test
         public void testSingleDataStick(){
             CandleStickFixedDouble stick = new CandleStickFixedDouble(1000,3,9,1,5,1.25);
-            boolean[][] inflatedBin = first_lexical.getBinaryData(stick);
+            assertEquals(5,first_lexical.getBase10PriceDigits());  //15 bits => 2^15 => 32768 (base10) => 5 digits
+            assertEquals(5,first_lexical.getBase10VolumeDigits()); //15 bits => 2^15 => 32768 (base10) => 5 digits
+
+            boolean[][] inflatedBin = first_lexical.getBinaryData(stick); //Core Interface Function to test
+            boolean[] flatInflatedBin = first_lexical.getBinaryDataFlat(stick);
+            boolean[] manuallyFlatInflatedBin = BinaryTools.genConcatenatedBoolArrays(inflatedBin);
+
+            assertTrue(BinaryTools.isEqualBoolArray(flatInflatedBin,manuallyFlatInflatedBin));
 
             boolean[] utcBin = inflatedBin[0];
             boolean[] openWholeBin = inflatedBin[1];
@@ -327,7 +342,7 @@ public class OriginalTest{
             assertEquals(1,BinaryTools.toUnsignedInt(volumeWholeBin));
 
             assertEquals(15,volumeFractionBin.length);
-            assertEquals(25,BinaryTools.toUnsignedInt(volumeFractionBin));
+            assertEquals(25000,BinaryTools.toUnsignedInt(volumeFractionBin)); //5 Decimal Digits
         }
     }
 }
