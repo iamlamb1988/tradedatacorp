@@ -12,7 +12,6 @@ import java.util.ArrayList;
 //This is the first BinaryLexical in design
 //Thhe headers generated will be dependant on the collection of sticks to be written
 public class Original implements BinaryLexical<StickDouble>{
-    private String symbol;
     private String interval;
     private ArrayList<StickDouble> stickList;
 
@@ -94,6 +93,7 @@ public class Original implements BinaryLexical<StickDouble>{
     private void constructHeaderFromTranslatedValues(
         boolean T_byid,
         String T_int,
+        byte T_h_gap_len,
         byte T_utc_len,
         byte T_pw_len,
         byte T_pf_len,
@@ -111,47 +111,47 @@ public class Original implements BinaryLexical<StickDouble>{
         //Header 1: int
         interval = T_int; //Need strictly parse different String formats in the future
         t_h1_int = Integer.parseUnsignedInt(interval); //interval will be evaluated to correct integer in the future
-        h1_int = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_int,25);
+        h1_int = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_int,H1_INT_LEN);
         header[1] = h1_int;
 
         //Header 2: ct_len Always empty upon construction therefor 0
         t_h1_ct_len = 0;
-        h1_ct_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_ct_len,26);
+        h1_ct_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_ct_len,H1_CT_LEN_LEN);
         header[2] = h1_ct_len;
 
         //Header 3: data_len
-        h1_data_len = new boolean[9];
+        t_h1_data_len = T_utc_len + 4*(T_pw_len + T_pf_len) + T_vw_len + T_vf_len;
+        h1_data_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_data_len,H1_DATA_LEN_LEN);
         header[3] = h1_data_len;
-        //value depends on: 
 
         //Header 4: h_gap_len
-        h1_h_gap_len = new boolean[3];
+        t_h1_h_gap_len = T_h_gap_len;
+        h1_h_gap_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_h_gap_len,H1_H_GAP_LEN_LEN);
         header[4] = h1_h_gap_len;
-        //value depends on every other headers bit length;
 
         //Header 5: utc_len
         t_h1_utc_len = T_utc_len;
-        h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_utc_len,6);
+        h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_utc_len,H1_UTC_LEN_LEN);
         header[5] = h1_utc_len;
 
         //Header 6: pw_len
         t_h1_pw_len = T_pw_len;
-        h1_pw_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_pw_len,5);
+        h1_pw_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_pw_len,H1_PW_LEN_LEN);
         header[6] = h1_pw_len;
 
         //Header 7: pf_len
         t_h1_pf_len = T_pf_len;
-        h1_pf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_pf_len,4);
+        h1_pf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_pf_len,H1_PF_LEN_LEN);
         header[7] = h1_pf_len;
 
         //Header 8: vw_len
         t_h1_vw_len = T_vw_len;
-        h1_vw_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vw_len,5);
+        h1_vw_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vw_len,H1_VW_LEN_LEN);
         header[8] = h1_vw_len;
 
         //Header 9: vf_len
         t_h1_vf_len = T_vf_len;
-        h1_vf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vf_len,4);
+        h1_vf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vf_len,H1_VF_LEN_LEN);
         header[9] = h1_vf_len;
 
         base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
@@ -159,7 +159,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         //Header 10: sym_len
         t_h2_sym_len = (byte)(T_sym.length() << 3);
-        h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(T_sym.length(),7);
+        h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(T_sym.length(),H2_SYM_LEN_LEN);
         header[10] = h2_sym_len;
 
         //Header 11: sym
@@ -174,78 +174,98 @@ public class Original implements BinaryLexical<StickDouble>{
 
         //Header 13: gap
         h2_h_gap = header[13] = BinaryTools.genBoolArrayFromUnsignedInt(0,t_h1_h_gap_len);
-    }
 
-    public Original(String symbol, String interval){
-        this.symbol=symbol;
-        this.interval=interval;
-        stickList = new ArrayList<StickDouble>();
-
-        //Set ALL H1 bin sizes and some bin values
-        h1_byid = new boolean[]{false};
-        h1_int = new boolean[H1_INT_LEN];
-        h1_ct_len = new boolean[H1_CT_LEN_LEN];
-        h1_data_len = new boolean[H1_DATA_LEN_LEN]; //Value set AFTER h1_(pv)(wf)_len values set
-        h1_h_gap_len = new boolean[H1_H_GAP_LEN_LEN]; //Value set AFTER ALL h2 sizes
-
-        h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(44,H1_UTC_LEN_LEN); //44 bits default, fixed 6 bits
-
-        h1_pw_len = new boolean[]{true,true,true,true,true};
-        h1_pf_len = new boolean[]{true,true,true,true};
-
-        h1_vw_len = new boolean[]{true,true,true,true,true};
-        h1_vf_len = new boolean[]{true,true,true,true};
-
-        // Set translated and binary H1 values where applicable
-        t_h1_byid=h1_byid[0];
-        t_h1_int=Integer.parseUnsignedInt(interval);
-        BinaryTools.setUnsignedIntToBoolArray(t_h1_int,h1_int);
-
-        t_h1_ct_len = 1; // 1 bit required to represent 0. Minimum bits required to represent current count
-        BinaryTools.setUnsignedIntToBoolArray(0,h1_ct_len); //Initially 0 Sticks
-
-        t_h1_utc_len = (byte)BinaryTools.toUnsignedInt(h1_utc_len);
-        t_h1_pw_len = (byte)BinaryTools.toUnsignedInt(h1_pw_len);
-        t_h1_pf_len = (byte)BinaryTools.toUnsignedInt(h1_pf_len);
-
-        t_h1_vw_len = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
-        t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
-
-        base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
-        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
-
-        t_h1_data_len = 44 + 4*(t_h1_pw_len + t_h1_pf_len) + t_h1_vw_len + t_h1_vf_len;
-        BinaryTools.setUnsignedIntToBoolArray(t_h1_data_len,h1_data_len);
-
-        //Set H2 translated values (these are already known)
-        t_h2_sym_len = (byte)(symbol.length() << 3);
-        t_h2_data_ct = 0;
-
-        //Set the H2 sizes and values
-        h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_sym_len,H2_SYM_LEN_LEN);
-        h2_sym = BinaryTools.genBoolArrayFrom8BitCharString(symbol);
-
-        h2_data_ct = new boolean[]{false};
-
-        //Set gap
-        int remainder = (H1_TOTAL_LEN + h2_sym_len.length + h2_sym.length + h2_data_ct.length)%8;
-        if(remainder != 0){
-            t_h1_h_gap_len = (byte)(8 - remainder);
-            BinaryTools.setUnsignedIntToBoolArray(t_h1_h_gap_len,h1_h_gap_len);
-            h2_h_gap = BinaryTools.genBoolArrayFromUnsignedInt(0,t_h1_h_gap_len);
-        }else{
-            h2_h_gap = new boolean[0];
-            t_h1_h_gap_len = 0; //h2_h_gap.length
-        }
-
-        //set remaining dependent initial values
-        h2_total_len =
+        h2_total_len = 
             h2_sym_len.length +
             h2_sym.length + 
             h2_data_ct.length +
             h2_h_gap.length;
 
         h_total_len = H1_TOTAL_LEN + h2_total_len;
+    }
+
+    public Original(String symbol, String interval){
+        constructHeaderFromTranslatedValues(
+            false,// boolean T_byid,
+            interval,// String T_int,
+            (byte)0,// byte T_h_gap_len,
+            (byte)44,// byte T_utc_len,
+            (byte)31,// byte T_pw_len,
+            (byte)15,// byte T_pf_len,
+            (byte)31,// byte T_vw_len,
+            (byte)15,// byte T_vf_len,
+            symbol// String T_sym
+        );
+
+        // t_h2_sym=symbol;
+        // this.interval=interval;
+        // stickList = new ArrayList<StickDouble>();
+
+        // //Set ALL H1 bin sizes and some bin values
+        // h1_byid = new boolean[]{false};
+        // h1_int = new boolean[H1_INT_LEN];
+        // h1_ct_len = new boolean[H1_CT_LEN_LEN];
+        // h1_data_len = new boolean[H1_DATA_LEN_LEN]; //Value set AFTER h1_(pv)(wf)_len values set
+        // h1_h_gap_len = new boolean[H1_H_GAP_LEN_LEN]; //Value set AFTER ALL h2 sizes
+
+        // h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(44,H1_UTC_LEN_LEN); //44 bits default, fixed 6 bits
+
+        // h1_pw_len = new boolean[]{true,true,true,true,true};
+        // h1_pf_len = new boolean[]{true,true,true,true};
+
+        // h1_vw_len = new boolean[]{true,true,true,true,true};
+        // h1_vf_len = new boolean[]{true,true,true,true};
+
+        // // Set translated and binary H1 values where applicable
+        // t_h1_byid=h1_byid[0];
+        // t_h1_int=Integer.parseUnsignedInt(interval);
+        // BinaryTools.setUnsignedIntToBoolArray(t_h1_int,h1_int);
+
+        // t_h1_ct_len = 1; // 1 bit required to represent 0. Minimum bits required to represent current count
+        // BinaryTools.setUnsignedIntToBoolArray(0,h1_ct_len); //Initially 0 Sticks
+
+        // t_h1_utc_len = (byte)BinaryTools.toUnsignedInt(h1_utc_len);
+        // t_h1_pw_len  = (byte)BinaryTools.toUnsignedInt(h1_pw_len);
+        // t_h1_pf_len  = (byte)BinaryTools.toUnsignedInt(h1_pf_len);
+
+        // t_h1_vw_len  = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
+        // t_h1_vf_len  = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
+
+        // base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
+        // base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
+
+        // t_h1_data_len = 44 + 4*(t_h1_pw_len + t_h1_pf_len) + t_h1_vw_len + t_h1_vf_len;
+        // BinaryTools.setUnsignedIntToBoolArray(t_h1_data_len,h1_data_len);
+
+        // //Set H2 translated values (these are already known)
+        // t_h2_sym_len = (byte)(symbol.length() << 3);
+        // t_h2_data_ct = 0;
+
+        // //Set the H2 sizes and values
+        // h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_sym_len,H2_SYM_LEN_LEN);
+        // h2_sym = BinaryTools.genBoolArrayFrom8BitCharString(symbol);
+
+        // h2_data_ct = new boolean[]{false};
+
+        // //Set gap
+        // int remainder = (H1_TOTAL_LEN + h2_sym_len.length + h2_sym.length + h2_data_ct.length)%8;
+        // if(remainder != 0){
+        //     t_h1_h_gap_len = (byte)(8 - remainder);
+        //     BinaryTools.setUnsignedIntToBoolArray(t_h1_h_gap_len,h1_h_gap_len);
+        //     h2_h_gap = BinaryTools.genBoolArrayFromUnsignedInt(0,t_h1_h_gap_len);
+        // }else{
+        //     h2_h_gap = new boolean[0];
+        //     t_h1_h_gap_len = 0; //h2_h_gap.length
+        // }
+
+        // //set remaining dependent initial values
+        // h2_total_len =
+        //     h2_sym_len.length +
+        //     h2_sym.length + 
+        //     h2_data_ct.length +
+        //     h2_h_gap.length;
+
+        // h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
 
     // BinaryLexical Overrides
@@ -556,7 +576,7 @@ public class Original implements BinaryLexical<StickDouble>{
     public int getHeaderBitLength(){return h_total_len;}
     public int getHeader2BitLength(){return h2_total_len;}
 
-    public String getSymbol(){return symbol;}
+    public String getSymbol(){return t_h2_sym;}
     public String getInterval(){return interval;}
 
     public boolean getByID(){return t_h1_byid;}
