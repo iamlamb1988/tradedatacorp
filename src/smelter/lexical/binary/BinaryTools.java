@@ -191,10 +191,28 @@ public class BinaryTools{
         for(boolean[] binArr : binArrays){sizeR+=binArr.length;}
 
         boolean[] r = new boolean[sizeR];
-        boolean[] arr;
         for(boolean[] binArr : binArrays){
             for(int i=0; i<binArr.length; ++i, ++intIndex){
                 r[intIndex]=binArr[i];
+            }
+        }
+        return r;
+    }
+
+    public static boolean[] genConcatenatedBoolArrays(boolean[][]... bin3DArray){
+        int sizeR=0;
+        int intIndex=0;
+
+        for(boolean[][] bin2DArray : bin3DArray){
+            for(boolean[] binArr : bin2DArray) sizeR+=binArr.length;
+        }
+
+        boolean[] r = new boolean[sizeR];
+        for(boolean[][] bin2DArray : bin3DArray){
+            for(boolean[] binArr : bin2DArray){
+                for(int i=0; i<binArr.length; ++i, ++intIndex){
+                    r[intIndex]=binArr[i];
+                }
             }
         }
         return r;

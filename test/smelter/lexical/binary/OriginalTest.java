@@ -363,6 +363,7 @@ int expected_h2_len =
             //Total Data length
             assertEquals(274,expected_data_len); //44 + 4*31 + 4*15 + 31 + 15
             assertEquals(expected_data_len,first_lexical.getDataBitLength());
+            assertEquals(expected_data_len,flatInflatedBin.length);
         }
 
         @Test
@@ -391,7 +392,17 @@ int expected_h2_len =
         //TODO
         @Test
         public void testMultipleSticksTwoELements(){
-            
+            CandleStickFixedDouble[] stickArray = new CandleStickFixedDouble[]{stick1,stick2};
+
+            boolean[][][] inflatedBinArray = first_lexical.getBinaryDataPoints(stickArray);
+            boolean[] flatBinArray = first_lexical.getBinaryDataPointsFlat(stickArray);
+            boolean[] manuallyFlatBinArray = BinaryTools.genConcatenatedBoolArrays(inflatedBinArray);
+
+            assertTrue(BinaryTools.isEqualBoolArray(flatBinArray,manuallyFlatBinArray));
+
+            //Extra Confirmation
+            assertEquals(2*expected_data_len,flatBinArray.length); //two sticks == twice as many bits
+            assertEquals(2*expected_data_len,manuallyFlatBinArray.length);
         }
     }
 }

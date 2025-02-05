@@ -152,6 +152,48 @@ public class BinaryToolsTest{
     }
 
     @Nested
+    @DisplayName("Small Boolean Array Concatenations into 1 Dimensional Array")
+    class SmallArrayConcatenations{
+        boolean[] boolArray1 = new boolean[]{T,F,T};
+        boolean[] boolArray2 = new boolean[]{F,T};
+        boolean[] boolArray3 = new boolean[]{F,F,F};
+        boolean[] boolArray4 = new boolean[]{T};
+        boolean[] boolArray5 = new boolean[]{F,T,T,F};
+
+        @Test
+        public void testSingle2Dto1DConcat(){
+            boolean[][] bool2D = new boolean[][]{boolArray1,boolArray2};
+
+            boolean[] result = BinaryTools.genConcatenatedBoolArrays(bool2D);
+            assertTrue(BinaryTools.isEqualBoolArray(new boolean[]{T,F,T,F,T},result));
+        }
+
+        @Test
+        public void testSingle3Dto1DConcat(){
+            boolean[][] bool2D1 = new boolean[][]{boolArray1,boolArray2,boolArray3};
+            boolean[][] bool2D2 = new boolean[][]{boolArray4,boolArray5};
+
+            boolean[][][] bool3D= new boolean[][][]{bool2D1,bool2D2};
+
+            boolean[] result = BinaryTools.genConcatenatedBoolArrays(bool3D);
+            boolean[] expectedResult = new boolean[]{
+                T,F,T,  // boolArray1
+                F,T,    // boolArray2
+                F,F,F , // boolArray3
+                T,      // boolArray4
+                F,T,T,F // boolArray5
+            };
+
+            assertTrue(BinaryTools.isEqualBoolArray(expectedResult,result));
+
+            //Additional Confirmation
+            int expectedTotalLength = boolArray1.length + boolArray2.length + boolArray3.length + boolArray4.length + boolArray5.length;
+            assertEquals(13,expectedTotalLength);
+            assertEquals(expectedTotalLength,result.length);
+        }
+    }
+
+    @Nested
     @DisplayName("Small Boolean Array Clones and subsets")
     class SmallArrayClonesAndSubsets{
         boolean[] boolArray1 = new boolean[]{F,T,F,T,T}; //01011 = 7 unsigned
