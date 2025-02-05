@@ -16,7 +16,6 @@ public class Original implements BinaryLexical<StickDouble>{
     private String interval;
     private ArrayList<StickDouble> stickList;
 
-    public final int H1_TOTAL_LEN;
     private int h2_total_len;
     private int h_total_len;
 
@@ -26,6 +25,31 @@ public class Original implements BinaryLexical<StickDouble>{
 
     //Binary Header
     boolean[][] header;
+
+    // Binary Fixed field bit lengths
+    public static final byte H1_BYID_LEN = 1;
+    public static final byte H1_INT_LEN = 25;
+    public static final byte H1_CT_LEN_LEN = 26;
+    public static final byte H1_DATA_LEN_LEN = 9;
+    public static final byte H1_H_GAP_LEN_LEN = 3;
+    public static final byte H1_UTC_LEN_LEN = 6;
+    public static final byte H1_PW_LEN_LEN = 4; //Should be MUCH BIGGER
+    public static final byte H1_PF_LEN_LEN = 5; //Should be 50 bits to support 15 decimal points
+    public static final byte H1_VW_LEN_LEN = 4; //Should be MUCH BIGGER
+    public static final byte H1_VF_LEN_LEN = 5; //Should be 50 bits to support 15 decimal points
+    public static final byte H2_SYM_LEN_LEN = 7;
+
+    public final int H1_TOTAL_LEN = 
+        H1_BYID_LEN +
+        H1_INT_LEN +
+        H1_CT_LEN_LEN +
+        H1_DATA_LEN_LEN +
+        H1_H_GAP_LEN_LEN +
+        H1_UTC_LEN_LEN +
+        H1_PW_LEN_LEN + 
+        H1_PF_LEN_LEN +
+        H1_VW_LEN_LEN + 
+        H1_VF_LEN_LEN;
 
     //Binary Lexical H1
     private boolean[] h1_byid;
@@ -159,30 +183,18 @@ public class Original implements BinaryLexical<StickDouble>{
 
         //Set ALL H1 bin sizes and some bin values
         h1_byid = new boolean[]{false};
-        h1_int = new boolean[25];
-        h1_ct_len = new boolean[26];
-        h1_data_len = new boolean[9]; //Value set AFTER h1_(pv)(wf)_len values set
-        h1_h_gap_len = new boolean[3]; //Value set AFTER ALL h2 sizes
+        h1_int = new boolean[H1_INT_LEN];
+        h1_ct_len = new boolean[H1_CT_LEN_LEN];
+        h1_data_len = new boolean[H1_DATA_LEN_LEN]; //Value set AFTER h1_(pv)(wf)_len values set
+        h1_h_gap_len = new boolean[H1_H_GAP_LEN_LEN]; //Value set AFTER ALL h2 sizes
 
-        h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(44,6); //44 bits default, fixed 6 bits
+        h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(44,H1_UTC_LEN_LEN); //44 bits default, fixed 6 bits
 
         h1_pw_len = new boolean[]{true,true,true,true,true};
         h1_pf_len = new boolean[]{true,true,true,true};
 
         h1_vw_len = new boolean[]{true,true,true,true,true};
         h1_vf_len = new boolean[]{true,true,true,true};
-
-        H1_TOTAL_LEN =
-            h1_byid.length +
-            h1_int.length +
-            h1_ct_len.length +
-            h1_data_len.length +
-            h1_h_gap_len.length +
-            h1_utc_len.length +
-            h1_pw_len.length +
-            h1_pf_len.length +
-            h1_vw_len.length +
-            h1_vf_len.length;
 
         // Set translated and binary H1 values where applicable
         t_h1_byid=h1_byid[0];
@@ -210,7 +222,7 @@ public class Original implements BinaryLexical<StickDouble>{
         t_h2_data_ct = 0;
 
         //Set the H2 sizes and values
-        h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_sym_len,(byte)7);
+        h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_sym_len,H2_SYM_LEN_LEN);
         h2_sym = BinaryTools.genBoolArrayFrom8BitCharString(symbol);
 
         h2_data_ct = new boolean[]{false};
