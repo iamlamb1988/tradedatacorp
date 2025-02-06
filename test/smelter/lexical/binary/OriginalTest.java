@@ -182,7 +182,7 @@ int expected_h2_len =
             public void testDefault_SymbolBitLength(){
                 boolean[] bin_h2_sym_len = generatedHeader2[0];
                 assertEquals(6*8,BinaryTools.toUnsignedInt(bin_h2_sym_len)); //BTCUSD has 6 characters
-                assertEquals(7,bin_h2_sym_len.length); //firxed length of 7 bits
+                assertEquals(7,bin_h2_sym_len.length); //fixed length of 7 bits
             }
 
             @Test
