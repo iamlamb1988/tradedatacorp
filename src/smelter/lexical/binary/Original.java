@@ -185,10 +185,23 @@ public class Original implements BinaryLexical<StickDouble>{
     }
 
     public Original(String symbol, String interval){
+        //Calculate Gap
+        int headerExceptGapLength = 
+            H1_TOTAL_LEN + 
+            H2_SYM_LEN_LEN + 
+            (symbol.length() << 3) + 
+            1;
+        int remainder = headerExceptGapLength%8;
+        byte T_gap;
+
+
+        if(remainder != 0) T_gap = (byte)(8-remainder);
+        else T_gap=(byte)0;
+
         constructHeaderFromTranslatedValues(
             false,// boolean T_byid,
             interval,// String T_int,
-            (byte)0,// byte T_h_gap_len,
+            T_gap,// byte T_h_gap_len,
             (byte)44,// byte T_utc_len,
             (byte)31,// byte T_pw_len,
             (byte)15,// byte T_pf_len,
@@ -265,49 +278,8 @@ public class Original implements BinaryLexical<StickDouble>{
         int nextIndex = 0;
 
         for(StickDouble singleData : dataArray){
-            // setBinaryDataStickFlat(singleData, r, tmpWholeFractionInts, nextIndex);
-            BinaryTools.setSubsetUnsignedLong(nextIndex,t_h1_utc_len,singleData.getUTC(),r);
-            nextIndex+=t_h1_utc_len;
-
-            //Open
-            splitWholeFraction(singleData.getO(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
-            nextIndex+=t_h1_pw_len;
-
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
-            nextIndex+=t_h1_pf_len;
-
-            //High
-            splitWholeFraction(singleData.getH(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
-            nextIndex+=t_h1_pw_len;
-
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
-            nextIndex+=t_h1_pf_len;
-
-            //Low
-            splitWholeFraction(singleData.getL(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
-            nextIndex+=t_h1_pw_len;
-
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
-            nextIndex+=t_h1_pf_len;
-
-            //Close
-            splitWholeFraction(singleData.getC(),base10PriceMaxFractionDigit,tmpWholeFractionInts);
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pw_len,tmpWholeFractionInts[0],r);
-            nextIndex+=t_h1_pw_len;
-
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_pf_len,tmpWholeFractionInts[1],r);
-            nextIndex+=t_h1_pf_len;
-
-            //Volume
-            splitWholeFraction(singleData.getV(),base10VolumeMaxFractionDigit,tmpWholeFractionInts);
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_vw_len,tmpWholeFractionInts[0],r);
-            nextIndex+=t_h1_vw_len;
-
-            BinaryTools.setSubsetUnsignedInt(nextIndex,t_h1_vf_len,tmpWholeFractionInts[1],r);
-            nextIndex+=t_h1_vf_len;
+            setBinaryDataStickFlat(singleData, r, tmpWholeFractionInts, nextIndex);
+            nextIndex += t_h1_data_len;
         }
 
         return r;
