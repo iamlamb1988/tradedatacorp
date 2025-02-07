@@ -37,6 +37,13 @@ public class BinaryTools{
         return r;
     }
 
+    public static long toUnsignedLongFromBoolSubset(boolean[] bin, int startIndex, int length){
+        long r=(bin[startIndex] ? 1 : 0);
+        int maxIndex = startIndex + length - 1;
+        for(int i=startIndex+1; i<maxIndex; ++i){r = (r << 1) | (bin[i] ? 1 : 0);}
+        return r;
+    }
+
     public static boolean isEqualBoolArray(boolean[] bin1, boolean[] bin2){
         if(bin1.length != bin2.length) return false;
         for(int i=0; i<bin1.length; ++i){

@@ -5,6 +5,7 @@
 package tradedatacorp.smelter.lexical.binary;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
+import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -224,7 +225,7 @@ public class Original implements BinaryLexical<StickDouble>{
     }
 
     @Override
-    public boolean[] getBinaryHeaderFlat(){return BinaryTools.genConcatenatedBoolArrays(getBinaryHeader());}
+    public boolean[] getBinaryHeaderFlat(){return BinaryTools.genConcatenatedBoolArrays(header);}
 
     //Get Binary Data from Data instances
     @Override
@@ -285,7 +286,37 @@ public class Original implements BinaryLexical<StickDouble>{
     public boolean[] getBinaryDataPointsFlat(Collection dataCollection){return null;}
 
     //Get Data instance from Binary
-    public StickDouble getRefinedData(boolean[][] singleBinaryData){return null;}
+    @Override
+    public StickDouble getRefinedData(boolean[][] singleBinaryData){
+        //Read out each chunk based on data header lengths
+        int tmpWhole,
+            tmpFraction;
+
+        long utc = BinaryTools.toUnsignedLong(singleBinaryData[0]);
+
+        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[1]);
+        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[2]);
+        double open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[3]);
+        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[4]);
+        double high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[5]);
+        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[6]);
+        double low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[7]);
+        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[8]);
+        double close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[9]);
+        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[10]);
+        double volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+
+        return new CandleStickFixedDouble(utc,open,high,low,close,volume);
+    }
+
     public StickDouble getRefinedDataFlat(boolean[] singleFlatBinaryData){return null;}
     public StickDouble[] getRefinedDataArray(boolean[][][] BinaryDataArray){return null;}
     public StickDouble[] getRefinedDataArrayFlat(boolean[] BinaryFlatDataArray){return null;}
