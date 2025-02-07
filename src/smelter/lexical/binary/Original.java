@@ -36,7 +36,7 @@ public class Original implements BinaryLexical<StickDouble>{
     public static final byte H1_PF_LEN_LEN = 4; //Should be 50 bits to support 15 decimal points
     public static final byte H1_VW_LEN_LEN = 5; //Should be MUCH BIGGER
     public static final byte H1_VF_LEN_LEN = 4; //Should be 50 bits to support 15 decimal points
-    public static final byte H2_SYM_LEN_LEN = 7;
+    public static final byte H1_SYM_LEN_LEN = 7;
 
     public final int H1_TOTAL_LEN = 
         H1_BYID_LEN +
@@ -48,7 +48,8 @@ public class Original implements BinaryLexical<StickDouble>{
         H1_PW_LEN_LEN + 
         H1_PF_LEN_LEN +
         H1_VW_LEN_LEN + 
-        H1_VF_LEN_LEN;
+        H1_VF_LEN_LEN +
+        H1_SYM_LEN_LEN;
 
     //Binary Lexical H1
     private boolean[] h1_byid;
@@ -60,12 +61,11 @@ public class Original implements BinaryLexical<StickDouble>{
     private boolean[] h1_utc_len; //UTC bit length;
     private boolean[] h1_pw_len;  //price (ohlc) bit length
     private boolean[] h1_pf_len;  //price (ohlc) bit length
-
     private boolean[] h1_vw_len;  //volume bit length
     private boolean[] h1_vf_len;  //volume bit length
+    private boolean[] h1_sym_len;
 
     //Binary Lexical H2
-    private boolean[] h2_sym_len;
     private boolean[] h2_sym;
     private boolean[] h2_data_ct;
     private boolean[] h2_h_gap;
@@ -80,12 +80,11 @@ public class Original implements BinaryLexical<StickDouble>{
     private byte t_h1_utc_len;
     private byte t_h1_pw_len; //price (ohlc)
     private byte t_h1_pf_len;
-
     private byte t_h1_vw_len; //volume
     private byte t_h1_vf_len;
+    private byte t_h1_sym_len;
 
     //Translated Lexical H2
-    private byte t_h2_sym_len;
     private String t_h2_sym;
     private int t_h2_data_ct;
 
@@ -158,9 +157,9 @@ public class Original implements BinaryLexical<StickDouble>{
         base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
 
         //Header 10: sym_len
-        t_h2_sym_len = (byte)(T_sym.length() << 3);
-        h2_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_sym_len,H2_SYM_LEN_LEN);
-        header[10] = h2_sym_len;
+        t_h1_sym_len = (byte)(T_sym.length() << 3);
+        h1_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_sym_len,H1_SYM_LEN_LEN);
+        header[10] = h1_sym_len;
 
         //Header 11: sym
         t_h2_sym = T_sym;
@@ -176,7 +175,6 @@ public class Original implements BinaryLexical<StickDouble>{
         h2_h_gap = header[13] = BinaryTools.genBoolArrayFromUnsignedInt(0,t_h1_h_gap_len);
 
         h2_total_len = 
-            h2_sym_len.length +
             h2_sym.length + 
             h2_data_ct.length +
             h2_h_gap.length;
@@ -188,7 +186,6 @@ public class Original implements BinaryLexical<StickDouble>{
         //Calculate Gap
         int headerExceptGapLength = 
             H1_TOTAL_LEN + 
-            H2_SYM_LEN_LEN + 
             (symbol.length() << 3) + 
             1;
         int remainder = headerExceptGapLength%8;
@@ -296,7 +293,7 @@ public class Original implements BinaryLexical<StickDouble>{
     // Original methods
     //Get methods
     public boolean[][] genBinaryHeader1(){
-        boolean[][] h1=new boolean[10][];
+        boolean[][] h1=new boolean[11][];
 
         h1[0] = BinaryTools.genClone(h1_byid); //h1_biid
         h1[1] = BinaryTools.genClone(h1_int); // h1_int
@@ -308,17 +305,17 @@ public class Original implements BinaryLexical<StickDouble>{
         h1[7] = BinaryTools.genClone(h1_pf_len); // h1_pf_len
         h1[8] = BinaryTools.genClone(h1_vw_len); // h1_vw_len
         h1[9] = BinaryTools.genClone(h1_vf_len); // h1_vf_len
+        h1[10] = BinaryTools.genClone(h1_sym_len); // h1_sym_len
 
         return h1;
     }
 
     public boolean[][] genBinaryHeader2(){
-        boolean[][] h2=new boolean[4][];
+        boolean[][] h2=new boolean[3][];
 
-        h2[0] = BinaryTools.genClone(h2_sym_len); //h2_sym_len
-        h2[1] = BinaryTools.genClone(h2_sym); //h2_sym
-        h2[2] = BinaryTools.genClone(h2_data_ct); //h2_data_ct
-        h2[3] = BinaryTools.genClone(h2_h_gap); //h2_h_gap
+        h2[0] = BinaryTools.genClone(h2_sym); //h2_sym
+        h2[1] = BinaryTools.genClone(h2_data_ct); //h2_data_ct
+        h2[2] = BinaryTools.genClone(h2_h_gap); //h2_h_gap
 
         return h2;
     }

@@ -27,10 +27,10 @@ public class OriginalTest{
     5 +  //h1_pw_len
     5 +  //h1_vw_len
     4 +  //h1_pf_len
-    4;   //h1_vf_len
+    4 +  //h1_vf_len
+    7;   //h1_sym_len
 
 int expected_h2_len = 
-    7 +  //h2_sym_len (the only fixed h2 header)
     48 + //h2_sym characters "BTCUSD" x 8 bits
     1 +  //h2_data_ct_len 1 bit to represent the value 0
     0;   //h2_h_gap (only need to add 0 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
@@ -180,14 +180,15 @@ int expected_h2_len =
         public class DefaultHeader2Test{
             @Test
             public void testDefault_SymbolBitLength(){
-                boolean[] bin_h2_sym_len = generatedHeader2[0];
-                assertEquals(6*8,BinaryTools.toUnsignedInt(bin_h2_sym_len)); //BTCUSD has 6 characters
-                assertEquals(7,bin_h2_sym_len.length); //fixed length of 7 bits
+                boolean[] bin_h1_sym_len = generatedHeader1[10];
+                assertEquals(6*8,BinaryTools.toUnsignedInt(bin_h1_sym_len)); //BTCUSD has 6 characters
+                assertEquals(7,Original.H1_SYM_LEN_LEN);
+                assertEquals(Original.H1_SYM_LEN_LEN,bin_h1_sym_len.length); //fixed length of 7 bits
             }
 
             @Test
-            public void testDefault_Sybmbol(){
-                boolean[] bin_h2_sym = generatedHeader2[1];
+            public void testDefault_Symbol(){
+                boolean[] bin_h2_sym = generatedHeader2[0];
                 byte ascii_B = (byte)'B';
                 byte ascii_T = (byte)'T';
                 byte ascii_C = (byte)'C';
@@ -221,7 +222,7 @@ int expected_h2_len =
 
             @Test
             public void testDefault_DataCount(){
-                boolean[] bin_h2_data_ct = generatedHeader2[2];
+                boolean[] bin_h2_data_ct = generatedHeader2[1];
 
                 assertEquals(0,BinaryTools.toUnsignedInt(bin_h2_data_ct));
                 assertEquals(1,bin_h2_data_ct.length); //should match h1_data_ct_len
@@ -229,14 +230,13 @@ int expected_h2_len =
 
             @Test
             public void testDefaultGap(){
-                boolean[] bin_h2_h_gap = generatedHeader2[3];;
+                boolean[] bin_h2_h_gap = generatedHeader2[2];;
                 int  exptected_total_length = 
                     first_lexical.H1_TOTAL_LEN +
-                    7 +
                     48 +
                     1 +
                     0; //This is the gap, With
-                int expected_gap_bit_length = 0; //2 more bits to get a total of 
+                int expected_gap_bit_length = 0; 
 
                 assertEquals(expected_gap_bit_length,bin_h2_h_gap.length);
             }
@@ -250,7 +250,7 @@ int expected_h2_len =
 
         @Test
         public void testDefaultHeader1(){
-            assertEquals(88,expected_h1_len);
+            assertEquals(95,expected_h1_len);
             assertEquals(expected_h1_len,first_lexical.H1_TOTAL_LEN);
             assertEquals(first_lexical.H1_TOTAL_LEN,flatHeader1.length);
             assertEquals(flatHeader1.length,first_lexical.H1_TOTAL_LEN);
@@ -258,7 +258,7 @@ int expected_h2_len =
 
         @Test
         public void testDefaultHeader2(){
-            assertEquals(56,expected_h2_len);
+            assertEquals(49,expected_h2_len);
             assertEquals(expected_h2_len,first_lexical.getHeader2BitLength());
         }
 
