@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 20 JAN 2025
+ * @since 8 FEB 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -284,7 +284,24 @@ public class Original implements BinaryLexical<StickDouble>{
         return r;
     }
 
-    public boolean[][][] getBinaryDataPoints(Collection dataCollection){return null;}
+    @Override
+    public boolean[][][] getBinaryDataPoints(Collection<StickDouble> dataCollection){
+        boolean[][][] r = new boolean[dataCollection.size()][][];
+        boolean[][] binData;
+        int[] tmpWholeFractionInts = new int[3];
+
+        int rIndex=0;
+        for(StickDouble singleData : dataCollection){
+            binData = new boolean[11][]; //This is a singular element of r
+
+            setBinaryDataStick(singleData, binData, tmpWholeFractionInts);
+            
+            r[rIndex] = binData;
+            ++rIndex;
+        }        
+
+        return r;
+    }
 
     @Override
     public boolean[] getBinaryDataPointsFlat(StickDouble[] dataArray){
@@ -300,7 +317,19 @@ public class Original implements BinaryLexical<StickDouble>{
         return r;
     }
 
-    public boolean[] getBinaryDataPointsFlat(Collection dataCollection){return null;}
+    @Override
+    public boolean[] getBinaryDataPointsFlat(Collection<StickDouble> dataCollection){
+        boolean[] r = new boolean[t_h1_data_len * dataCollection.size()];
+        int[] tmpWholeFractionInts = new int[3];
+        int nextIndex = 0;
+
+        for(StickDouble singleData : dataCollection){
+            setBinaryDataStickFlat(singleData, r, tmpWholeFractionInts, nextIndex);
+            nextIndex += t_h1_data_len;
+        }
+
+        return r;
+    }
 
     //Get Data instance from Binary
     @Override
@@ -329,7 +358,7 @@ public class Original implements BinaryLexical<StickDouble>{
     public StickDouble getRefinedDataFlat(boolean[] singleFlatBinaryData){
         int tmpWhole,
             tmpFraction;
-        
+
         int nextIndex=0;
 
         long utc = BinaryTools.toUnsignedLongFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_utc_len);
@@ -372,14 +401,85 @@ public class Original implements BinaryLexical<StickDouble>{
         nextIndex += t_h1_vw_len;
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vf_len);
-        // nextIndex += t_h1_vf_len;
         double volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
 
         return new CandleStickFixedDouble(utc, open, high, low, close, volume);
     }
 
-    public StickDouble[] getRefinedDataArray(boolean[][][] BinaryDataArray){return null;}
-    public StickDouble[] getRefinedDataArrayFlat(boolean[] BinaryFlatDataArray){return null;}
+    @Override
+    public StickDouble[] getRefinedDataArray(boolean[][][] BinaryDataArray){
+        StickDouble[] r = new StickDouble[BinaryDataArray.length];
+        int index=0;
+        for(boolean[][] singleBinData : BinaryDataArray){
+            r[index] = getRefinedData(singleBinData);
+        }
+        return r;
+    }
+
+    @Override
+    public StickDouble[] getRefinedDataArrayFlat(boolean[] binaryFlatDataArray){
+        StickDouble[] r = new StickDouble[binaryFlatDataArray.length / (t_h2_data_ct * t_h1_data_len)];
+
+        int tmpWhole,
+            tmpFraction,
+            nextIndex=0;
+
+        long utc;
+
+        double open,
+               high,
+               low,
+               close,
+               volume;
+
+        for(int i=0; i<r.length; ++i){
+            utc = BinaryTools.toUnsignedLongFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_utc_len);
+            nextIndex += t_h1_utc_len;
+
+            //Open
+            tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
+            nextIndex += t_h1_pw_len;
+
+            tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
+            nextIndex += t_h1_pf_len;
+            open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+            //High
+            tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
+            nextIndex += t_h1_pw_len;
+
+            tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
+            nextIndex += t_h1_pf_len;
+            high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+            //Low
+            tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
+            nextIndex += t_h1_pw_len;
+
+            tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
+            nextIndex += t_h1_pf_len;
+            low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+            //Close
+            tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
+            nextIndex += t_h1_pw_len;
+
+            tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
+            nextIndex += t_h1_pf_len;
+            close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+            //Volume
+            tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_vw_len);
+            nextIndex += t_h1_vw_len;
+
+            tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_vf_len);
+            volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+
+            r[i] = new CandleStickFixedDouble(utc, open, high, low, close, volume);;
+        }
+
+        return r;
+    }
 
     // Original methods
     //Get methods

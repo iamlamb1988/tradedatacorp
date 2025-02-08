@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 12 OCT 2024
+ * @since 8 FEB 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -18,9 +18,9 @@ public interface BinaryLexical<RefinedT> extends Lexical{
     public boolean[][] getBinaryData(RefinedT singleData);
     public boolean[] getBinaryDataFlat(RefinedT singleData);
     public boolean[][][] getBinaryDataPoints(RefinedT[] dataArray);
-    public boolean[][][] getBinaryDataPoints(Collection dataCollection);
+    public boolean[][][] getBinaryDataPoints(Collection<RefinedT> dataCollection);
     public boolean[] getBinaryDataPointsFlat(RefinedT[] dataArray);
-    public boolean[] getBinaryDataPointsFlat(Collection dataCollection);
+    public boolean[] getBinaryDataPointsFlat(Collection<RefinedT> dataCollection);
 
     //Get Data instance from Binary
     public RefinedT getRefinedData(boolean[][] singleBinaryData);
