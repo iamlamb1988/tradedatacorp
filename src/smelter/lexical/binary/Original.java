@@ -341,7 +341,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double open = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
 
         //High
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -349,7 +349,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double high = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
 
         //Low
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -357,7 +357,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double low = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
 
         //Close
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -365,7 +365,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double close = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
 
         //Volume
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vw_len);
@@ -373,7 +373,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vf_len);
         // nextIndex += t_h1_vf_len;
-        double volume = tmpFraction + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+        double volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
 
         return new CandleStickFixedDouble(utc, open, high, low, close, volume);
     }

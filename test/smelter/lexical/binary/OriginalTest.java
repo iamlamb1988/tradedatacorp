@@ -6,6 +6,9 @@ package tradedatacorp.smelter.lexical.binary;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.beans.Transient;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.jupiter.api.Nested;
@@ -247,6 +250,9 @@ int expected_h2_len =
         public void testInitialConstructor(){
             assertEquals("BTCUSD",first_lexical.getSymbol());
             assertEquals("60",first_lexical.getInterval());
+    
+            assertEquals(5,first_lexical.getBase10PriceDigits());  //15 bits => 2^15 => 32768 (base10) => 5 digits
+            assertEquals(5,first_lexical.getBase10VolumeDigits()); //15 bits => 2^15 => 32768 (base10) => 5 digits
         }
 
         @Test
@@ -284,6 +290,24 @@ int expected_h2_len =
             1.25  //Volume
         );
 
+        boolean[][] binStick1 = first_lexical.getBinaryData(stick1);
+        boolean[] binFlatStick1 = first_lexical.getBinaryDataFlat(stick1);
+
+        StickDouble reverseStick1 = first_lexical.getRefinedData(binStick1);
+        StickDouble reverseFlatStick1 = first_lexical.getRefinedDataFlat(binFlatStick1);
+
+        boolean[] utcBin1 = binStick1[0];
+        boolean[] openWholeBin1 = binStick1[1];
+        boolean[] openFractionBin1 = binStick1[2];
+        boolean[] highWholeBin1 = binStick1[3];
+        boolean[] highFractionBin1 = binStick1[4];
+        boolean[] lowWholeBin1 = binStick1[5];
+        boolean[] lowFractionBin1 = binStick1[6];
+        boolean[] closeWholeBin1 = binStick1[7];
+        boolean[] closeFractionBin1 = binStick1[8];
+        boolean[] volumeWholeBin1 = binStick1[9];
+        boolean[] volumeFractionBin1 = binStick1[10];
+
         CandleStickFixedDouble stick2 = new CandleStickFixedDouble(
             2000,     //UTC
             4.125,    //Open
@@ -293,83 +317,139 @@ int expected_h2_len =
             1.25      //Volume
         );
 
+        boolean[][] binStick2 = first_lexical.getBinaryData(stick2);
+        boolean[] binFlatStick2 = first_lexical.getBinaryDataFlat(stick2);
+
         @Test
-        public void testSingleDataStick1(){
-            assertEquals(5,first_lexical.getBase10PriceDigits());  //15 bits => 2^15 => 32768 (base10) => 5 digits
-            assertEquals(5,first_lexical.getBase10VolumeDigits()); //15 bits => 2^15 => 32768 (base10) => 5 digits
-
-            boolean[][] inflatedBin = first_lexical.getBinaryData(stick1); //Core Interface Function to test
-            boolean[] flatInflatedBin = first_lexical.getBinaryDataFlat(stick1);
-            boolean[] manuallyFlatInflatedBin = BinaryTools.genConcatenatedBoolArrays(inflatedBin);
-
-            StickDouble reverseStick1 = first_lexical.getRefinedData(inflatedBin);
-            StickDouble reverseFlatStick1 = first_lexical.getRefinedDataFlat(flatInflatedBin);
-
-            assertTrue(BinaryTools.isEqualBoolArray(flatInflatedBin,manuallyFlatInflatedBin));
-
-            boolean[] utcBin = inflatedBin[0];
-            boolean[] openWholeBin = inflatedBin[1];
-            boolean[] openFractionBin = inflatedBin[2];
-            boolean[] highWholeBin = inflatedBin[3];
-            boolean[] highFractionBin = inflatedBin[4];
-            boolean[] lowWholeBin = inflatedBin[5];
-            boolean[] lowFractionBin = inflatedBin[6];
-            boolean[] closeWholeBin = inflatedBin[7];
-            boolean[] closeFractionBin = inflatedBin[8];
-            boolean[] volumeWholeBin = inflatedBin[9];
-            boolean[] volumeFractionBin = inflatedBin[10];
-
-            //Check Stick
+        public void testPreflightDataStick1(){
             assertEquals(3,stick1.getO());
             assertEquals(9,stick1.getH());
             assertEquals(1,stick1.getL());
             assertEquals(5,stick1.getC());
             assertEquals(1.25,stick1.getV());
+        }
 
-            assertEquals(44,utcBin.length);
-            assertEquals(1000,BinaryTools.toUnsignedLong(utcBin));
+        @Test
+        public void testFlatArrayEquivalents1(){
+            boolean[] manuallyFlatInflatedBin = BinaryTools.genConcatenatedBoolArrays(binStick1);
+            assertTrue(BinaryTools.isEqualBoolArray(binFlatStick1,manuallyFlatInflatedBin));
+        }
+
+        @Test
+        public void testSingleDataInflatedBinStick1(){
+            //Check Stick
+            assertEquals(44,utcBin1.length);
+            assertEquals(1000,BinaryTools.toUnsignedLong(utcBin1));
 
             //Open
-            assertEquals(31,openWholeBin.length);
-            assertEquals(3,BinaryTools.toUnsignedInt(openWholeBin));
+            assertEquals(31,openWholeBin1.length);
+            assertEquals(3,BinaryTools.toUnsignedInt(openWholeBin1));
 
-            assertEquals(15,openFractionBin.length);
-            assertEquals(0,BinaryTools.toUnsignedInt(openFractionBin));
+            assertEquals(15,openFractionBin1.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(openFractionBin1));
 
             //High
-            assertEquals(31,highWholeBin.length);
-            assertEquals(9,BinaryTools.toUnsignedInt(highWholeBin));
+            assertEquals(31,highWholeBin1.length);
+            assertEquals(9,BinaryTools.toUnsignedInt(highWholeBin1));
 
-            assertEquals(15,highFractionBin.length);
-            assertEquals(0,BinaryTools.toUnsignedInt(highFractionBin));
+            assertEquals(15,highFractionBin1.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(highFractionBin1));
 
             //Low
-            assertEquals(31,lowWholeBin.length);
-            assertEquals(1,BinaryTools.toUnsignedInt(lowWholeBin));
+            assertEquals(31,lowWholeBin1.length);
+            assertEquals(1,BinaryTools.toUnsignedInt(lowWholeBin1));
 
-            assertEquals(15,lowFractionBin.length);
-            assertEquals(0,BinaryTools.toUnsignedInt(lowFractionBin));
+            assertEquals(15,lowFractionBin1.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(lowFractionBin1));
 
             //Close
-            assertEquals(31,closeWholeBin.length);
-            assertEquals(5,BinaryTools.toUnsignedInt(closeWholeBin));
+            assertEquals(31,closeWholeBin1.length);
+            assertEquals(5,BinaryTools.toUnsignedInt(closeWholeBin1));
 
-            assertEquals(15,closeFractionBin.length);
-            assertEquals(0,BinaryTools.toUnsignedInt(closeFractionBin));
+            assertEquals(15,closeFractionBin1.length);
+            assertEquals(0,BinaryTools.toUnsignedInt(closeFractionBin1));
 
             //Volume
-            assertEquals(31,volumeWholeBin.length);
-            assertEquals(1,BinaryTools.toUnsignedInt(volumeWholeBin));
+            assertEquals(31,volumeWholeBin1.length);
+            assertEquals(1,BinaryTools.toUnsignedInt(volumeWholeBin1));
 
-            assertEquals(15,volumeFractionBin.length);
-            assertEquals(25000,BinaryTools.toUnsignedInt(volumeFractionBin)); //5 Decimal Digits
+            assertEquals(15,volumeFractionBin1.length);
+            assertEquals(25000,BinaryTools.toUnsignedInt(volumeFractionBin1)); //5 Decimal Digits
 
             //Total Data length
             assertEquals(274,expected_data_len); //44 + 4*31 + 4*15 + 31 + 15
             assertEquals(expected_data_len,first_lexical.getDataBitLength());
-            assertEquals(expected_data_len,flatInflatedBin.length);
+            assertEquals(expected_data_len,binFlatStick1.length);
+        }
 
+        @Test
+        public void testDecodedUTC1(){
+            assertEquals(stick1.UTC,reverseStick1.getUTC());
+        }
+
+        @Test
+        public void testDecodedOpen1(){
+            assertEquals(stick1.O,reverseStick1.getO());
+        }
+
+
+        @Test
+        public void testDecodedHigh1(){
+            assertEquals(stick1.H,reverseStick1.getH());
+        }
+
+        @Test
+        public void testDecodedLow1(){
+            assertEquals(stick1.L,reverseStick1.getL());
+        }
+
+        @Test
+        public void testDecodedClose1(){
+            assertEquals(stick1.C,reverseStick1.getC());
+        }
+
+        @Test
+        public void testDecodedVolume1(){
+            assertEquals(stick1.V,reverseStick1.getV());
+        }
+
+        @Test
+        public void testDecodedStick1toOriginalStick1(){
             assertTrue(stick1.compareTo(reverseStick1) == 0);
+        }
+
+        @Test
+        public void testDecodedFlatUTC1(){
+            assertEquals(stick1.UTC,reverseFlatStick1.getUTC());
+        }
+
+        @Test
+        public void testDecodedFlatOpen1(){
+            assertEquals(stick1.O,reverseFlatStick1.getO());
+        }
+
+        @Test
+        public void testDecodedFlatHigh1(){
+            assertEquals(stick1.H,reverseFlatStick1.getH());
+        }
+
+        @Test
+        public void testDecodedFlatLow1(){
+            assertEquals(stick1.L,reverseFlatStick1.getL());
+        }
+
+        @Test
+        public void testDecodedFlatClose1(){
+            assertEquals(stick1.C,reverseFlatStick1.getC());
+        }
+
+        @Test
+        public void testDecodedFlatVolume1(){
+            assertEquals(stick1.V,reverseFlatStick1.getV());
+        }
+
+        @Test
+        public void testDecodedFlatStick1toOriginalStick1(){
             assertTrue(stick1.compareTo(reverseFlatStick1) == 0);
         }
 
