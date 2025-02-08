@@ -5,6 +5,7 @@
 package tradedatacorp.smelter.lexical.binary;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
+import tradedatacorp.item.stick.primitive.CandleStickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 import java.util.Collection;
@@ -26,6 +27,22 @@ public class Original implements BinaryLexical<StickDouble>{
     //Binary Header
     boolean[][] header;
 
+    //Binary Header Index
+    public static final byte H_INDEX_BYID = 0;
+    public static final byte H_INDEX_INT = 1;
+    public static final byte H_INDEX_CT_LEN = 2;
+    public static final byte H_INDEX_DATA_LEN = 3;
+    public static final byte H_INDEX_H_GAP_LEN = 4;
+    public static final byte H_INDEX_UTC_LEN = 5;
+    public static final byte H_INDEX_PW_LEN = 6;
+    public static final byte H_INDEX_PF_LEN = 7;
+    public static final byte H_INDEX_VW_LEN = 8;
+    public static final byte H_INDEX_VF_LEN = 9;
+    public static final byte H_INDEX_SYM_LEN = 10;
+    public static final byte H_INDEX_SYM = 11;
+    public static final byte H_INDEX_DATA_CT = 12;
+    public static final byte H_INDEX_H_GAP = 13;
+
     // Binary Fixed field bit lengths
     public static final byte H1_BYID_LEN = 1;
     public static final byte H1_INT_LEN = 25;
@@ -39,7 +56,7 @@ public class Original implements BinaryLexical<StickDouble>{
     public static final byte H1_VF_LEN_LEN = 4; //Should be 50 bits to support 15 decimal points
     public static final byte H1_SYM_LEN_LEN = 7;
 
-    public final int H1_TOTAL_LEN = 
+    public static final int H1_TOTAL_LEN = 
         H1_BYID_LEN +
         H1_INT_LEN +
         H1_CT_LEN_LEN +
@@ -106,53 +123,53 @@ public class Original implements BinaryLexical<StickDouble>{
         //Header 0: by_id
         t_h1_byid = T_byid;
         h1_byid = new boolean[]{T_byid};
-        header[0] = h1_byid;
+        header[H_INDEX_BYID] = h1_byid;
 
         //Header 1: int
         interval = T_int; //Need strictly parse different String formats in the future
         t_h1_int = Integer.parseUnsignedInt(interval); //interval will be evaluated to correct integer in the future
         h1_int = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_int,H1_INT_LEN);
-        header[1] = h1_int;
+        header[H_INDEX_INT] = h1_int;
 
         //Header 2: ct_len Always empty upon construction therefor 0
         t_h1_ct_len = 0;
         h1_ct_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_ct_len,H1_CT_LEN_LEN);
-        header[2] = h1_ct_len;
+        header[H_INDEX_CT_LEN] = h1_ct_len;
 
         //Header 3: data_len
         t_h1_data_len = T_utc_len + 4*(T_pw_len + T_pf_len) + T_vw_len + T_vf_len;
         h1_data_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_data_len,H1_DATA_LEN_LEN);
-        header[3] = h1_data_len;
+        header[H_INDEX_DATA_LEN] = h1_data_len;
 
         //Header 4: h_gap_len
         t_h1_h_gap_len = T_h_gap_len;
         h1_h_gap_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_h_gap_len,H1_H_GAP_LEN_LEN);
-        header[4] = h1_h_gap_len;
+        header[H_INDEX_H_GAP_LEN] = h1_h_gap_len;
 
         //Header 5: utc_len
         t_h1_utc_len = T_utc_len;
         h1_utc_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_utc_len,H1_UTC_LEN_LEN);
-        header[5] = h1_utc_len;
+        header[H_INDEX_UTC_LEN] = h1_utc_len;
 
         //Header 6: pw_len
         t_h1_pw_len = T_pw_len;
         h1_pw_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_pw_len,H1_PW_LEN_LEN);
-        header[6] = h1_pw_len;
+        header[H_INDEX_PW_LEN] = h1_pw_len;
 
         //Header 7: pf_len
         t_h1_pf_len = T_pf_len;
         h1_pf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_pf_len,H1_PF_LEN_LEN);
-        header[7] = h1_pf_len;
+        header[H_INDEX_PF_LEN] = h1_pf_len;
 
         //Header 8: vw_len
         t_h1_vw_len = T_vw_len;
         h1_vw_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vw_len,H1_VW_LEN_LEN);
-        header[8] = h1_vw_len;
+        header[H_INDEX_VW_LEN] = h1_vw_len;
 
         //Header 9: vf_len
         t_h1_vf_len = T_vf_len;
         h1_vf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vf_len,H1_VF_LEN_LEN);
-        header[9] = h1_vf_len;
+        header[H_INDEX_VF_LEN] = h1_vf_len;
 
         base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
         base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
@@ -160,20 +177,20 @@ public class Original implements BinaryLexical<StickDouble>{
         //Header 10: sym_len
         t_h1_sym_len = (byte)(T_sym.length() << 3);
         h1_sym_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_sym_len,H1_SYM_LEN_LEN);
-        header[10] = h1_sym_len;
+        header[H_INDEX_SYM_LEN] = h1_sym_len;
 
         //Header 11: sym
         t_h2_sym = T_sym;
         h2_sym = BinaryTools.genBoolArrayFrom8BitCharString(t_h2_sym);
-        header[11] = h2_sym;
+        header[H_INDEX_SYM] = h2_sym;
 
         //Header 12: data_ct
         t_h2_data_ct = 0; //Initially 0 datapoints
         h2_data_ct = new boolean[]{false};
-        header[12] = h2_data_ct;
+        header[H_INDEX_DATA_CT] = h2_data_ct;
 
         //Header 13: gap
-        h2_h_gap = header[13] = BinaryTools.genBoolArrayFromUnsignedInt(0,t_h1_h_gap_len);
+        h2_h_gap = header[H_INDEX_H_GAP] = BinaryTools.genBoolArrayFromUnsignedInt(0,t_h1_h_gap_len);
 
         h2_total_len = 
             h2_sym.length + 
@@ -288,36 +305,79 @@ public class Original implements BinaryLexical<StickDouble>{
     //Get Data instance from Binary
     @Override
     public StickDouble getRefinedData(boolean[][] singleBinaryData){
-        //Read out each chunk based on data header lengths
-        int tmpWhole,
-            tmpFraction;
+        return new CandleStickFixedDouble(
+            BinaryTools.toUnsignedLong(singleBinaryData[0]), //UTC
 
-        long utc = BinaryTools.toUnsignedLong(singleBinaryData[0]);
+            BinaryTools.toUnsignedInt(singleBinaryData[1]) + 
+            BinaryTools.toUnsignedInt(singleBinaryData[2])/Math.pow(10,base10PriceMaxFractionDigit), //Open
 
-        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[1]);
-        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[2]);
-        double open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            BinaryTools.toUnsignedInt(singleBinaryData[3]) + 
+            BinaryTools.toUnsignedInt(singleBinaryData[4])/Math.pow(10,base10PriceMaxFractionDigit), //High
+            
+            BinaryTools.toUnsignedInt(singleBinaryData[5]) + 
+            BinaryTools.toUnsignedInt(singleBinaryData[6])/Math.pow(10,base10PriceMaxFractionDigit), //Low
+            
+            BinaryTools.toUnsignedInt(singleBinaryData[7]) + 
+            BinaryTools.toUnsignedInt(singleBinaryData[8])/Math.pow(10,base10PriceMaxFractionDigit), //Close
 
-        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[3]);
-        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[4]);
-        double high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
-
-        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[5]);
-        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[6]);
-        double low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
-
-        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[7]);
-        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[8]);
-        double close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
-
-        tmpWhole = BinaryTools.toUnsignedInt(singleBinaryData[9]);
-        tmpFraction = BinaryTools.toUnsignedInt(singleBinaryData[10]);
-        double volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
-
-        return new CandleStickFixedDouble(utc,open,high,low,close,volume);
+            BinaryTools.toUnsignedInt(singleBinaryData[9]) + 
+            BinaryTools.toUnsignedInt(singleBinaryData[10])/Math.pow(10,base10VolumeMaxFractionDigit) //Volume
+        );
     }
 
-    public StickDouble getRefinedDataFlat(boolean[] singleFlatBinaryData){return null;}
+    @Override
+    public StickDouble getRefinedDataFlat(boolean[] singleFlatBinaryData){
+        int tmpWhole,
+            tmpFraction;
+        
+        int nextIndex=0;
+
+        long utc = BinaryTools.toUnsignedLongFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_utc_len);
+        nextIndex += t_h1_utc_len;
+
+        //Open
+        tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
+        nextIndex += t_h1_pw_len;
+
+        tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
+        nextIndex += t_h1_pf_len;
+        double open = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        //High
+        tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
+        nextIndex += t_h1_pw_len;
+
+        tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
+        nextIndex += t_h1_pf_len;
+        double high = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        //Low
+        tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
+        nextIndex += t_h1_pw_len;
+
+        tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
+        nextIndex += t_h1_pf_len;
+        double low = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        //Close
+        tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
+        nextIndex += t_h1_pw_len;
+
+        tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
+        nextIndex += t_h1_pf_len;
+        double close = tmpFraction + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+
+        //Volume
+        tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vw_len);
+        nextIndex += t_h1_vw_len;
+
+        tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vf_len);
+        // nextIndex += t_h1_vf_len;
+        double volume = tmpFraction + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+
+        return new CandleStickFixedDouble(utc, open, high, low, close, volume);
+    }
+
     public StickDouble[] getRefinedDataArray(boolean[][][] BinaryDataArray){return null;}
     public StickDouble[] getRefinedDataArrayFlat(boolean[] BinaryFlatDataArray){return null;}
 

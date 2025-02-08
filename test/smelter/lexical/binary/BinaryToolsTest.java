@@ -255,6 +255,14 @@ public class BinaryToolsTest{
             assertEquals(30,BinaryTools.toUnsignedInt(mutableBin));
             assertEquals(-2,BinaryTools.to2sCompInt(mutableBin));
         }
+
+        @Test
+        public void testExtractValueFromSubset(){
+            assertEquals(2,BinaryTools.toUnsignedIntFromBoolSubset(boolArray1,0,3));   //010 = 2
+            assertEquals(5,BinaryTools.toUnsignedIntFromBoolSubset(boolArray1, 1, 3)); //101 = 5
+            assertEquals(5,BinaryTools.toUnsignedIntFromBoolSubset(boolArray1, 0, 4)); //0101 = 5
+            assertEquals(11,BinaryTools.toUnsignedIntFromBoolSubset(boolArray1, 1, 4)); //1011 - 11
+        }
     }
 
     @Nested

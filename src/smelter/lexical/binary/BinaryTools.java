@@ -37,9 +37,16 @@ public class BinaryTools{
         return r;
     }
 
+    public static int toUnsignedIntFromBoolSubset(boolean[] bin, int startIndex, int length){
+        int r=(bin[startIndex] ? 1 : 0);
+        int maxIndex = startIndex + length;
+        for(int i=startIndex+1; i<maxIndex; ++i){r = (r << 1) | (bin[i] ? 1 : 0);}
+        return r;
+    }
+
     public static long toUnsignedLongFromBoolSubset(boolean[] bin, int startIndex, int length){
         long r=(bin[startIndex] ? 1 : 0);
-        int maxIndex = startIndex + length - 1;
+        int maxIndex = startIndex + length;
         for(int i=startIndex+1; i<maxIndex; ++i){r = (r << 1) | (bin[i] ? 1 : 0);}
         return r;
     }

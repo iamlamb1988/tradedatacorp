@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import tradedatacorp.smelter.lexical.binary.Original;
+import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 public class OriginalTest{
@@ -301,6 +302,9 @@ int expected_h2_len =
             boolean[] flatInflatedBin = first_lexical.getBinaryDataFlat(stick1);
             boolean[] manuallyFlatInflatedBin = BinaryTools.genConcatenatedBoolArrays(inflatedBin);
 
+            StickDouble reverseStick1 = first_lexical.getRefinedData(inflatedBin);
+            StickDouble reverseFlatStick1 = first_lexical.getRefinedDataFlat(flatInflatedBin);
+
             assertTrue(BinaryTools.isEqualBoolArray(flatInflatedBin,manuallyFlatInflatedBin));
 
             boolean[] utcBin = inflatedBin[0];
@@ -364,6 +368,9 @@ int expected_h2_len =
             assertEquals(274,expected_data_len); //44 + 4*31 + 4*15 + 31 + 15
             assertEquals(expected_data_len,first_lexical.getDataBitLength());
             assertEquals(expected_data_len,flatInflatedBin.length);
+
+            assertTrue(stick1.compareTo(reverseStick1) == 0);
+            assertTrue(stick1.compareTo(reverseFlatStick1) == 0);
         }
 
         @Test
