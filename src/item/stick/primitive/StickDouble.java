@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 9 FEB 2025
+ */
 package tradedatacorp.item.stick.primitive;
 
 /**
@@ -14,4 +18,14 @@ public interface StickDouble extends PrimitiveStick, Comparable<StickDouble> {
 	public double getL();
 	public double getC();
 	public double getV();
+
+	public static boolean isEqual(StickDouble stick1, StickDouble stick2){
+		return
+			stick1.getUTC() == stick2.getUTC() &&
+			stick1.getO() == stick2.getO() &&
+			stick1.getH() == stick2.getH() &&
+			stick1.getL() == stick2.getL() &&
+			stick1.getC() == stick2.getC() &&
+			stick1.getV() == stick2.getV();
+	}
 }

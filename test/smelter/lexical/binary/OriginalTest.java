@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 20 JAN 2025
+ * @since 9 FEB 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -320,6 +320,30 @@ int expected_h2_len =
         boolean[][] binStick2 = first_lexical.getBinaryData(stick2);
         boolean[] binFlatStick2 = first_lexical.getBinaryDataFlat(stick2);
 
+        StickDouble reverseStick2 = first_lexical.getRefinedData(binStick2);
+        StickDouble reverseFlatStick2 = first_lexical.getRefinedDataFlat(binFlatStick2);
+
+        boolean[] utcBin2 = binStick1[0];
+        boolean[] openWholeBin2 = binStick1[1];
+        boolean[] openFractionBin2 = binStick1[2];
+        boolean[] highWholeBin2 = binStick1[3];
+        boolean[] highFractionBin2 = binStick1[4];
+        boolean[] lowWholeBin2 = binStick1[5];
+        boolean[] lowFractionBin2 = binStick1[6];
+        boolean[] closeWholeBin2 = binStick1[7];
+        boolean[] closeFractionBin2 = binStick1[8];
+        boolean[] volumeWholeBin2 = binStick1[9];
+        boolean[] volumeFractionBin2 = binStick1[10];
+
+        //Array bin with stick1 and stick2
+        CandleStickFixedDouble[] stickArray = new CandleStickFixedDouble[]{stick1,stick2};
+
+        boolean[][][] inflatedBinArray = first_lexical.getBinaryDataPoints(stickArray);
+        boolean[] flatBinArray = first_lexical.getBinaryDataPointsFlat(stickArray);
+
+        StickDouble[] reverseStickArray = first_lexical.getRefinedDataArray(inflatedBinArray);
+        StickDouble[] reverseFlatStickArray = first_lexical.getRefinedDataArrayFlat(flatBinArray);
+
         @Test
         public void testPreflightDataStick1(){
             assertEquals(3,stick1.getO());
@@ -383,75 +407,46 @@ int expected_h2_len =
         }
 
         @Test
-        public void testDecodedUTC1(){
-            assertEquals(stick1.UTC,reverseStick1.getUTC());
-        }
+        public void testDecodedUTC1(){assertEquals(stick1.UTC,reverseStick1.getUTC());}
 
         @Test
-        public void testDecodedOpen1(){
-            assertEquals(stick1.O,reverseStick1.getO());
-        }
-
+        public void testDecodedOpen1(){assertEquals(stick1.O,reverseStick1.getO());}
 
         @Test
-        public void testDecodedHigh1(){
-            assertEquals(stick1.H,reverseStick1.getH());
-        }
+        public void testDecodedHigh1(){assertEquals(stick1.H,reverseStick1.getH());}
 
         @Test
-        public void testDecodedLow1(){
-            assertEquals(stick1.L,reverseStick1.getL());
-        }
+        public void testDecodedLow1(){assertEquals(stick1.L,reverseStick1.getL());}
 
         @Test
-        public void testDecodedClose1(){
-            assertEquals(stick1.C,reverseStick1.getC());
-        }
+        public void testDecodedClose1(){assertEquals(stick1.C,reverseStick1.getC());}
 
         @Test
-        public void testDecodedVolume1(){
-            assertEquals(stick1.V,reverseStick1.getV());
-        }
+        public void testDecodedVolume1(){assertEquals(stick1.V,reverseStick1.getV());}
 
         @Test
-        public void testDecodedStick1toOriginalStick1(){
-            assertTrue(stick1.compareTo(reverseStick1) == 0);
-        }
+        public void testDecodedStick1toOriginalStick1(){assertTrue(StickDouble.isEqual(stick1, reverseStick1));}
 
         @Test
-        public void testDecodedFlatUTC1(){
-            assertEquals(stick1.UTC,reverseFlatStick1.getUTC());
-        }
+        public void testDecodedFlatUTC1(){assertEquals(stick1.UTC,reverseFlatStick1.getUTC());}
 
         @Test
-        public void testDecodedFlatOpen1(){
-            assertEquals(stick1.O,reverseFlatStick1.getO());
-        }
+        public void testDecodedFlatOpen1(){assertEquals(stick1.O,reverseFlatStick1.getO());}
 
         @Test
-        public void testDecodedFlatHigh1(){
-            assertEquals(stick1.H,reverseFlatStick1.getH());
-        }
+        public void testDecodedFlatHigh1(){assertEquals(stick1.H,reverseFlatStick1.getH());}
 
         @Test
-        public void testDecodedFlatLow1(){
-            assertEquals(stick1.L,reverseFlatStick1.getL());
-        }
+        public void testDecodedFlatLow1(){assertEquals(stick1.L,reverseFlatStick1.getL());}
 
         @Test
-        public void testDecodedFlatClose1(){
-            assertEquals(stick1.C,reverseFlatStick1.getC());
-        }
+        public void testDecodedFlatClose1(){assertEquals(stick1.C,reverseFlatStick1.getC());}
 
         @Test
-        public void testDecodedFlatVolume1(){
-            assertEquals(stick1.V,reverseFlatStick1.getV());
-        }
+        public void testDecodedFlatVolume1(){assertEquals(stick1.V,reverseFlatStick1.getV());}
 
         @Test
-        public void testDecodedFlatStick1toOriginalStick1(){
-            assertTrue(stick1.compareTo(reverseFlatStick1) == 0);
-        }
+        public void testDecodedFlatStick1toOriginalStick1(){assertTrue(StickDouble.isEqual(stick2, reverseStick2));}
 
         @Test
         public void testMultipleSticksOneElement(){
@@ -479,17 +474,21 @@ int expected_h2_len =
         //TODO
         @Test
         public void testMultipleSticksTwoELements(){
-            CandleStickFixedDouble[] stickArray = new CandleStickFixedDouble[]{stick1,stick2};
-
-            boolean[][][] inflatedBinArray = first_lexical.getBinaryDataPoints(stickArray);
-            boolean[] flatBinArray = first_lexical.getBinaryDataPointsFlat(stickArray);
             boolean[] manuallyFlatBinArray = BinaryTools.genConcatenatedBoolArrays(inflatedBinArray);
 
+            assertFalse(StickDouble.isEqual(stick1, stick2));
             assertTrue(BinaryTools.isEqualBoolArray(flatBinArray,manuallyFlatBinArray));
 
             //Extra Confirmation
             assertEquals(2*expected_data_len,flatBinArray.length); //two sticks == twice as many bits
             assertEquals(2*expected_data_len,manuallyFlatBinArray.length);
         }
+
+        @Test
+        public void testDecodedTwoElements(){
+            assertTrue(StickDouble.isEqual(stick1, reverseFlatStick1));
+            assertTrue(StickDouble.isEqual(stick2, reverseFlatStick2));
+        }
+
     }
 }

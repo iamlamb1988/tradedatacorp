@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 8 FEB 2025
+ * @since 9 FEB 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -418,11 +418,13 @@ public class Original implements BinaryLexical<StickDouble>{
 
     @Override
     public StickDouble[] getRefinedDataArrayFlat(boolean[] binaryFlatDataArray){
-        StickDouble[] r = new StickDouble[binaryFlatDataArray.length / (t_h2_data_ct * t_h1_data_len)];
+        int dataCount = (binaryFlatDataArray.length / t_h1_data_len);
+        if(dataCount == 0) return new StickDouble[0];
+        StickDouble[] r = new StickDouble[dataCount];
 
         int tmpWhole,
             tmpFraction,
-            nextIndex=0;
+            nextIndex = 0;
 
         long utc;
 
@@ -473,9 +475,10 @@ public class Original implements BinaryLexical<StickDouble>{
             nextIndex += t_h1_vw_len;
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_vf_len);
+            nextIndex += t_h1_vf_len;
             volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
 
-            r[i] = new CandleStickFixedDouble(utc, open, high, low, close, volume);;
+            r[i] = new CandleStickFixedDouble(utc, open, high, low, close, volume);
         }
 
         return r;

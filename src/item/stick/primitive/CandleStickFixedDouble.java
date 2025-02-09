@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 9 FEB 2025
+ */
 package tradedatacorp.item.stick.primitive;
 
 /**
@@ -53,14 +57,5 @@ public class CandleStickFixedDouble implements StickDouble{
 
 	//Comparable Interface methods:
 	@Override
-	public int compareTo(StickDouble otherStick){
-		return (
-			UTC == otherStick.getUTC() &&
-			O == otherStick.getO() &&
-			H == otherStick.getH() &&
-			L == otherStick.getL() &&
-			C == otherStick.getC() &&
-			V == otherStick.getV()
-		) ? 0 : -1;
-	}
+	public int compareTo(StickDouble otherStick){return Long.compare(UTC,otherStick.getUTC());}
 }
