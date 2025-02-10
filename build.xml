@@ -28,8 +28,8 @@
 	<target name="gendocs">
 		<delete dir="${docsource}" />
 		<mkdir dir="${docsource}" />
-		<javadoc sourcepath="${jarsource}" destdir="${docsource}" packagenames="*">
-			<fileset dir="${jarsource}" defaultexcludes="yes">
+		<javadoc sourcepath="${source}" destdir="${docsource}" packagenames="*">
+			<fileset dir="${source}" defaultexcludes="yes">
 				<include name="**/*.java" />
 			</fileset>
 		</javadoc>

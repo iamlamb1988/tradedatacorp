@@ -4,33 +4,61 @@
  */
 package tradedatacorp.smelter.lexical.binary;
 
+/**
+ * A utility class providing stateless static methods for converting between 
+ * binary representations (arrays or collections) and integers.
+ */
 public class BinaryTools{
     public static final byte ZED=(byte)0;
     public static final byte ONE=(byte)1;
     public static final byte NEG_ONE=(byte)-1;
     public static final double LOG10_BASE2 = Math.log10(2);
 
-    //Gets the minimum number of bits to represent this unsigned value
+    /**
+     * Calculates the minimum number of bits required to represent a positive integer in binary.
+     * @param positiveInteger a postive integer to be evaluated.
+     * @return The minimum number of bits to represent the posititive integer.
+     */
     public static int getMinimumNumberOfBits(int positiveInteger){return (int)Math.ceil(Math.log10(positiveInteger)/LOG10_BASE2);}
 
+    /**
+     * Calculates a positive base-10 integer from an array of boolean values.
+     * @param bin The boolean array to be evaluated that represents a positive base-10 integer.
+     * @return The postive base-10 integer to be calculated.
+     */
     public static int toUnsignedInt(boolean[] bin){
         int r=(bin[0] ? 1 : 0);
         for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}
         return r;
     }
 
+    /**
+     * Calculates a base-10 integer from an array of boolean values that represent 2s compliment binary string.
+     * @param bin The boolean array to be evaluated that represents a base-10 integer.
+     * @return The base-10 integer to be calculated.
+     */
     public static int to2sCompInt(boolean[] bin){
         int r=(bin[0] ? -1 : 0);
         for(byte i=(byte)1; i<bin.length; ++i){r = (r << 1) | (bin[i] ? 1 : 0);}
         return r;
     }
 
+    /**
+     * Calculates a base-10 positive long integer from an array of boolean values that represent 2s compliment binary string.
+     * @param bin The boolean array to be evaluated that represents a positive long base-10 integer.
+     * @return The base-10 long integer to be calculated.
+     */
     public static long toUnsignedLong(boolean[] bin){
         long r=(bin[0] ? 1 : 0);
         for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}
         return r;
     }
 
+    /**
+     * Calculates a base-10 long integer from an array of boolean values that represent 2s compliment binary string.
+     * @param bin The boolean array to be evaluated that represents a base-10 integer.
+     * @return The base-10 integer to be calculated.
+     */
     public static long to2sCompLong(boolean[] bin){
         long r=(bin[0] ? -1 : 0);
         for(byte i=(byte)1;i<bin.length;++i){r = (r << 1) | (bin[i] ? 1 : 0);}

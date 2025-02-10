@@ -1,3 +1,11 @@
+item.stick
+item.stick.info
+item.stick.primitive
+item.stick.primitive.mod
+smelter
+smelter.filesmelter
+smelter.lexical
+smelter.lexical.binary
 tradedatacorp.item.stick
 tradedatacorp.item.stick.info
 tradedatacorp.item.stick.primitive
@@ -7,3 +15,4 @@ tradedatacorp.smelter.filesmelter
 tradedatacorp.smelter.lexical
 tradedatacorp.smelter.lexical.binary
 tradedatacorp.warehouse
+warehouse
