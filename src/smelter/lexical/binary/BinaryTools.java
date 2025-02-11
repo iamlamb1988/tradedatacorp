@@ -18,10 +18,14 @@ public class BinaryTools{
      * Calculates the minimum number of bits required to represent a non-negative base-10 integer in binary.
      * @param nonNegativeInteger a non-negative integer to be evaluated.
      * @return The minimum number of bits to represent the non-negative integer.
-     * Example 1: {@code getMinimumNumberOfBits(3); // returns 2. binary 11 => 3, minimum of 2 bits represents 3}
-     * Example 2: {@code getMinimumNumberOfBits(5); // returns 3. binary 101 => 5, minimum of 3 bits represents 5}
+     * Example 1: {@code getMinimumNumberOfBits(3); // returns 2. binary 11 => 3, minimum of 2 bits represents 3.}
+     * Example 2: {@code getMinimumNumberOfBits(5); // returns 3. binary 101 => 5, minimum of 3 bits represents 5.}
+     * Example 3: {@code getMinimumNumberOfBits(0); // returns 1. binary 0 => 0, minimum of 1 bit represents 0.}
      */
-    public static int getMinimumNumberOfBits(int nonNegativeInteger){return (int)Math.ceil(Math.log10(nonNegativeInteger)/LOG10_BASE2);}
+    public static int getMinimumNumberOfBits(int nonNegativeInteger){
+        if(nonNegativeInteger == 0) return 1; //1 bit required to represent 0.
+        return (int)Math.ceil(Math.log10(nonNegativeInteger)/LOG10_BASE2);
+    }
 
     /**
      * Calculates a non-negative base-10 integer from an array of boolean values.
