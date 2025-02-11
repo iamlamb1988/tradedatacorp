@@ -15,16 +15,22 @@ public class BinaryTools{
     public static final double LOG10_BASE2 = Math.log10(2);
 
     /**
-     * Calculates the minimum number of bits required to represent a positive integer in binary.
-     * @param positiveInteger a postive integer to be evaluated.
-     * @return The minimum number of bits to represent the posititive integer.
+     * Calculates the minimum number of bits required to represent a non-negative base-10 integer in binary.
+     * @param nonNegativeInteger a non-negative integer to be evaluated.
+     * @return The minimum number of bits to represent the non-negative integer.
+     * Example 1: {@code getMinimumNumberOfBits(3); // returns 2. binary 11 => 3, minimum of 2 bits represents 3}
+     * Example 2: {@code getMinimumNumberOfBits(5); // returns 3. binary 101 => 5, minimum of 3 bits represents 5}
      */
-    public static int getMinimumNumberOfBits(int positiveInteger){return (int)Math.ceil(Math.log10(positiveInteger)/LOG10_BASE2);}
+    public static int getMinimumNumberOfBits(int nonNegativeInteger){return (int)Math.ceil(Math.log10(nonNegativeInteger)/LOG10_BASE2);}
 
     /**
-     * Calculates a positive base-10 integer from an array of boolean values.
-     * @param bin The boolean array to be evaluated that represents a positive base-10 integer.
-     * @return The postive base-10 integer to be calculated.
+     * Calculates a non-negative base-10 integer from an array of boolean values.
+     * @param bin The boolean array to be evaluated that represents a non-negative base-10 integer.
+     * Must be non-null and contain at least 1 element.
+     * Most significant bit is at index 0.
+     * @return The non-negative base-10 integer to be calculated.
+     * Example 1: {@code toUnsignedInt(new boolean[]{true,true,true}); //returns 7. bool array represents 111}
+     * Example 2: {@code toUnsignedInt(new boolean[]{true,true,false}); //returns 6. bool array represents 110}
      */
     public static int toUnsignedInt(boolean[] bin){
         int r=(bin[0] ? 1 : 0);
@@ -33,9 +39,13 @@ public class BinaryTools{
     }
 
     /**
-     * Calculates a base-10 integer from an array of boolean values that represent 2s compliment binary string.
-     * @param bin The boolean array to be evaluated that represents a base-10 integer.
+     * Calculates a base-10 integer from an array of boolean values that represent 2s complement number.
+     * @param bin The boolean array to be evaluated that represents a base-10 integer in 2s complement notation.
+     * Must be non-null and contain at least 1 element.
      * @return The base-10 integer to be calculated.
+     * Example 1: {@code to2sCompInt(new boolean[]{true,true,true}); //returns -1. bool array represents 111}
+     * Example 2: {@code to2sCompInt(new boolean[]{false,true,true,true}); //returns 7. bool array represents 0111}
+     * Example 3: {@code to2sCompInt(new boolean[]{true,true,false}); //returns -2. bool array represents 110}
      */
     public static int to2sCompInt(boolean[] bin){
         int r=(bin[0] ? -1 : 0);
@@ -44,9 +54,13 @@ public class BinaryTools{
     }
 
     /**
-     * Calculates a base-10 positive long integer from an array of boolean values that represent 2s compliment binary string.
-     * @param bin The boolean array to be evaluated that represents a positive long base-10 integer.
+     * Calculates a base-10 non-negative long integer from an array of boolean values that represent 2s complement binary number.
+     * @param bin The boolean array to be evaluated that represents a non-negative long base-10 integer.
+     * Must be non-null and contain at least 1 element.
+     * Most significant bit is at index 0.
      * @return The base-10 long integer to be calculated.
+     * Example 1: {@code toUnsignedLong(new boolean[]{true,true,true}); //returns 7L. bool array represents 111}
+     * Example 2: {@code toUnsignedLong(new boolean[]{true,true,false}); //returns 6L. bool array represents 110}
      */
     public static long toUnsignedLong(boolean[] bin){
         long r=(bin[0] ? 1 : 0);
@@ -55,9 +69,13 @@ public class BinaryTools{
     }
 
     /**
-     * Calculates a base-10 long integer from an array of boolean values that represent 2s compliment binary string.
-     * @param bin The boolean array to be evaluated that represents a base-10 integer.
+     * Calculates a base-10 long integer from an array of boolean values that represent 2s complement binary number.
+     * @param bin The boolean array to be evaluated that represents a base-10 integer in 2s complement notation.
+     * Must be non-null and contain at least 1 element.
      * @return The base-10 integer to be calculated.
+     * Example 1: {@code to2sCompLong(new boolean[]{true,true,true}); //returns -1L. bool array represents 111}
+     * Example 2: {@code to2sCompLong(new boolean[]{false,true,true,true}); //returns 7L. bool array represents 0111}
+     * Example 3: {@code to2sCompLong(new boolean[]{true,true,false}); //returns -2L. bool array represents 110}
      */
     public static long to2sCompLong(boolean[] bin){
         long r=(bin[0] ? -1 : 0);
@@ -65,6 +83,19 @@ public class BinaryTools{
         return r;
     }
 
+    /**
+     * Calculates a base-10 integer from boolean array subset.
+     * @param bin A boolean array. Does not represent any particular type of format.
+     * Must be non-null and contain at least 1 element.
+     * @param startIndex The index of the most significant bit in the subset to be used for the calculation.
+     * @param length The total number of consecutive elements to be used in {@code bin}.
+     * @return The base-10 integer to be calculated.
+     * Example: {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
+     * Example 1: {@code toUnsignedIntFromBoolSubset(exampleBoolArray,1,3); //returns 2. subset array: 010, indexes 1, 2, and 3.}
+     * Example 2: {@code toUnsignedIntFromBoolSubset(exampleBoolArray,1,4); //returns 5. subset array: 0101, indexes 1, 2, 3, and 4.}
+     * Example 3: {@code toUnsignedIntFromBoolSubset(exampleBoolArray,0,4); //returns 10. subset array: 1010, indexes 0, 1, 2, and 3.}
+     * Example 4: {@code toUnsignedIntFromBoolSubset(exampleBoolArray,2,3); //returns 5. subset array: 101, indexes 2, 3, and 4}
+     */
     public static int toUnsignedIntFromBoolSubset(boolean[] bin, int startIndex, int length){
         int r=(bin[startIndex] ? 1 : 0);
         int maxIndex = startIndex + length;
@@ -72,6 +103,19 @@ public class BinaryTools{
         return r;
     }
 
+    /**
+     * Calculates a base-10 long integer from boolean array subset.
+     * @param bin A boolean array. Does not represent any particular type of format.
+     * Must be non-null and contain at least 1 element.
+     * @param startIndex The index of the most significant bit in the subset to be used for the calculation.
+     * @param length The total number of consecutive elements to be used in {@code bin}..
+     * @return The base-10 integer to be calculated.
+     * Example: {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
+     * Example 1: {@code toUnsignedLongFromBoolSubset(exampleBoolArray,1,3); //returns 2L. subset array: 010, indexes 1, 2, and 3.}
+     * Example 2: {@code toUnsignedLongFromBoolSubset(exampleBoolArray,1,4); //returns 5L. subset array: 0101, indexes 1, 2, 3, and 4.}
+     * Example 3: {@code toUnsignedLongFromBoolSubset(exampleBoolArray,0,4); //returns 10L. subset array: 1010, indexes 0, 1, 2, and 3.}
+     * Example 4: {@code toUnsignedLongFromBoolSubset(exampleBoolArray,2,3); //returns 5L. subset array: 101, indexes 2, 3, and 4}
+     */
     public static long toUnsignedLongFromBoolSubset(boolean[] bin, int startIndex, int length){
         long r=(bin[startIndex] ? 1 : 0);
         int maxIndex = startIndex + length;
@@ -79,6 +123,16 @@ public class BinaryTools{
         return r;
     }
 
+    /**
+     * Determines if two boolean arrays are equivalent
+     * @param bin1 A boolean array.
+     * @param bin2 A boolean array.
+     * @return {@code true} if both arrays have the same length and every element in {@code bin1} 
+     * is equal to the corresponding element in {@code bin2}; {@code false} otherwise.
+     * Example 1: {@code isEqualBoolArray(new boolean[]{true,false},new boolean[]{true,false}); //returns true.}
+     * Example 2: {@code isEqualBoolArray(new boolean[]{true,false},new boolean[]{false,true}); //returns false.}
+     * Example 3: {@code isEqualBoolArray(new boolean[]{true,true},new boolean[]{true,true,true}); //returns false.}
+     */
     public static boolean isEqualBoolArray(boolean[] bin1, boolean[] bin2){
         if(bin1.length != bin2.length) return false;
         for(int i=0; i<bin1.length; ++i){
