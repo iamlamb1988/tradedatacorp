@@ -129,13 +129,14 @@ public class BinaryTools{
 
     /**
      * Determines if two boolean arrays are equivalent
-     * @param bin1 A boolean array.
-     * @param bin2 A boolean array.
+     * @param bin1 A boolean array. Must be non-null and contain at least 1 element.
+     * @param bin2 A boolean array. Must be non-null and contain at least 1 element.
      * @return {@code true} if both arrays have the same length and every element in {@code bin1} 
      * is equal to the corresponding element in {@code bin2}; {@code false} otherwise.
      * Example 1: {@code isEqualBoolArray(new boolean[]{true,false},new boolean[]{true,false}); //returns true.}
      * Example 2: {@code isEqualBoolArray(new boolean[]{true,false},new boolean[]{false,true}); //returns false.}
-     * Example 3: {@code isEqualBoolArray(new boolean[]{true,true},new boolean[]{true,true,true}); //returns false.}
+     * Example 3: {@code isEqualBoolArray(new boolean[]{true,true},new boolean[]{false,true,true}); //returns false.}
+     * Example 4: {@code isEqualBoolArray(new boolean[]{true,true},new boolean[]{true,true,true}); //returns false.}
      */
     public static boolean isEqualBoolArray(boolean[] bin1, boolean[] bin2){
         if(bin1.length != bin2.length) return false;
@@ -145,18 +146,58 @@ public class BinaryTools{
         return true;
     }
 
+    /**
+     * Determines if two boolean arrays representing non-negative binary numbers are equivalent in value. 
+     * @param bin1 A boolean array representing a non-negative base-10 integer. Must be non-null and contain at least 1 element.
+     * @param bin2 A boolean array representing a non-negative base-10 integer. Must be non-null and contain at least 1 element.
+     * @return {@code true} if both arrays evaluate to the same unsigned integer in {@code bin1}; {@code false} otherwise.
+     * Example 1: {@code isEqualUnsignedIntValue(new boolean[]{true,false},new boolean[]{true,false}); //returns true. 2 == 2}
+     * Example 2: {@code isEqualUnsignedIntValue(new boolean[]{true,false},new boolean[]{false,true}); //returns false. 2 != 1}
+     * Example 3: {@code isEqualUnsignedIntValue(new boolean[]{true,true},new boolean[]{false,true,true}); //returns true. 3 == 3}
+     * Example 4: {@code isEqualUnsignedIntValue(new boolean[]{true,true},new boolean[]{true,true,true}); //returns false. 3 != -7}
+     */
     public static boolean isEqualUnsignedIntValue(boolean[] bin1, boolean[] bin2){
         return toUnsignedInt(bin1) == toUnsignedInt(bin2);
     }
 
+    /**
+     * Determines if two boolean arrays of a 2s complement binary number are equivalent in value.
+     * @param bin1 A boolean array representing an integer in 2s complement notation. Must be non-null and contain at least 1 element.
+     * @param bin2 A boolean array representing an integer in 2s complement notation. Must be non-null and contain at least 1 element.
+     * @return {@code true} if both arrays evaluate to the same 2s complement integer in {@code bin1}; {@code false} otherwise.
+     * Example 1: {@code isEqual2sCompIntValue(new boolean[]{true,false},new boolean[]{true,false}); //returns true. -2 == -2}
+     * Example 2: {@code isEqual2sCompIntValue(new boolean[]{true,false},new boolean[]{false,true}); //returns false.  -2 != 1}
+     * Example 3: {@code isEqual2sCompIntValue(new boolean[]{true,true},new boolean[]{false,true,true}); //returns false. -1 != 3}
+     * Example 4: {@code isEqual2sCompIntValue(new boolean[]{true,true},new boolean[]{true,true,true}); //returns true. -1 == -1}
+     */
     public static boolean isEqual2sCompIntValue(boolean[] bin1, boolean[] bin2){
         return to2sCompInt(bin1) == to2sCompInt(bin2);
     }
 
+    /**
+     * Determines if two boolean arrays representing non-negative binary numbers are equivalent in value. 
+     * @param bin1 A boolean array representing a non-negative base-10 integer. Must be non-null and contain at least 1 element.
+     * @param bin2 A boolean array representing a non-negative base-10 integer. Must be non-null and contain at least 1 element.
+     * @return {@code true} if both arrays evaluate to the same unsigned integer in {@code bin1}; {@code false} otherwise.
+     * Example 1: {@code isEqualUnsignedIntValue(new boolean[]{true,false},new boolean[]{true,false}); //returns true. 2L == 2L}
+     * Example 2: {@code isEqualUnsignedIntValue(new boolean[]{true,false},new boolean[]{false,true}); //returns false. 2L != 1L}
+     * Example 3: {@code isEqualUnsignedIntValue(new boolean[]{true,true},new boolean[]{false,true,true}); //returns true. 3L == 3L}
+     * Example 4: {@code isEqualUnsignedIntValue(new boolean[]{true,true},new boolean[]{true,true,true}); //returns false. 3L != -7L}
+     */
     public static boolean isEqualUnsignedLongValue(boolean[] bin1, boolean[] bin2){
         return toUnsignedLong(bin1) == toUnsignedLong(bin2);
     }
 
+    /**
+     * Determines if two boolean arrays of a 2s complement binary number are equivalent in value.
+     * @param bin1 A boolean array representing an integer in 2s complement notation. Must be non-null and contain at least 1 element.
+     * @param bin2 A boolean array representing an integer in 2s complement notation. Must be non-null and contain at least 1 element.
+     * @return {@code true} if both arrays evaluate to the same 2s complement integer in {@code bin1}; {@code false} otherwise.
+     * Example 1: {@code isEqual2sCompIntValue(new boolean[]{true,false},new boolean[]{true,false}); //returns true. -2L == -2L}
+     * Example 2: {@code isEqual2sCompIntValue(new boolean[]{true,false},new boolean[]{false,true}); //returns false.  -2L != 1L}
+     * Example 3: {@code isEqual2sCompIntValue(new boolean[]{true,true},new boolean[]{false,true,true}); //returns false. -1L != 3L}
+     * Example 4: {@code isEqual2sCompIntValue(new boolean[]{true,true},new boolean[]{true,true,true}); //returns true. -1L == -1L}
+     */
     public static boolean isEqual2sCompLongValue(boolean[] bin1, boolean[] bin2){
         return to2sCompLong(bin1) == to2sCompLong(bin2);
     }
