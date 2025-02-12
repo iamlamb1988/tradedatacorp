@@ -202,30 +202,83 @@ public class BinaryTools{
         return to2sCompLong(bin1) == to2sCompLong(bin2);
     }
 
+    /**
+     * Clones a new instance of a boolean array.
+     * @param originalBin The boolean array to be cloned. Must not be null.
+     * @return New boolean array that is equivalent to {@code originalBin}.
+     * Example: {@code
+     * isEqualBoolArray(originalBin, genClone(originalBin)); //Evaluates to true
+     * originalBin != genClone(originalBin); //Evaluates to false}
+     */
     public static boolean[] genClone(boolean[] originalBin){
         boolean[] r = new boolean[originalBin.length];
         for(byte i=(byte)(r.length-1);i>=0;--i){r[i] = originalBin[i];}
         return r;
     }
 
+    /**
+     * Returns a new instance of a boolean array that is a subset of another boolean array.
+     * @param inclusiveStartIndex The index of the most significant bit in the subset. This is the starting index of {@code bin}
+     * @param subsetLength The total number of consecutive elements to be used in {@code bin}. Also, the length of the return value
+     * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
+     * @return New boolean array that is a subset of {@code bin}.
+     * Example: {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
+     * Example 1: {@code genSubset(1,3,exampleBoolArray); //returns {false,true,false} //index 1, 2, and 3.}
+     * Example 2: {@code genSubset(1,4,exampleBoolArray); //returns {false,true,false,true} //index 1, 2, 3, and 4.}
+     * Example 3: {@code genSubset(0,4,exampleBoolArray); //returns {true,false,true,false} //index 0, 1, 3, and 3.}
+     * Example 4: {@code genSubset(2,3,exampleBoolArray); //returns {true,false,true} //index 2, 3, and 4.}
+     */
     public static boolean[] genSubset(int inclusiveStartIndex, int subsetLength, boolean[] bin){
         boolean[] r = new boolean[subsetLength];
         for(int i=0; i<subsetLength; ++i){r[i] = bin[inclusiveStartIndex+i];}
         return r;
     }
 
+    /**
+     * Returns a new instance of a boolean array that is a subset of another boolean array.
+     * @param inclusiveStartIndex The index of the most significant bit in the subset. This is the starting index of {@code bin}
+     * @param inclusiveEndIndex The index of the least significant bit in the subset. This is the starting index of {@code bin}
+     * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
+     * @return New boolean array that is a subset of {@code bin}. Then length of array is {@code inclusiveStartIndex - inclusiveEndIndex + 1}.
+     * Example: {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
+     * Example 1: {@code genSubsetFromIndexes(1,3,exampleBoolArray); //returns {false,true,false} //index 1, 2, and 3.}
+     * Example 2: {@code genSubsetFromIndexes(1,4,exampleBoolArray); //returns {false,true,false,true} //index 1, 2, 3, and 4.}
+     * Example 3: {@code genSubsetFromIndexes(0,4,exampleBoolArray); //returns {true,false,true,false,true} //The entire original array.}
+     * Example 4: {@code genSubsetFromIndexes(2,3,exampleBoolArray); //returns {true,false} //index 2 and 3.}
+     */
     public static boolean[] genSubsetFromIndexes(int inclusiveStartIndex, int inclusiveEndIndex, boolean[] bin){
         boolean[] r = new boolean[inclusiveEndIndex - inclusiveStartIndex + 1];
         for(int i=0; i<r.length; ++i){r[i] = bin[inclusiveStartIndex+i];}
         return r;
     }
 
+    /**
+     * Returns a new instance of a boolean array that is a left subset of another boolean array. The most significant bit as at index 0.
+     * @param exclusiveRightIndex The index immediately after the last element to include in the subset.
+     * Must be greater than or equal to 0 and less than or equal to the length of {@code bin}.
+     * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
+     * @return New boolean array that is a subset of {@code bin}. Then length of array is {@code exclusiveRightIndex}.
+     * Example: {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
+     * Example 1: {@code genLeftSubset(1,exampleBoolArray); //returns {true,false} //index 0 and 1}
+     * Example 2: {@code genLeftSubset(3,exampleBoolArray); //returns {true,false,true} //index 0, 1, and 2}
+     * Example 3: {@code genLeftSubset(5,exampleBoolArray); //returns the equivalent bin array (indexes 0 - 4)}
+     */
     public static boolean[] genLeftSubset(int exclusiveRightIndex, boolean[] bin){
         boolean[] r = new boolean[exclusiveRightIndex];
         for(int i=0; i<exclusiveRightIndex; ++i){r[i] = bin[i];}
         return r;
     }
 
+    /**
+     * Returns a new instance of a boolean array that is a left subset of another boolean array. The least significant bit as at index {@code bin.length - 1}.
+     * @param inclusiveLeftIndex The index of the most significant bit in the subset. This is the starting index of {@code bin}
+     * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
+     * @return New boolean array that is a subset of {@code bin}.
+     * Example: {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
+     * Example 1: {@code genRightSubset(1,exampleBoolArray); //returns {false,true,false,true} //index 1, 2, 3, and 4}
+     * Example 2: {@code genRightSubset(3,exampleBoolArray); //returns {false,true} //index 3 and 4}
+     * Example 3: {@code genRightSubset(0,5,exampleBoolArray); //returns the equivalent bin array (indexes 0 - 4)}
+     */
     public static boolean[] genRightSubset(int inclusiveLeftIndex, boolean[] bin){
         boolean[] r = new boolean[bin.length-inclusiveLeftIndex];
         for(int i=0; i<r.length; ++i){r[i] = bin[inclusiveLeftIndex+i];}
