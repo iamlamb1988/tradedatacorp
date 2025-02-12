@@ -285,19 +285,41 @@ public class BinaryTools{
         return r;
     }
 
-    public static boolean[] genBoolArrayFromUnsignedInt(int val, int bit_size){
-        boolean[] r = new boolean[bit_size];
-        for(byte i=(byte)(bit_size-1); i>=0; --i){
-            r[i] = ((val & 1) == 1 ? true : false);
+    /**
+     * Returns a new instance of a boolean array representing an unsigned integer.
+     * @param val The value to be represented by the return boolean array. Must be non-negative.
+     * @param bitSize The length of the boolean array.
+     * @return New boolean array that represents the unsigned {@code val} where most significant bit is at index 0.
+     * This will return an incorrect value if {@code bitSize} is too small for {@code val}.
+     * Example 1: {@code genBoolArrayFromUnsignedInt(7,3); //returns {true,true,true}} binary: 111
+     * Example 2: {@code genBoolArrayFromUnsignedInt(7,4); //returns {false,true,true,true}} binary: 0111
+     * Example 3: {@code genBoolArrayFromUnsignedInt(5,3); //returns {true,false,true}} binary: 101
+     * Example 4: {@code genBoolArrayFromUnsignedInt(0,5); //returns {false,false,false,false,false}} binary: 00000
+     */
+    public static boolean[] genBoolArrayFromUnsignedInt(int val, int bitSize){
+        boolean[] r = new boolean[bitSize];
+        for(byte i=(byte)(bitSize-1); i>=0; --i){
+            r[i] = ((val & 1) == 1);
             val = val >>> 1;
         }
         return r;
     }
 
-    public static boolean[] genBoolArrayFromUnsignedLong(long val, int bit_size){
-        boolean[] r = new boolean[bit_size];
-        for(byte i=(byte)(bit_size-1); i>=0; --i){
-            r[i] = ((val & 1) == 1 ? true : false);
+    /**
+     * Returns a new instance of a boolean array representing an unsigned integer.
+     * @param val The value to be represented by the return boolean array. Must be non-negative.
+     * @param bitSize The length of the boolean array.
+     * @return New boolean array that represents the unsigned {@code val} where most significant bit is at index 0.
+     * This will return an incorrect value if {@code bitSize} is too small for {@code val}.
+     * Example 1: {@code genBoolArrayFromUnsignedInt(7L,3); //returns {true,true,true}} binary: 111
+     * Example 2: {@code genBoolArrayFromUnsignedInt(7L,4); //returns {false,true,true,true}} binary: 0111
+     * Example 3: {@code genBoolArrayFromUnsignedInt(5L,3); //returns {true,false,true}} binary: 101
+     * Example 4: {@code genBoolArrayFromUnsignedInt(0L,5); //returns {false,false,false,false,false}} binary: 00000
+     */
+    public static boolean[] genBoolArrayFromUnsignedLong(long val, int bitSize){
+        boolean[] r = new boolean[bitSize];
+        for(byte i=(byte)(bitSize-1); i>=0; --i){
+            r[i] = ((val & 1) == 1);
             val = val >>> 1;
         }
         return r;
