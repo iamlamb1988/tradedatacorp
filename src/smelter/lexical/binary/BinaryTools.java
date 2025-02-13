@@ -366,8 +366,8 @@ public class BinaryTools{
      * Must be non-null and contain at least 1 element.
      * @return New boolean array that represents the 2s complement negation of {@code bin}.
      * <p>Example:</p><pre><code>
-     * Example 1: {@code gen2sCompNegate(new boolean{true, true, true}); //returns {false, false, true} from bin: 111 = -1 to bin: 001 = 1
-     * Example 2: {@code gen2sCompNegate(new boolean{true, true, false, false}); //returns {false, true, false, false} from bin: 1100 = -4 to bin: 0100 = 4
+     * Example 1: {@code gen2sCompNegate(new boolean[]{true, true, true}); //returns {false, false, true} from bin: 111 = -1 to bin: 001 = 1}
+     * Example 2: {@code gen2sCompNegate(new boolean[]{true, true, false, false}); //returns {false, true, false, false} from bin: 1100 = -4 to bin: 0100 = 4}
      * </code></pre>
      */
     public static boolean[] gen2sCompNegate(boolean[] bin){
