@@ -338,6 +338,19 @@ public class BinaryTools{
     }
 
     /**
+     * Generates a new instance of a boolean array that represents an unsigned integer.
+     * The size of the array is the smallest possible size needed to represent the integer.
+     * @param value The value that the boolean array will represent. Must be a non-negative value.
+     * @return A boolean array that represents {@code value}.
+     */
+    public static boolean[] genUnsignedIntToMinimumBoolArray(int value){
+        return genBoolArrayFromUnsignedInt(
+            value,
+            getMinimumNumberOfBits(value)
+        );
+    }
+
+    /**
      * Returns a new instance of a boolean array representing an unsigned integer.
      * @param val The value to be represented by the return boolean array. Must be non-negative.
      * @param bitSize The length of the boolean array.
@@ -519,13 +532,6 @@ public class BinaryTools{
         }
 
         for(int i=index_preserved-1; i>=0; --i){bin[i]=!bin[i];}
-    }
-
-    public static boolean[] genUnsignedIntToMinimumBoolArray(int value){
-        return genBoolArrayFromUnsignedInt(
-            value,
-            (byte)getMinimumNumberOfBits(value)
-        );
     }
 
     public static boolean[] genConcatenatedBoolArrays(boolean[]... binArrays){
