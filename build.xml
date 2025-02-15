@@ -1,17 +1,55 @@
-<project name="compile">
+<project name="tradedatacorp">
 	<property name="source" location="src" relative="true" />
+	<property name="unittest" location="test" relative="true" />
+	<property name="bin" location="bin" relative="true" />
 	<property name="jarsource" location="." relative="true" />
+	<property name="docsource" location="docs" relative="true" />
 
 	<target name="clean">
-		<delete dir="${source}" />
+		<delete dir="${bin}" />
 	</target>
 
 	<target name="compile">
-		<mkdir dir="${source}"/>
-		<javac srcdir="." destdir="${source}" />
+		<mkdir dir="${bin}"/>
+		<javac srcdir="${source}" destdir="${bin}" />
+	</target>
+
+	<target name="compileunittest">
+		<mkdir dir="${bin}"/>
+		<javac destdir="${bin}">
+			<src path="${source}" />
+			<src path="${unittest}" />
+			<classpath>
+				<pathelement location="junit-platform-console-standalone-1.11.4.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="gendocs">
+		<delete dir="${docsource}" />
+		<mkdir dir="${docsource}" />
+		<javadoc sourcepath="${source}" destdir="${docsource}" packagenames="*">
+			<fileset dir="${source}" defaultexcludes="yes">
+				<include name="**/*.java" />
+			</fileset>
+		</javadoc>
 	</target>
 
 	<target name="craft" depends="compile">
-		<jar destfile="tradedatacore-V0-M.jar" basedir="src/" />
+		<jar destfile="tradedatacore-V0-M.jar" basedir="bin/" />
+	</target>
+
+	<target name="craftunittest" depends="compileunittest">
+		<jar destfile="tradedatacore-unittest-V0-M.jar" basedir="bin/" />
+	</target>
+
+	<target name="exetest" depends="compileunittest">
+		<java jar="junit-platform-console-standalone-1.11.4.jar" fork="true">
+			<arg value="execute" />
+			<arg value="-cp"/>
+			<arg value="${bin}"/>
+			<arg value="--scan-class-path" />
+			<arg value="--reports-dir=./unit-test-results" />
+		</java>
 	</target>
 </project>

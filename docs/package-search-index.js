@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"item.stick"},{"l":"item.stick.info"},{"l":"item.stick.primitive"},{"l":"item.stick.primitive.mod"},{"l":"smelter"},{"l":"smelter.filesmelter"},{"l":"smelter.lexical"},{"l":"smelter.lexical.binary"},{"l":"warehouse"}];updateSearchResults();
