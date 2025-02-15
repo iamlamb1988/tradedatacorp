@@ -534,6 +534,20 @@ public class BinaryTools{
         for(int i=index_preserved-1; i>=0; --i){bin[i]=!bin[i];}
     }
 
+    /**
+     * Generates a new boolean array by concatenating several different arrays into a singular array.
+     * @param binArrays A collection of boolean arrays that will be merged in order from left to right or index 0 to binArrays.length.
+     * @return The concatenation of all arrays in {@code binArrays}..
+     * <p>Example:</p><pre><code>
+     * Example 1: genConcatenatedBoolArrays(new boolean[]{true, true}, new boolean[]{false, false}); //returns new boolean[]{true, true, false, false};
+     * Example 2: 
+     * boolean[][] bin2 = new boolean[3][];
+     * bin2[0] = new boolean[]{true, true};
+     * bin2[1] = new boolean[]{false, false};
+     * bin2[2] = new boolean[]{true, false};
+     * genConcatenatedBoolArrays(bin2); //returns new boolean[]{true, true, false, false, true, false}; 
+     * </code></pre>
+     */
     public static boolean[] genConcatenatedBoolArrays(boolean[]... binArrays){
         int sizeR=0;
         int intIndex=0;
@@ -549,6 +563,22 @@ public class BinaryTools{
         return r;
     }
 
+    /**
+     * Generates a new boolean array by concatenating several different 2D boolean arrays into a single 1D array.
+     * @param bin3DArray A collection of 2D boolean arrays that will be merged in order from left to right and top to bottom.
+     * @return A new boolean array containing all elements from {@code bin3DArray} in order.
+     * <p>Example:</p>
+     * <pre><code>
+     * // Example:
+     * boolean[][][] bin3DArray = {
+     *     { {true, true}, {false} },
+     *     { {false, true}, {true, false} }
+     * };
+     *
+     * boolean[] result = genConcatenatedBoolArrays(bin3DArray);
+     * // result = {true, true, false, false, true, true, false}
+     * </code></pre>
+     */
     public static boolean[] genConcatenatedBoolArrays(boolean[][]... bin3DArray){
         int sizeR=0;
         int intIndex=0;
