@@ -7,6 +7,8 @@ package tradedatacorp.smelter.lexical.binary;
 /**
  * A utility class providing stateless static methods for converting between 
  * binary representations (arrays or collections) and integers.
+ * This class will not check for any invalid input nor exceptions.
+ * User is fully responsible for ensuring valid arguments are passed into each function.
  */
 public class BinaryTools{
     public static final double LOG10_BASE2 = Math.log10(2);
@@ -15,6 +17,7 @@ public class BinaryTools{
      * Calculates the minimum number of bits required to represent a non-negative base-10 integer in binary.
      * @param nonNegativeInteger a non-negative integer to be evaluated.
      * @return The minimum number of bits to represent the non-negative integer.
+     * NOTE: If {@code nonNegativeInteger} is negative, it's binary representation will be treated as positive and still bitshift accordingly.
      * <p>Examples:</p><pre><code>
      * Example 1: {@code getMinimumNumberOfBits(3); // returns 2. binary 11 => 3, minimum of 2 bits represents 3.}
      * Example 2: {@code getMinimumNumberOfBits(5); // returns 3. binary 101 => 5, minimum of 3 bits represents 5.}
