@@ -34,6 +34,18 @@ import java.util.ArrayList;
  * The Lexical knows the exact length of H1 and each of it's static fields. H2 bit lengths and values will be known based on the value of H1 Fields.
  * The Data will be known based on all the Header data. Such as the bit size of each data point and all of it's attributes.
  * </p>
+ * <p>
+ * Below is a table representing the Header
+ * <table>
+ * <tr><th>Field</th><th>Bit Length</th><th>Full Name</th><th>Description</th></tr>
+ * <tr><td>h1_byid</td><td>1</td><td>By ID</td><td>May not be needed anymore.</td></tr>
+ * <tr><td>h1_int</td><td>25</td><td>Time Frame Interval</td><td>The unsigned integer value represents the number of seconds for the time frame.</td></tr>
+ * <tr><td>h1_ct_len</td><td>26</td><td>Data Count Bit Length</td><td>The unsigned integer value represents number of bits for field h2_data_ct.</td></tr>
+ * </table>
+ * </p>
+ * <p>
+ * Single Datapint TBA
+ * </p>
  */
 public class Original implements BinaryLexical<StickDouble>{
     private String interval;
@@ -274,9 +286,9 @@ public class Original implements BinaryLexical<StickDouble>{
     public boolean[] getBinaryHeaderFlat(){return BinaryTools.genConcatenatedBoolArrays(header);}
 
     /**
-     * Returns a single datapoint
+     * Returns a single datapoint representing a 2D array.
      * @param singleData
-     * @return 
+     * @return 2D boolean array that has 6 elements. Each element represents DataPoint as defined.
      */
     @Override
     public boolean[][] getBinaryData(StickDouble singleData){
