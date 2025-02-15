@@ -498,9 +498,9 @@ public class BinaryTools{
      * Example 2: setUnsignedLongToBoolArray(7L, new boolean[5]); sets the bin to {false, false, true, true, true}: 7 == binary 00111
      * </code></pre>
      */
-    public static void setUnsignedLongToBoolArray(long value, boolean[] boolArray){
-        for(int i=boolArray.length-1; i>=0; --i){
-            boolArray[i] = (value & 1) == 1;
+    public static void setUnsignedLongToBoolArray(long value, boolean[] bin){
+        for(int i=bin.length-1; i>=0; --i){
+            bin[i] = (value & 1) == 1;
             value = value >>> 1;
         }
     }
@@ -639,6 +639,7 @@ public class BinaryTools{
      *   true, false, true //Characters that will be ignored.
      * };
      * Example 2: genStringFrom8BitBoolCharRep(binAB_more); //returns "AB";
+     * </code></pre>
      */
     public static String genStringFrom8BitBoolCharRep(boolean[] EightBitCharBool){
         StringBuilder strBldr = new StringBuilder();

@@ -13,39 +13,30 @@ import java.util.ArrayList;
 
 /**
  * A BinaryLexical implementation for translating {@link StickDouble} instances into binary arrays.
- * <p>
- * This class is designed to efficiently convert {@link StickDouble} instances into boolean arrays 
+ * <p>This class is designed to efficiently convert {@link StickDouble} instances into boolean arrays 
  * that represent their binary form. Each instance of this class is tied to a specific ticker 
  * symbol and a single time interval, ensuring precise and consistent translations.
  * This classes primary focus is to prepare a binary file reader for accurate and efficient reading rather than maximum write speed.
- * A file write should be able to write pretty fast if certain meta information is known beforehand.
- * </p>
- * <p>
- * The state of the lexical primarily consists of the Header and the Data.
+ * A file write should be able to write pretty fast if certain meta information is known beforehand.</p>
+ * <p>The state of the lexical primarily consists of the Header and the Data.
  * The Header represents the meta data about all the data, including how many data points are stored and how long each field is.
  * The Header is split into 2 parts H1 and H2. H1 contains all fixed bit lengths but values may change.
  * H2 consists of variable bit lengths based on different dependencies.
  * The Data consists of many Stick data points. The details about each stick attributes are in the Header fields.
  * The Header and the Data make up the Content of this {@link BinaryLexical}. This class is not meant to hold an entire large file all at once.
- * It is meant to hold portions of Content such that a file writer can write portions of a full file at a time.
- * </p>
- * <p>
- * When a Lexical reads valid Content for the first time, it is exptected to read from left to right: H1, H2, data elements.
+ * It is meant to hold portions of Content such that a file writer can write portions of a full file at a time.</p>
+ * <p>When a Lexical reads valid Content for the first time, it is exptected to read from left to right: H1, H2, data elements.
  * The Lexical knows the exact length of H1 and each of it's static fields. H2 bit lengths and values will be known based on the value of H1 Fields.
- * The Data will be known based on all the Header data. Such as the bit size of each data point and all of it's attributes.
- * </p>
- * <p>
- * Below is a table representing the Header
+ * The Data will be known based on all the Header data. Such as the bit size of each data point and all of it's attributes.</p>
+ * <p>Below is a table representing the Header</p>
  * <table>
+ * <caption>Header Fields</caption>
  * <tr><th>Field</th><th>Bit Length</th><th>Full Name</th><th>Description</th></tr>
  * <tr><td>h1_byid</td><td>1</td><td>By ID</td><td>May not be needed anymore.</td></tr>
  * <tr><td>h1_int</td><td>25</td><td>Time Frame Interval</td><td>The unsigned integer value represents the number of seconds for the time frame.</td></tr>
  * <tr><td>h1_ct_len</td><td>26</td><td>Data Count Bit Length</td><td>The unsigned integer value represents number of bits for field h2_data_ct.</td></tr>
  * </table>
- * </p>
- * <p>
- * Single Datapint TBA
- * </p>
+ * <p>Single Datapint TBA</p>
  */
 public class Original implements BinaryLexical<StickDouble>{
     private String interval;
