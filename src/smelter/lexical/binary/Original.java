@@ -54,6 +54,14 @@ import java.util.ArrayList;
  * <tr><td>UTC Time Stamp</td><td>t_h1_utc_len</td><td>The unsigned integer UTC timestamp that represents the number of milliseconds since Jan 1st 1970.</td></tr>
  * <tr><td>Open Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the Open price.</td></tr>
  * <tr><td>Open Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the Open price.</td></tr>
+ * <tr><td>High Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the High price.</td></tr>
+ * <tr><td>High Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the High price.</td></tr>
+ * <tr><td>Low Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the Low price.</td></tr>
+ * <tr><td>Low Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the Low price.</td></tr>
+ * <tr><td>Close Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the Close price.</td></tr>
+ * <tr><td>Close Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the Close price.</td></tr>
+ * <tr><td>Volume Whole Value</td><td>t_h1_vw_len</td><td>The unsigned integer that represents the whole number portion of the Volume price.</td></tr>
+ * <tr><td>Volume Fractional Value</td><td>t_h1_vf_len</td><td>The unsigned integer that represents the fractional side of the Volume price.</td></tr>
  * </table>
  */
 public class Original implements BinaryLexical<StickDouble>{
