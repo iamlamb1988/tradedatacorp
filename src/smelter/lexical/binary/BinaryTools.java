@@ -9,9 +9,6 @@ package tradedatacorp.smelter.lexical.binary;
  * binary representations (arrays or collections) and integers.
  */
 public class BinaryTools{
-    public static final byte ZED=(byte)0;
-    public static final byte ONE=(byte)1;
-    public static final byte NEG_ONE=(byte)-1;
     public static final double LOG10_BASE2 = Math.log10(2);
 
     /**
