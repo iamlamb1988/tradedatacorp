@@ -303,9 +303,9 @@ public class Original implements BinaryLexical<StickDouble>{
     public boolean[] getBinaryHeaderFlat(){return BinaryTools.genConcatenatedBoolArrays(header);}
 
     /**
-     * Returns a single datapoint representing a 2D array.
-     * @param singleData
-     * @return 2D boolean array that has 6 elements. Each element represents DataPoint as defined.
+     * Returns a single datapoint representing a Data Point Field defined in class header.
+     * @param singleData A Data Stick that will have all fields converted to boolean array IAW Data Point.
+     * @return 2D boolean array that has 11 elements IAW Data Point Fields explained in the class header table.
      */
     @Override
     public boolean[][] getBinaryData(StickDouble singleData){
@@ -317,6 +317,11 @@ public class Original implements BinaryLexical<StickDouble>{
         return binData;
     }
 
+    /**
+     * Returns a single flattened datapoint representing a Data Point Field defined in class header.
+     * @param singleData A Data Stick that will have all fields converted to boolean array IAW Data Point.
+     * @return A flattened array where all 11 elements IAW Data Point Fields explained in the class header table are concatenated into a single boolean array.
+     */
     @Override
     public boolean[] getBinaryDataFlat(StickDouble singleData){
         boolean[] binData = new boolean[t_h1_data_len];
