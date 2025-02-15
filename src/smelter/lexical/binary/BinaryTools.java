@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 09 JAN 2025
+ * @since 14 FEB 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -567,9 +567,7 @@ public class BinaryTools{
      * Generates a new boolean array by concatenating several different 2D boolean arrays into a single 1D array.
      * @param bin3DArray A collection of 2D boolean arrays that will be merged in order from left to right and top to bottom.
      * @return A new boolean array containing all elements from {@code bin3DArray} in order.
-     * <p>Example:</p>
-     * <pre><code>
-     * // Example:
+     * <p>Example:</p><pre><code>
      * boolean[][][] bin3DArray = {
      *     { {true, true}, {false} },
      *     { {false, true}, {true, false} }
@@ -598,6 +596,16 @@ public class BinaryTools{
         return r;
     }
 
+    /**
+     * Generates a boolean array instance of a string where each 8 booleans represent the ASCII character. The resulting array has a length equal to 8 times the number of characters in {@code asciiString}.
+     * @param asciiString The string that will be used to generate the boolean array to be returned.
+     * @return The boolean array that represents the {@code asciiString}.
+     * Example: genBoolArrayFrom8BitCharString("AB"); //A is 65 == binary: 0100 0001, B is 66 == binary: 0100 0010
+     * Returns new boolean[]{
+     *   false, true, false,false, false, false, false, true, //char A
+     *   false, true, false,false, false, false, true, false, //char B
+     * };
+     */
     public static boolean[] genBoolArrayFrom8BitCharString(String asciiString){
         byte EIGHT_BITS = (byte)8;
 
@@ -614,6 +622,24 @@ public class BinaryTools{
         return r;
     }
 
+    /**
+     * Returns a String by converting every 8 bits into an integer that represents an ascii character.
+     * @param EightBitCharBool The boolean array that represents a string to be returned.
+     * @return String represented by {@code EightBitCharBool}. Ignores any remaining bits if their count is not a multiple of 8.
+     * <p>Example:</p><pre><code>
+     * binAB = new boolean[]{
+     *   false, true, false,false, false, false, false, true, //char A
+     *   false, true, false,false, false, false, true, false, //char B
+     * };
+     * Example 1: genStringFrom8BitBoolCharRep(binAB); //returns "AB";
+     * 
+     * binAB_more = new boolean[]{
+     *   false, true, false,false, false, false, false, true, //char A
+     *   false, true, false,false, false, false, true, false, //char B
+     *   true, false, true //Characters that will be ignored.
+     * };
+     * Example 2: genStringFrom8BitBoolCharRep(binAB_more); //returns "AB";
+     */
     public static String genStringFrom8BitBoolCharRep(boolean[] EightBitCharBool){
         StringBuilder strBldr = new StringBuilder();
         boolean[] charBin = new boolean[8];
