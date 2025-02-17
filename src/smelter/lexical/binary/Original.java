@@ -260,10 +260,10 @@ public class Original implements BinaryLexical<StickDouble>{
         int remainder = headerExceptGapLength%8;
         byte T_gap;
 
-
         if(remainder != 0) T_gap = (byte)(8-remainder);
         else T_gap=(byte)0;
 
+        stickList = new ArrayList<StickDouble>();
         constructHeaderFromTranslatedValues(
             false,// boolean T_byid,
             interval,// String T_int,
@@ -692,4 +692,22 @@ public class Original implements BinaryLexical<StickDouble>{
 
     public boolean getByID(){return t_h1_byid;}
     public int getDataBitLength(){return t_h1_data_len;}
+
+    public boolean[][] processDataStick(){
+        if(stickList.size() == 0) return new boolean[0][0];
+        boolean[][] r = getBinaryData(stickList.remove(0));
+        return r;
+    }
+
+    public boolean[][][] processDataSticks(){
+        boolean[][][] r = getBinaryDataPoints(stickList);
+        stickList.clear();
+        return r;
+    }
+
+    public boolean[] processDataSticksFlat(){
+        boolean[] r = getBinaryDataPointsFlat(stickList);
+        stickList.clear();
+        return r;
+    }
 }
