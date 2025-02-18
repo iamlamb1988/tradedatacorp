@@ -65,7 +65,7 @@ import java.util.ArrayList;
  * </table>
  */
 public class Original implements BinaryLexical<StickDouble>{
-    private String interval;
+    private String interval; //probably should be an int or long
     private ArrayList<StickDouble> stickList;
 
     private int h2_total_len;
@@ -585,7 +585,6 @@ public class Original implements BinaryLexical<StickDouble>{
     public int getBase10PriceDigits(){return base10PriceMaxFractionDigit;}
     public int getBase10VolumeDigits(){return base10VolumeMaxFractionDigit;}
 
-    //Set methods
     //This will need to be sped up
     public static void splitWholeFraction(double value, int maxDigits, int[] valueParts){
         int whole = (int)Math.abs(value);
@@ -693,10 +692,18 @@ public class Original implements BinaryLexical<StickDouble>{
     public boolean getByID(){return t_h1_byid;}
     public int getDataBitLength(){return t_h1_data_len;}
 
+    public void setHeaderGap(byte gapBitLength){
+        
+    }
+
     public boolean[][] processDataStick(){
         if(stickList.size() == 0) return new boolean[0][0];
-        boolean[][] r = getBinaryData(stickList.remove(0));
-        return r;
+        return getBinaryData(stickList.remove(0));
+    }
+
+    public boolean[] processDataStickFlat(){
+        if(stickList.size() == 0) return new boolean[0];
+        return getBinaryDataFlat(stickList.remove(0));
     }
 
     public boolean[][][] processDataSticks(){

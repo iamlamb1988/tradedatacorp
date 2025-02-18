@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 9 FEB 2025
+ * @since 18 FEB 2025
  */
 package tradedatacorp.item.stick.primitive;
 
@@ -12,50 +12,88 @@ package tradedatacorp.item.stick.primitive;
  * Unlike the US stockmarket the most decimal points a value may need is 4 or 5. A different CandleStick implementation may be needed for US Stocks.
  */
 public class CandleStickFixedDouble implements StickDouble{
-	public final long UTC;
-	public final double O;
-	public final double H;
-	public final double L;
-	public final double C;
-	public final double V;
+    public final long UTC;
+    public final double O;
+    public final double H;
+    public final double L;
+    public final double C;
+    public final double V;
 
-	//CandleStickFixedDouble Constructors:
-	public CandleStickFixedDouble(
-		long utc_timestamp,
-		double open,
-		double high,
-		double low,
-		double close,
-		double volume
-	){
-		UTC=utc_timestamp;
-		O=open;
-		H=high;
-		L=low;
-		C=close;
-		V=volume;
-	}
+    //CandleStickFixedDouble Constructors:
+    /**
+     * Constructs a new CandleStickFixedDouble with the specified candlestick data.
+     * @param utc_timestamp The UTC timestamp (milliseconds) of the closing value. Represents the number of milliseconds elapsed since January 1, 1970 (epoch time).
+     * @param open The opening price of the candlestick.
+     * @param high The highest price reached during the candlestick's time period.
+     * @param low The lowest price reached during the candlestick's time period.
+     * @param close The closing price of the candlestick.
+     * @param volume The trading volume during the candlestick's time period.
+     */
+    public CandleStickFixedDouble(
+        long utc_timestamp,
+        double open,
+        double high,
+        double low,
+        double close,
+        double volume
+    ){
+        UTC=utc_timestamp;
+        O=open;
+        H=high;
+        L=low;
+        C=close;
+        V=volume;
+    }
 
-	//StickDouble Interface methods:
-	@Override
-	public long getUTC(){return UTC;}
+    //StickDouble Interface methods:
+    /**
+     * Returns the UTC timestamp (milliseconds) of closing value.
+     * @return The UTC timestamp (milliseconds) of the closing value of this stick. The number millisieconds that has elapsed since 1 JAN 1970.
+     * Also indicates the Greenwich Mean Time (GMT) zone or Zulu time. 
+     */
+    @Override
+    public long getUTC(){return UTC;}
 
-	@Override
-	public double getO(){return O;}
+    /**
+     * Returns the opening value of this Stick.
+     * @return The opening value of this Stick.
+     */
+    @Override
+    public double getO(){return O;}
 
-	@Override
-	public double getH(){return H;}
+    /**
+     * Returns the highest value of this Stick.
+     * @return The highest value of this Stick.
+     */
+    @Override
+    public double getH(){return H;}
 
-	@Override
-	public double getL(){return L;}
+    /**
+     * Returns the lowest value of this Stick.
+     * @return The lowest value of this Stick.
+     */
+    @Override
+    public double getL(){return L;}
 
-	@Override
-	public double getC(){return C;}
+    /**
+     * Returns the closing value of this Stick.
+     * @return The closing value of this Stick.
+     */
+    @Override
+    public double getC(){return C;}
 
-	@Override
-	public double getV(){return V;}
+    /**
+     * Returns the volume traded of this Stick.
+     * @return The volume traded of this Stick.
+     */
+    @Override
+    public double getV(){return V;}
 
-	//Comparable Interface methods:
-	@Override
-	public int compareTo(StickDouble otherStick){return Long.compare(UTC,otherStick.getUTC());}
+    //Comparable Interface methods:
+    /**
+     * Returns the time difference between this stick and the next
+     * @return The time difference from the 2nd candlestick to this.
+     */
+    @Override
+    public int compareTo(StickDouble otherStick){return Long.compare(UTC,otherStick.getUTC());}
 }
