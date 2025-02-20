@@ -16,7 +16,7 @@ public class BinaryTools{
     /**
      * This class should not be instantiated.
      */
-    private BinaryTools() {throw new AssertionError("This class should not be instantiated.");}
+    private BinaryTools(){throw new AssertionError("This class should not be instantiated.");}
 
     /**
      * Calculates the minimum number of bits required to represent a non-negative base-10 integer in binary.

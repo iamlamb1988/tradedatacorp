@@ -13,6 +13,7 @@ This version is incomplete and unstable. Will Upgrade to 0-RC upon reaching mini
 Component repositories may or may not work due to not in sync and not in stable state.
 
 Completed class BinaryTools and documentation. No exception checking for this class (This is intentional).
+Completed StickDouble Interface, CandleStickDouble class, and CandleStickFixedDouble class documentation.
 
 Will focus Original Lexical documentation and remaining test cases.
 
