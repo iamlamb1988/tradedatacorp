@@ -75,6 +75,86 @@ public class Original implements BinaryLexical<StickDouble>{
     private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
     private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
 
+    private static final long[] tenToPow;
+    private static final long[] maxFraction;
+    private static final byte[] bitsNeededForTenPow;
+    private static final byte[] bitsNeededForMaxFraction;
+
+    static {
+        tenToPow = new long[16];
+        maxFraction = new long[16];
+        bitsNeededForTenPow = new byte[16];
+        bitsNeededForMaxFraction = new byte[16];
+
+        tenToPow[0] = 1; //10^0 == 1
+        tenToPow[1] = 10; //10^1 == 10
+        tenToPow[2] = 100; //10^2 == 100
+        tenToPow[3] = 1000; //10^3 == 1000
+        tenToPow[4] = 10000;
+        tenToPow[5] = 100_000L;
+        tenToPow[6] = 1_000_000L;
+        tenToPow[7] = 10_000_000L;
+        tenToPow[8] = 100_000_000L;
+        tenToPow[9] = 1_000_000_000L;
+        tenToPow[10] = 10_000_000_000L;
+        tenToPow[11] = 100_000_000_000L;
+        tenToPow[12] = 1_000_000_000_000L;
+        tenToPow[13] = 10_000_000_000_000L;
+        tenToPow[14] = 100_000_000_000_000L;
+        tenToPow[15] = 1_000_000_000_000_000L;
+
+        bitsNeededForTenPow[0] = 1; //One bit is needed to represent 1
+        bitsNeededForTenPow[1] = 4; //log2(10) =~ 3.3 => 4
+        bitsNeededForTenPow[2] = 7; //log2(10^2) =~ 6.6 => 7
+        bitsNeededForTenPow[3] = 10; //log2(10^3) =~ 10.0 => 10
+        bitsNeededForTenPow[4] = 14; //log2(10^4) =~ 13.2 => 14
+        bitsNeededForTenPow[5] = 17; //log2(10^5) =~ 16.6 => 17
+        bitsNeededForTenPow[6] = 20; //log2(10^6) =~ 19.9 => 20
+        bitsNeededForTenPow[7] = 24; //log2(10^7) =~ 23.5 => 24
+        bitsNeededForTenPow[8] = 27; //log2(10^8) =~ 26.6 => 27
+        bitsNeededForTenPow[9] = 30; //log2(10^9) =~ 29.9 => 30
+        bitsNeededForTenPow[10] = 34; //log2(10^10) =~ 33.2 => 34
+        bitsNeededForTenPow[11] = 37; //log2(10^11) =~ 36.5 => 37
+        bitsNeededForTenPow[12] = 40; //log2(10^12) =~ 39.9 => 40
+        bitsNeededForTenPow[13] = 44; //log2(10^13) =~ 43.1 => 44
+        bitsNeededForTenPow[14] = 47; //log2(10^14) =~ 46.5 => 47
+        bitsNeededForTenPow[15] = 50; //log2(10^15) =~ 49.8 => 50
+
+        maxFraction[0] = 0; // no digit to represent no fractional point
+        maxFraction[1] = 9;
+        maxFraction[2] = 99;
+        maxFraction[3] = 999;
+        maxFraction[4] = 9999;
+        maxFraction[5] = 99_999L;
+        maxFraction[6] = 999_999L;
+        maxFraction[7] = 9_999_999L;
+        maxFraction[8] = 99_999_999L;
+        maxFraction[9] = 999_999_999L;
+        maxFraction[10] = 9_999_999_999L;
+        maxFraction[11] = 99_999_999_999L;
+        maxFraction[12] = 999_999_999_999L;
+        maxFraction[13] = 9_999_999_999_999L;
+        maxFraction[14] = 99_999_999_999_999L;
+        maxFraction[15] = 999_999_999_999_999L;
+
+        bitsNeededForMaxFraction[0] = 0; //No bits needed for no fraction
+        bitsNeededForMaxFraction[1] = 4; //log2(9) =~ 3.1 => 4
+        bitsNeededForMaxFraction[2] = 7; //log2(99) =~ 6.6 => 7
+        bitsNeededForMaxFraction[3] = 10; //log2(999) =~ 10.0 => 10
+        bitsNeededForMaxFraction[4] = 14; //log2(9,999) =~ 13.2 => 14
+        bitsNeededForMaxFraction[5] = 17; //log2(99,999) =~ 16.6 => 17
+        bitsNeededForMaxFraction[6] = 20; //log2(999,999) =~ 19.9 => 20
+        bitsNeededForMaxFraction[7] = 24; //log2(9,999,999) =~ 23.2 => 24
+        bitsNeededForMaxFraction[8] = 27; //log2(99,999,999) =~ 26.6 => 27
+        bitsNeededForMaxFraction[9] = 30; //log2(999,999,999) =~ 29.9 => 30
+        bitsNeededForMaxFraction[10] = 34; //log2(9,999,999,999) =~ 33.2 => 34
+        bitsNeededForMaxFraction[11] = 37; //log2(99,999,999,999) =~ 36.5 => 37
+        bitsNeededForMaxFraction[12] = 40; //log2(999,999,999,999) =~ 39.9 => 40
+        bitsNeededForMaxFraction[13] = 44; //log2(9,999,999,999,999) =~ 43.1 => 44
+        bitsNeededForMaxFraction[14] = 47; //log2(99,999,999,999,999) =~ 46.5 => 47
+        bitsNeededForMaxFraction[15] = 50; //log2(999,999,999,999,999) =~ 49.8 => 50
+    }
+
     //Binary Header
     boolean[][] header;
 
@@ -101,10 +181,10 @@ public class Original implements BinaryLexical<StickDouble>{
     public static final byte H1_DATA_LEN_LEN = 9;
     public static final byte H1_H_GAP_LEN_LEN = 3;
     public static final byte H1_UTC_LEN_LEN = 6;
-    public static final byte H1_PW_LEN_LEN = 5; //Should be MUCH BIGGER
-    public static final byte H1_PF_LEN_LEN = 4; //Should be 50 bits to support 15 decimal points
-    public static final byte H1_VW_LEN_LEN = 5; //Should be MUCH BIGGER
-    public static final byte H1_VF_LEN_LEN = 4; //Should be 50 bits to support 15 decimal points
+    public static final byte H1_PW_LEN_LEN = 6;
+    public static final byte H1_PF_LEN_LEN = 6;
+    public static final byte H1_VW_LEN_LEN = 6;
+    public static final byte H1_VF_LEN_LEN = 6;
     public static final byte H1_SYM_LEN_LEN = 7;
 
     public static final int H1_TOTAL_LEN = 
@@ -170,6 +250,7 @@ public class Original implements BinaryLexical<StickDouble>{
         String T_sym
     ){
         header = new boolean[14][];
+        stickList = new ArrayList<StickDouble>();
 
         //Header 0: by_id
         t_h1_byid = T_byid;
@@ -251,6 +332,110 @@ public class Original implements BinaryLexical<StickDouble>{
         h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
 
+    public static Original genFatLexical(String symbol, String interval, byte numberOfFloatingValueDigits, byte numberOfFloatingVolumeDigits){
+        byte valueWholeDigits=(byte)(52-numberOfFloatingValueDigits);
+        byte volumeWholeDigits=(byte)(52-numberOfFloatingVolumeDigits);
+
+        //Calculate Gap
+        int headerExceptGapLength = 
+            H1_TOTAL_LEN + 
+            (symbol.length() << 3) + 
+            1;
+        int remainder = headerExceptGapLength%8;
+        byte T_gap;
+
+        if(remainder != 0) T_gap = (byte)(8-remainder);
+        else T_gap=(byte)0;
+
+        return new Original(
+            false,// boolean T_byid,
+            interval,// String T_int,
+            T_gap,// byte T_h_gap_len,
+            (byte)44,// byte T_utc_len,
+            valueWholeDigits,// byte T_pw_len,
+            numberOfFloatingValueDigits,// byte T_pf_len,
+            volumeWholeDigits,// byte T_vw_len,
+            numberOfFloatingVolumeDigits,// byte T_vf_len,
+            symbol // String T_sym
+        );
+    }
+
+    public static Original genStandardAlignedLexical(String symbol, String interval){
+        //Calculate Gap
+        int headerExceptGapLength = 
+            H1_TOTAL_LEN + 
+            (symbol.length() << 3) + 
+            1;
+        int remainder = headerExceptGapLength%8;
+        byte T_gap;
+
+        if(remainder != 0) T_gap = (byte)(8-remainder);
+        else T_gap=(byte)0;
+        return new Original(
+            false,// boolean T_byid,
+            interval,// String T_int,
+            T_gap,// byte T_h_gap_len,
+            (byte)44,// byte T_utc_len,
+            (byte)31,// byte T_pw_len,
+            (byte)15,// byte T_pf_len,
+            (byte)31,// byte T_vw_len,
+            (byte)15,// byte T_vf_len,
+            symbol // String T_sym
+        );
+    }
+
+    public static Original genStandardLexical(String symbol, String interval, byte gapLength){
+        return new Original(
+            false,// boolean T_byid,
+            interval,// String T_int,
+            gapLength,// byte T_h_gap_len,
+            (byte)44,// byte T_utc_len,
+            (byte)31,// byte T_pw_len,
+            (byte)15,// byte T_pf_len,
+            (byte)31,// byte T_vw_len,
+            (byte)15,// byte T_vf_len,
+            symbol // String T_sym
+        );
+    }
+
+    public Original(
+        boolean T_h1_byid,
+        String T_h1_interval,
+        byte T_h1_HeaderGap,
+        byte T_h1_utc_len,
+        byte T_h1_pw_len,
+        byte T_h1_pf_len,
+        byte T_h1_vw_len,
+        byte T_h1_vf_len,
+        String T_h2_sym
+    ){
+        constructHeaderFromTranslatedValues(
+            T_h1_byid,// boolean T_byid,
+            T_h1_interval,// String T_int,
+            T_h1_HeaderGap,// byte T_h_gap_len,
+            T_h1_utc_len,// byte T_utc_len,
+            T_h1_pw_len,// byte T_pw_len,
+            T_h1_pf_len,// byte T_pf_len,
+            T_h1_vw_len,// byte T_vw_len,
+            T_h1_vf_len,// byte T_vf_len,
+            T_h2_sym// String T_sym
+        );
+    }
+
+    public Original(String symbol, String interval, byte headerGap){
+        constructHeaderFromTranslatedValues(
+            false,// boolean T_byid,
+            interval,// String T_int,
+            headerGap,// byte T_h_gap_len,
+            (byte)44,// byte T_utc_len,
+            (byte)31,// byte T_pw_len,
+            (byte)15,// byte T_pf_len,
+            (byte)31,// byte T_vw_len,
+            (byte)15,// byte T_vf_len,
+            symbol// String T_sym
+        );
+    }
+
     public Original(String symbol, String interval){
         //Calculate Gap
         int headerExceptGapLength = 
@@ -263,7 +448,6 @@ public class Original implements BinaryLexical<StickDouble>{
         if(remainder != 0) T_gap = (byte)(8-remainder);
         else T_gap=(byte)0;
 
-        stickList = new ArrayList<StickDouble>();
         constructHeaderFromTranslatedValues(
             false,// boolean T_byid,
             interval,// String T_int,
