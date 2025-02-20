@@ -14,14 +14,19 @@ public class BinaryTools{
     public static final double LOG10_BASE2 = Math.log10(2);
 
     /**
+     * This class should not be instantiated.
+     */
+    private BinaryTools(){throw new AssertionError("This class should not be instantiated.");}
+
+    /**
      * Calculates the minimum number of bits required to represent a non-negative base-10 integer in binary.
      * @param nonNegativeInteger a non-negative integer to be evaluated.
      * @return The minimum number of bits to represent the non-negative integer.
      * NOTE: If {@code nonNegativeInteger} is negative, it's binary representation will be treated as positive and still bitshift accordingly.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code getMinimumNumberOfBits(3); // returns 2. binary 11 => 3, minimum of 2 bits represents 3.}
-     * Example 2: {@code getMinimumNumberOfBits(5); // returns 3. binary 101 => 5, minimum of 3 bits represents 5.}
-     * Example 3: {@code getMinimumNumberOfBits(0); // returns 1. binary 0 => 0, minimum of 1 bit represents 0.}
+     * Example 1: getMinimumNumberOfBits(3); // returns 2. binary 11 => 3, minimum of 2 bits represents 3.
+     * Example 2: getMinimumNumberOfBits(5); // returns 3. binary 101 => 5, minimum of 3 bits represents 5.
+     * Example 3: getMinimumNumberOfBits(0); // returns 1. binary 0 => 0, minimum of 1 bit represents 0.
      * </code></pre> 
      */
     public static int getMinimumNumberOfBits(int nonNegativeInteger){
@@ -36,8 +41,8 @@ public class BinaryTools{
      * Most significant bit is at index 0.
      * @return The non-negative base-10 integer to be calculated.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code toUnsignedInt(new boolean[]{true, true, true}); //returns 7. bool array represents 111}
-     * Example 2: {@code toUnsignedInt(new boolean[]{true, true, false}); //returns 6. bool array represents 110}
+     * Example 1: toUnsignedInt(new boolean[]{true, true, true}); //returns 7. bool array represents 111
+     * Example 2: toUnsignedInt(new boolean[]{true, true, false}); //returns 6. bool array represents 110
      * </code></pre>
      */
     public static int toUnsignedInt(boolean[] bin){
@@ -52,9 +57,9 @@ public class BinaryTools{
      * Must be non-null and contain at least 1 element.
      * @return The base-10 integer to be calculated.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code to2sCompInt(new boolean[]{true, true, true}); //returns -1. bool array represents 111}
-     * Example 2: {@code to2sCompInt(new boolean[]{false, true, true,true}); //returns 7. bool array represents 0111}
-     * Example 3: {@code to2sCompInt(new boolean[]{true, true, false}); //returns -2. bool array represents 110}
+     * Example 1: to2sCompInt(new boolean[]{true, true, true}); //returns -1. bool array represents 111
+     * Example 2: to2sCompInt(new boolean[]{false, true, true,true}); //returns 7. bool array represents 0111
+     * Example 3: to2sCompInt(new boolean[]{true, true, false}); //returns -2. bool array represents 110
      * </code></pre>
      */
     public static int to2sCompInt(boolean[] bin){
@@ -70,8 +75,8 @@ public class BinaryTools{
      * Most significant bit is at index 0.
      * @return The base-10 long integer to be calculated.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code toUnsignedLong(new boolean[]{true, true, true}); //returns 7L. bool array represents 111}
-     * Example 2: {@code toUnsignedLong(new boolean[]{true, true, false}); //returns 6L. bool array represents 110}
+     * Example 1: toUnsignedLong(new boolean[]{true, true, true}); //returns 7L. bool array represents 111
+     * Example 2: toUnsignedLong(new boolean[]{true, true, false}); //returns 6L. bool array represents 110
      * </code></pre>
      */
     public static long toUnsignedLong(boolean[] bin){
@@ -86,9 +91,9 @@ public class BinaryTools{
      * Must be non-null and contain at least 1 element.
      * @return The base-10 integer to be calculated.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code to2sCompLong(new boolean[]{true, true, true}); //returns -1L. bool array represents 111}
-     * Example 2: {@code to2sCompLong(new boolean[]{false, true, true,true}); //returns 7L. bool array represents 0111}
-     * Example 3: {@code to2sCompLong(new boolean[]{true, true, false}); //returns -2L. bool array represents 110}
+     * Example 1: to2sCompLong(new boolean[]{true, true, true}); //returns -1L. bool array represents 111
+     * Example 2: to2sCompLong(new boolean[]{false, true, true,true}); //returns 7L. bool array represents 0111
+     * Example 3: to2sCompLong(new boolean[]{true, true, false}); //returns -2L. bool array represents 110
      * </code></pre>
      */
     public static long to2sCompLong(boolean[] bin){
@@ -105,11 +110,11 @@ public class BinaryTools{
      * @param length The total number of consecutive elements to be used in {@code bin}.
      * @return The base-10 integer to be calculated.
      * <p>Examples:</p><pre><code>
-     * {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
-     * Example 1: {@code toUnsignedIntFromBoolSubset(exampleBoolArray, 1, 3); //returns 2. subset array: 010, indices 1, 2, and 3.}
-     * Example 2: {@code toUnsignedIntFromBoolSubset(exampleBoolArray, 1, 4); //returns 5. subset array: 0101, indices 1, 2, 3, and 4.}
-     * Example 3: {@code toUnsignedIntFromBoolSubset(exampleBoolArray, 0, 4); //returns 10. subset array: 1010, indices 0, 1, 2, and 3.}
-     * Example 4: {@code toUnsignedIntFromBoolSubset(exampleBoolArray, 2, 3); //returns 5. subset array: 101, indices 2, 3, and 4}
+     * boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep
+     * Example 1: toUnsignedIntFromBoolSubset(exampleBoolArray, 1, 3); //returns 2. subset array: 010, indices 1, 2, and 3.
+     * Example 2: toUnsignedIntFromBoolSubset(exampleBoolArray, 1, 4); //returns 5. subset array: 0101, indices 1, 2, 3, and 4.
+     * Example 3: toUnsignedIntFromBoolSubset(exampleBoolArray, 0, 4); //returns 10. subset array: 1010, indices 0, 1, 2, and 3.
+     * Example 4: toUnsignedIntFromBoolSubset(exampleBoolArray, 2, 3); //returns 5. subset array: 101, indices 2, 3, and 4
      * </code></pre>
      */
     public static int toUnsignedIntFromBoolSubset(boolean[] bin, int startIndex, int length){
@@ -127,11 +132,11 @@ public class BinaryTools{
      * @param length The total number of consecutive elements to be used in {@code bin}..
      * @return The base-10 integer to be calculated.
      * <p>Examples:</p><pre><code>
-     * {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
-     * Example 1: {@code toUnsignedLongFromBoolSubset(exampleBoolArray, 1, 3); //returns 2L. subset array: 010, indices 1, 2, and 3.}
-     * Example 2: {@code toUnsignedLongFromBoolSubset(exampleBoolArray, 1, 4); //returns 5L. subset array: 0101, indices 1, 2, 3, and 4.}
-     * Example 3: {@code toUnsignedLongFromBoolSubset(exampleBoolArray, 0, 4); //returns 10L. subset array: 1010, indices 0, 1, 2, and 3.}
-     * Example 4: {@code toUnsignedLongFromBoolSubset(exampleBoolArray, 2, 3); //returns 5L. subset array: 101, indices 2, 3, and 4}
+     * boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep
+     * Example 1: toUnsignedLongFromBoolSubset(exampleBoolArray, 1, 3); //returns 2L. subset array: 010, indices 1, 2, and 3.
+     * Example 2: toUnsignedLongFromBoolSubset(exampleBoolArray, 1, 4); //returns 5L. subset array: 0101, indices 1, 2, 3, and 4.
+     * Example 3: toUnsignedLongFromBoolSubset(exampleBoolArray, 0, 4); //returns 10L. subset array: 1010, indices 0, 1, 2, and 3.
+     * Example 4: toUnsignedLongFromBoolSubset(exampleBoolArray, 2, 3); //returns 5L. subset array: 101, indices 2, 3, and 4
      * </code></pre>
      */
     public static long toUnsignedLongFromBoolSubset(boolean[] bin, int startIndex, int length){
@@ -148,10 +153,10 @@ public class BinaryTools{
      * @return {@code true} if both arrays have the same length and every element in {@code bin1} 
      * is equal to the corresponding element in {@code bin2}; {@code false} otherwise.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code isEqualBoolArray(new boolean[]{true, false},new boolean[]{true, false}); //returns true.}
-     * Example 2: {@code isEqualBoolArray(new boolean[]{true, false},new boolean[]{false, true}); //returns false.}
-     * Example 3: {@code isEqualBoolArray(new boolean[]{true, true},new boolean[]{false, true, true}); //returns false.}
-     * Example 4: {@code isEqualBoolArray(new boolean[]{true, true},new boolean[]{true, true, true}); //returns false.}
+     * Example 1: isEqualBoolArray(new boolean[]{true, false},new boolean[]{true, false}); //returns true.
+     * Example 2: isEqualBoolArray(new boolean[]{true, false},new boolean[]{false, true}); //returns false.
+     * Example 3: isEqualBoolArray(new boolean[]{true, true},new boolean[]{false, true, true}); //returns false.
+     * Example 4: isEqualBoolArray(new boolean[]{true, true},new boolean[]{true, true, true}); //returns false.
      * </code></pre>
      */
     public static boolean isEqualBoolArray(boolean[] bin1, boolean[] bin2){
@@ -168,10 +173,10 @@ public class BinaryTools{
      * @param bin2 A boolean array representing a non-negative base-10 integer. Must be non-null and contain at least 1 element.
      * @return {@code true} if both arrays evaluate to the same unsigned integer in {@code bin1}; {@code false} otherwise.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. 2 == 2}
-     * Example 2: {@code isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false. 2 != 1}
-     * Example 3: {@code isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns true. 3 == 3}
-     * Example 4: {@code isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns false. 3 != -7}
+     * Example 1: isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. 2 == 2
+     * Example 2: isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false. 2 != 1
+     * Example 3: isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns true. 3 == 3
+     * Example 4: isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns false. 3 != -7
      * </code></pre>
      */
     public static boolean isEqualUnsignedIntValue(boolean[] bin1, boolean[] bin2){
@@ -184,10 +189,10 @@ public class BinaryTools{
      * @param bin2 A boolean array representing an integer in 2s complement notation. Must be non-null and contain at least 1 element.
      * @return {@code true} if both arrays evaluate to the same 2s complement integer in {@code bin1}; {@code false} otherwise.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. -2 == -2}
-     * Example 2: {@code isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false.  -2 != 1}
-     * Example 3: {@code isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns false. -1 != 3}
-     * Example 4: {@code isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns true. -1 == -1}
+     * Example 1: isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. -2 == -2
+     * Example 2: isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false.  -2 != 1
+     * Example 3: isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns false. -1 != 3
+     * Example 4: isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns true. -1 == -1
      * </code></pre>
      */
     public static boolean isEqual2sCompIntValue(boolean[] bin1, boolean[] bin2){
@@ -200,10 +205,10 @@ public class BinaryTools{
      * @param bin2 A boolean array representing a non-negative base-10 integer. Must be non-null and contain at least 1 element.
      * @return {@code true} if both arrays evaluate to the same unsigned integer in {@code bin1}; {@code false} otherwise.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. 2L == 2L}
-     * Example 2: {@code isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false. 2L != 1L}
-     * Example 3: {@code isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns true. 3L == 3L}
-     * Example 4: {@code isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns false. 3L != -7L}
+     * Example 1: isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. 2L == 2L
+     * Example 2: isEqualUnsignedIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false. 2L != 1L
+     * Example 3: isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns true. 3L == 3L
+     * Example 4: isEqualUnsignedIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns false. 3L != -7L
      * </code></pre>
      */
     public static boolean isEqualUnsignedLongValue(boolean[] bin1, boolean[] bin2){
@@ -216,10 +221,10 @@ public class BinaryTools{
      * @param bin2 A boolean array representing an integer in 2s complement notation. Must be non-null and contain at least 1 element.
      * @return {@code true} if both arrays evaluate to the same 2s complement integer in {@code bin1}; {@code false} otherwise.
      * <p>Examples:</p><pre><code>
-     * Example 1: {@code isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. -2L == -2L}
-     * Example 2: {@code isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false.  -2L != 1L}
-     * Example 3: {@code isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns false. -1L != 3L}
-     * Example 4: {@code isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns true. -1L == -1L}
+     * Example 1: isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{true, false}); //returns true. -2L == -2L
+     * Example 2: isEqual2sCompIntValue(new boolean[]{true, false},new boolean[]{false, true}); //returns false.  -2L != 1L
+     * Example 3: isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{false, true, true}); //returns false. -1L != 3L
+     * Example 4: isEqual2sCompIntValue(new boolean[]{true, true},new boolean[]{true, true, true}); //returns true. -1L == -1L
      * </code></pre>
      */
     public static boolean isEqual2sCompLongValue(boolean[] bin1, boolean[] bin2){
@@ -247,11 +252,11 @@ public class BinaryTools{
      * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
      * @return New boolean array that is a subset of {@code bin}.
      * <p>Examples:</p><pre><code>
-     * {@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
-     * Example 1: {@code genSubset(1,3,exampleBoolArray); //returns {false, true, false} //index 1, 2, and 3.}
-     * Example 2: {@code genSubset(1,4,exampleBoolArray); //returns {false, true, false, true} //index 1, 2, 3, and 4.}
-     * Example 3: {@code genSubset(0,4,exampleBoolArray); //returns {true, false, true, false} //index 0, 1, 3, and 3.}
-     * Example 4: {@code genSubset(2,3,exampleBoolArray); //returns {true, false, true} //index 2, 3, and 4.}
+     * boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep
+     * Example 1: genSubset(1,3,exampleBoolArray); //returns {false, true, false} //index 1, 2, and 3.
+     * Example 2: genSubset(1,4,exampleBoolArray); //returns {false, true, false, true} //index 1, 2, 3, and 4.
+     * Example 3: genSubset(0,4,exampleBoolArray); //returns {true, false, true, false} //index 0, 1, 3, and 3.
+     * Example 4: genSubset(2,3,exampleBoolArray); //returns {true, false, true} //index 2, 3, and 4.
      * </code></pre>
      */
     public static boolean[] genSubset(int inclusiveStartIndex, int subsetLength, boolean[] bin){
@@ -266,11 +271,11 @@ public class BinaryTools{
      * @param inclusiveEndIndex The index of the least significant bit in the subset. This is the starting index of {@code bin}
      * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
      * @return New boolean array that is a subset of {@code bin}. Then length of array is {@code inclusiveStartIndex - inclusiveEndIndex + 1}.
-     * <p>Example:</p><pre><code>{@code boolean exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep}
-     * Example 1: {@code genSubsetFromIndexes(1, 3, exampleBoolArray); //returns {false, true, false} //index 1, 2, and 3.}
-     * Example 2: {@code genSubsetFromIndexes(1, 4, exampleBoolArray); //returns {false, true, false, true} //index 1, 2, 3, and 4.}
-     * Example 3: {@code genSubsetFromIndexes(0, 4, exampleBoolArray); //returns {true, false, true, false, true} //The entire original array.}
-     * Example 4: {@code genSubsetFromIndexes(2, 3, exampleBoolArray); //returns {true, false} //index 2 and 3.}
+     * <p>Example:</p><pre><code>exampleBoolArray = new boolean[]{true,false,true,false,true}; //10101 rep
+     * Example 1: genSubsetFromIndexes(1, 3, exampleBoolArray); //returns {false, true, false} //index 1, 2, and 3.
+     * Example 2: genSubsetFromIndexes(1, 4, exampleBoolArray); //returns {false, true, false, true} //index 1, 2, 3, and 4.
+     * Example 3: genSubsetFromIndexes(0, 4, exampleBoolArray); //returns {true, false, true, false, true} //The entire original array.
+     * Example 4: genSubsetFromIndexes(2, 3, exampleBoolArray); //returns {true, false} //index 2 and 3.
      * </code></pre>
      */
     public static boolean[] genSubsetFromIndexes(int inclusiveStartIndex, int inclusiveEndIndex, boolean[] bin){
@@ -285,10 +290,10 @@ public class BinaryTools{
      * Must be greater than or equal to 0 and less than or equal to the length of {@code bin}.
      * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
      * @return New boolean array that is a subset of {@code bin}. Then length of array is {@code exclusiveRightIndex}.
-     * <p>Example:</p><pre><code> {@code boolean exampleBoolArray = new boolean[]{true, false, true, false, true}; //10101 rep}
-     * Example 1: {@code genLeftSubset(1, exampleBoolArray); //returns {true, false} //indices 0 and 1}
-     * Example 2: {@code genLeftSubset(3, exampleBoolArray); //returns {true, false, true} //indices 0, 1, and 2}
-     * Example 3: {@code genLeftSubset(5, exampleBoolArray); //returns the equivalent bin array (indices 0 - 4)}
+     * <p>Example:</p><pre><code> boolean exampleBoolArray = new boolean[]{true, false, true, false, true}; //10101 rep
+     * Example 1: genLeftSubset(1, exampleBoolArray); //returns {true, false} //indices 0 and 1
+     * Example 2: genLeftSubset(3, exampleBoolArray); //returns {true, false, true} //indices 0, 1, and 2
+     * Example 3: genLeftSubset(5, exampleBoolArray); //returns the equivalent bin array (indices 0 - 4)
      * </code></pre>
      */
     public static boolean[] genLeftSubset(int exclusiveRightIndex, boolean[] bin){
@@ -303,10 +308,10 @@ public class BinaryTools{
      * @param bin The array the return value will generate a subset from. Must be non-null and contain at least 1 element.
      * @return New boolean array that is a subset of {@code bin}.
      * <p>Example:</p><pre><code>
-     * {@code boolean exampleBoolArray = new boolean[]{true, false, true, false, true}; //10101 rep}
-     * Example 1: {@code genRightSubset(1, exampleBoolArray); //returns {false, true, false, true} //indices 1, 2, 3, and 4}
-     * Example 2: {@code genRightSubset(3, exampleBoolArray); //returns {false, true} //indices 3 and 4}
-     * Example 3: {@code genRightSubset(0, 5, exampleBoolArray); //returns the equivalent bin array (indices 0 - 4)}
+     * boolean exampleBoolArray = new boolean[]{true, false, true, false, true}; //10101 rep
+     * Example 1: genRightSubset(1, exampleBoolArray); //returns {false, true, false, true} //indices 1, 2, 3, and 4
+     * Example 2: genRightSubset(3, exampleBoolArray); //returns {false, true} //indices 3 and 4
+     * Example 3: genRightSubset(0, 5, exampleBoolArray); //returns the equivalent bin array (indices 0 - 4)
      * </code></pre>
      */
     public static boolean[] genRightSubset(int inclusiveLeftIndex, boolean[] bin){
@@ -322,10 +327,10 @@ public class BinaryTools{
      * @return New boolean array that represents the unsigned {@code val} where most significant bit is at index 0.
      * This will return an incorrect value if {@code bitSize} is too small for {@code val}.
      * <p>Example:</p><pre><code>
-     * Example 1: {@code genBoolArrayFromUnsignedInt(7, 3); //returns {true, true, true}} binary: 111
-     * Example 2: {@code genBoolArrayFromUnsignedInt(7, 4); //returns {false, true, true, true}} binary: 0111
-     * Example 3: {@code genBoolArrayFromUnsignedInt(5, 3); //returns {true, false, true}} binary: 101
-     * Example 4: {@code genBoolArrayFromUnsignedInt(0, 5); //returns {false, false, false, false, false}} binary: 00000
+     * Example 1: genBoolArrayFromUnsignedInt(7, 3); //returns {true, true, true}} binary: 111
+     * Example 2: genBoolArrayFromUnsignedInt(7, 4); //returns {false, true, true, true}} binary: 0111
+     * Example 3: genBoolArrayFromUnsignedInt(5, 3); //returns {true, false, true}} binary: 101
+     * Example 4: genBoolArrayFromUnsignedInt(0, 5); //returns {false, false, false, false, false}} binary: 00000
      * </code></pre>
      */
     public static boolean[] genBoolArrayFromUnsignedInt(int val, int bitSize){
@@ -357,10 +362,10 @@ public class BinaryTools{
      * @return New boolean array that represents the unsigned {@code val} where most significant bit is at index 0.
      * This will return an incorrect value if {@code bitSize} is too small for {@code val}.
      * <p>Example:</p><pre><code> 
-     * Example 1: {@code genBoolArrayFromUnsignedInt(7L,3); //returns {true,true,true}} binary: 111
-     * Example 2: {@code genBoolArrayFromUnsignedInt(7L,4); //returns {false,true,true,true}} binary: 0111
-     * Example 3: {@code genBoolArrayFromUnsignedInt(5L,3); //returns {true,false,true}} binary: 101
-     * Example 4: {@code genBoolArrayFromUnsignedInt(0L,5); //returns {false,false,false,false,false}} binary: 00000
+     * Example 1: genBoolArrayFromUnsignedInt(7L,3); //returns {true,true,true}} binary: 111
+     * Example 2: genBoolArrayFromUnsignedInt(7L,4); //returns {false,true,true,true}} binary: 0111
+     * Example 3: genBoolArrayFromUnsignedInt(5L,3); //returns {true,false,true}} binary: 101
+     * Example 4: genBoolArrayFromUnsignedInt(0L,5); //returns {false,false,false,false,false}} binary: 00000
      * </code></pre>
      */
     public static boolean[] genBoolArrayFromUnsignedLong(long val, int bitSize){
@@ -378,8 +383,8 @@ public class BinaryTools{
      * Must be non-null and contain at least 1 element.
      * @return New boolean array that represents the 2s complement negation of {@code bin}.
      * <p>Example:</p><pre><code>
-     * Example 1: {@code gen2sCompNegate(new boolean[]{true, true, true}); //returns {false, false, true} from bin: 111 = -1 to bin: 001 = 1}
-     * Example 2: {@code gen2sCompNegate(new boolean[]{true, true, false, false}); //returns {false, true, false, false} from bin: 1100 = -4 to bin: 0100 = 4}
+     * Example 1: gen2sCompNegate(new boolean[]{true, true, true}); //returns {false, false, true} from bin: 111 = -1 to bin: 001 = 1
+     * Example 2: gen2sCompNegate(new boolean[]{true, true, false, false}); //returns {false, true, false, false} from bin: 1100 = -4 to bin: 0100 = 4
      * </code></pre>
      */
     public static boolean[] gen2sCompNegate(boolean[] bin){
@@ -412,7 +417,7 @@ public class BinaryTools{
      *   3, //Length 3, manipulate indices: 1, 2, and 3.
      *   7, // unsigned 7 evaulates to boolean 111 == {true, true, true}.
      *   new boolean[]{true, false, true, false, true}, //bin: 10101 index values 1, 2, and 3 will be overridden to true, true, and true respectively.
-     * ); //modified value of {@code bin}: {true, true, true, true, true}.
+     * ); //modified value of bin: {true, true, true, true, true}.
      * 
      * Example 2:
      * setSubsetUnsignedInt(
@@ -420,7 +425,7 @@ public class BinaryTools{
      *   3, //Length 3, manipulate indices: 1, 2, and 3.
      *   1, // unsigned 1 evaulates to boolean 001 == {false, false, true}.
      *   new boolean[]{false, false, false, false, false}, //bin: 00000 index values 1, 2, and 3 will be overridden to false, false, and true respectively.
-     * ); //modified value of {@code bin}: {false, false, false, true, false}.
+     * ); //modified value of bin: {false, false, false, true, false}.
      * </code></pre>
      */
     public static void setSubsetUnsignedInt(
@@ -448,7 +453,7 @@ public class BinaryTools{
      *   3, //Length 3, manipulate indices: 1, 2, and 3.
      *   7L, // unsigned 7 evaulates to boolean 111 == {true, true, true}.
      *   new boolean[]{true, false, true, false, true}, //bin: 10101 index values 1, 2, and 3 will be overridden to true, true, and true respectively.
-     * ); //modified value of {@code bin}: {true, true, true, true, true}.
+     * ); //modified value of bin: {true, true, true, true, true}.
      * 
      * Example 2:
      * setSubsetUnsignedLong(
@@ -456,7 +461,7 @@ public class BinaryTools{
      *   3, //Length 3, manipulate indices: 1, 2, and 3.
      *   1L, // unsigned 1 evaulates to boolean 001 == {false, false, true}.
      *   new boolean[]{false, false, false, false, false}, //bin: 00000 index values 1, 2, and 3 will be overridden to false, false, and true respectively.
-     * ); //modified value of {@code bin}: {false, false, false, true, false}.
+     * ); //modified value of bin: {false, false, false, true, false}.
      * </code></pre>
      */
     public static void setSubsetUnsignedLong(
@@ -498,9 +503,9 @@ public class BinaryTools{
      * Example 2: setUnsignedLongToBoolArray(7L, new boolean[5]); sets the bin to {false, false, true, true, true}: 7 == binary 00111
      * </code></pre>
      */
-    public static void setUnsignedLongToBoolArray(long value, boolean[] boolArray){
-        for(int i=boolArray.length-1; i>=0; --i){
-            boolArray[i] = (value & 1) == 1;
+    public static void setUnsignedLongToBoolArray(long value, boolean[] bin){
+        for(int i=bin.length-1; i>=0; --i){
+            bin[i] = (value & 1) == 1;
             value = value >>> 1;
         }
     }
@@ -639,6 +644,7 @@ public class BinaryTools{
      *   true, false, true //Characters that will be ignored.
      * };
      * Example 2: genStringFrom8BitBoolCharRep(binAB_more); //returns "AB";
+     * </code></pre>
      */
     public static String genStringFrom8BitBoolCharRep(boolean[] EightBitCharBool){
         StringBuilder strBldr = new StringBuilder();

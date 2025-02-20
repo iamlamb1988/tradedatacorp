@@ -471,7 +471,6 @@ int expected_h2_len =
             assertEquals(expected_data_len,flatBinArray.length);
         }
 
-        //TODO
         @Test
         public void testMultipleSticksTwoELements(){
             boolean[] manuallyFlatBinArray = BinaryTools.genConcatenatedBoolArrays(inflatedBinArray);
@@ -489,6 +488,5 @@ int expected_h2_len =
             assertTrue(StickDouble.isEqual(stick1, reverseFlatStick1));
             assertTrue(StickDouble.isEqual(stick2, reverseFlatStick2));
         }
-
     }
 }

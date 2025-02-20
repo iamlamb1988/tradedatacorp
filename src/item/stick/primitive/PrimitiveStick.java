@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 18 FEB 2025
+ */
 package tradedatacorp.item.stick.primitive;
 
 import tradedatacorp.item.stick.Stick;

@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 9 FEB 2025
+ * @since 15 FEB 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -11,10 +11,61 @@ import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 import java.util.Collection;
 import java.util.ArrayList;
 
-//This is the first BinaryLexical in design
-//Thhe headers generated will be dependant on the collection of sticks to be written
+/**
+ * A BinaryLexical implementation for translating {@link StickDouble} instances into binary arrays.
+ * <p>This class is designed to efficiently convert {@link StickDouble} instances into boolean arrays 
+ * that represent their binary form. Each instance of this class is tied to a specific ticker 
+ * symbol and a single time interval, ensuring precise and consistent translations.
+ * This classes primary focus is to prepare a binary file reader for accurate and efficient reading rather than maximum write speed.
+ * A file write should be able to write pretty fast if certain meta information is known beforehand.</p>
+ * <p>The state of the lexical primarily consists of the Header and the Data.
+ * The Header represents the meta data about all the data, including how many data points are stored and how long each field is.
+ * The Header is split into 2 parts H1 and H2. H1 contains all fixed bit lengths but values may change.
+ * H2 consists of variable bit lengths based on different dependencies.
+ * The Data consists of many Stick data points. The details about each stick attributes are in the Header fields.
+ * The Header and the Data make up the Content of this {@link BinaryLexical}. This class is not meant to hold an entire large file all at once.
+ * It is meant to hold portions of Content such that a file writer can write portions of a full file at a time.</p>
+ * <p>When a Lexical reads valid Content for the first time, it is exptected to read from left to right: H1, H2, data elements.
+ * The Lexical knows the exact length of H1 and each of it's static fields. H2 bit lengths and values will be known based on the value of H1 Fields.
+ * The Data will be known based on all the Header data. Such as the bit size of each data point and all of it's attributes.</p>
+ * <p>Below is a table representing the Header</p>
+ * <table>
+ * <caption>Header Fields</caption>
+ * <tr><th>Field</th><th>Bit Length</th><th>Full Name</th><th>Description</th></tr>
+ * <tr><td>h1_byid</td><td>1</td><td>By ID</td><td>May not be needed anymore.</td></tr>
+ * <tr><td>h1_int</td><td>25</td><td>Time Frame Interval</td><td>The unsigned integer value represents the number of seconds for the time frame.</td></tr>
+ * <tr><td>h1_ct_len</td><td>26</td><td>Data Count Bit Length</td><td>The unsigned integer value represents number of bits for field h2_data_ct.</td></tr>
+ * <tr><td>h1_data_len</td><td>9</td><td>Data point bit length</td><td>The total number of bits to represent a single stick instance.</td></tr>
+ * <tr><td>h1_h_gap_len</td><td>3</td><td>Header Gap bit length</td><td>The unsigned integer value represents the number of ignored bits between the Header and the datapoint within the content. This is the bit length of field h2_h_gap</td></tr>
+ * <tr><td>h1_utc_len</td><td>6</td><td>Data stick UTC bit length</td><td>The unsigned integer value represents the number of bits used to represent the UTC timestamp of each stick.</td></tr>
+ * <tr><td>h1_pw_len</td><td>?</td><td>Whole number price</td><td>The unsigned integer value represents the number of bits used to represent the whole part of 4 stick attribute, O, H, L, C.</td></tr>
+ * <tr><td>h1_pf_len</td><td>?</td><td>Fractional number price</td><td>The unsigned integer value represents the number of bits used to represent the fraction part of 4 stick attribute, O, H, L, C.</td></tr>
+ * <tr><td>h1_vw_len</td><td>?</td><td>Whole number volume</td><td>The unsigned integer value represents the number of bits used to represent the whole part of stick attribute V.</td></tr>
+ * <tr><td>h1_vf_len</td><td>?</td><td>Fractional number volume</td><td>The unsigned integer value represents the number of bits used to represent the fraction part of stick attribute V.</td></tr>
+ * <tr><td>h1_sym_len</td><td>7</td><td>Symbol bit length</td><td>The unsigned integer value represents The number of bits to represent the Symbol string. This is 8 times the number of characters.</td></tr>
+ * <tr><td>h2_sym</td><td>t_h1_sym_len</td><td>Symbol</td><td>8 bit character string of the Symbol.</td></tr>
+ * <tr><td>h2_data_ct</td><td>t_h1_data_len</td><td>Symbol</td><td>The number of sticks stored in the data section of content.</td></tr>
+ * <tr><td>h2_h_gap</td><td>t_h1_h_gap_len</td><td>Header gap</td><td>The number of bits between the header and the first data point. The value is ignored. The purpose of this field is for memory alignment when writing.</td></tr>
+ * </table>
+ * <p>Below is the table representing each datapoint attribute of content. Consecutive datapoints are directly next to each other with no spacing.</p>
+ * <table>
+ * <caption>Data Point Fields</caption>
+ * <tr><th>Full Name</th><th>Bit Length</th><th>Description</th></tr>
+ * <tr><td>UTC Time Stamp</td><td>t_h1_utc_len</td><td>The unsigned integer UTC timestamp that represents the number of milliseconds since Jan 1st 1970.</td></tr>
+ * <tr><td>Open Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the Open price.</td></tr>
+ * <tr><td>Open Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the Open price.</td></tr>
+ * <tr><td>High Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the High price.</td></tr>
+ * <tr><td>High Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the High price.</td></tr>
+ * <tr><td>Low Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the Low price.</td></tr>
+ * <tr><td>Low Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the Low price.</td></tr>
+ * <tr><td>Close Whole Value</td><td>t_h1_pw_len</td><td>The unsigned integer that represents the whole number portion of the Close price.</td></tr>
+ * <tr><td>Close Fractional Value</td><td>t_h1_pf_len</td><td>The unsigned integer that represents the fractional side of the Close price.</td></tr>
+ * <tr><td>Volume Whole Value</td><td>t_h1_vw_len</td><td>The unsigned integer that represents the whole number portion of the Volume price.</td></tr>
+ * <tr><td>Volume Fractional Value</td><td>t_h1_vf_len</td><td>The unsigned integer that represents the fractional side of the Volume price.</td></tr>
+ * </table>
+ */
 public class Original implements BinaryLexical<StickDouble>{
-    private String interval;
+    private String interval; //probably should be an int or long
     private ArrayList<StickDouble> stickList;
 
     private int h2_total_len;
@@ -209,10 +260,10 @@ public class Original implements BinaryLexical<StickDouble>{
         int remainder = headerExceptGapLength%8;
         byte T_gap;
 
-
         if(remainder != 0) T_gap = (byte)(8-remainder);
         else T_gap=(byte)0;
 
+        stickList = new ArrayList<StickDouble>();
         constructHeaderFromTranslatedValues(
             false,// boolean T_byid,
             interval,// String T_int,
@@ -227,7 +278,10 @@ public class Original implements BinaryLexical<StickDouble>{
     }
 
     // BinaryLexical Overrides
-    //Get Binary Header
+    /**
+     * Returns a deep copy of the current state of binary header.
+     * @return A deep copy of the binary header, where each index represents a specific static field as defined by {@code H_INDEX_*}.
+     */
     @Override
     public boolean[][] getBinaryHeader(){
         boolean[][] clone = new boolean[header.length][];
@@ -241,10 +295,18 @@ public class Original implements BinaryLexical<StickDouble>{
         return clone;
     }
 
+    /**
+     * Returns a deep, flattened copy of the current state of binary header.
+     * @return A deep, flattened copy of the binary header as a single one-dimensional boolean array.
+     */
     @Override
     public boolean[] getBinaryHeaderFlat(){return BinaryTools.genConcatenatedBoolArrays(header);}
 
-    //Get Binary Data from Data instances
+    /**
+     * Returns a single datapoint representing a Data Point Field defined in class header.
+     * @param singleData A Data Stick that will have all fields converted to boolean array IAW Data Point.
+     * @return 2D boolean array that has 11 elements IAW Data Point Fields explained in the class header table.
+     */
     @Override
     public boolean[][] getBinaryData(StickDouble singleData){
         boolean[][] binData = new boolean[11][];
@@ -255,6 +317,11 @@ public class Original implements BinaryLexical<StickDouble>{
         return binData;
     }
 
+    /**
+     * Returns a single flattened datapoint representing a Data Point Field defined in class header.
+     * @param singleData A Data Stick that will have all fields converted to boolean array IAW Data Point.
+     * @return A flattened array where all 11 elements IAW Data Point Fields explained in the class header table are concatenated into a single boolean array.
+     */
     @Override
     public boolean[] getBinaryDataFlat(StickDouble singleData){
         boolean[] binData = new boolean[t_h1_data_len];
@@ -518,7 +585,6 @@ public class Original implements BinaryLexical<StickDouble>{
     public int getBase10PriceDigits(){return base10PriceMaxFractionDigit;}
     public int getBase10VolumeDigits(){return base10VolumeMaxFractionDigit;}
 
-    //Set methods
     //This will need to be sped up
     public static void splitWholeFraction(double value, int maxDigits, int[] valueParts){
         int whole = (int)Math.abs(value);
@@ -625,4 +691,30 @@ public class Original implements BinaryLexical<StickDouble>{
 
     public boolean getByID(){return t_h1_byid;}
     public int getDataBitLength(){return t_h1_data_len;}
+
+    public void setHeaderGap(byte gapBitLength){
+        
+    }
+
+    public boolean[][] processDataStick(){
+        if(stickList.size() == 0) return new boolean[0][0];
+        return getBinaryData(stickList.remove(0));
+    }
+
+    public boolean[] processDataStickFlat(){
+        if(stickList.size() == 0) return new boolean[0];
+        return getBinaryDataFlat(stickList.remove(0));
+    }
+
+    public boolean[][][] processDataSticks(){
+        boolean[][][] r = getBinaryDataPoints(stickList);
+        stickList.clear();
+        return r;
+    }
+
+    public boolean[] processDataSticksFlat(){
+        boolean[] r = getBinaryDataPointsFlat(stickList);
+        stickList.clear();
+        return r;
+    }
 }
