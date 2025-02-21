@@ -20,7 +20,7 @@ import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 public class OriginalTest{
-    Original first_lexical = Original.genStandardAlignedLexical("BTCUSD","60");
+    Original first_lexical = Original.genStandardAlignedLexical("BTCUSD",60);
     int expected_h1_len =
     1 +  //h1_byid
     25 + //h1_int 
@@ -249,7 +249,7 @@ int expected_h2_len =
         @Test
         public void testInitialConstructor(){
             assertEquals("BTCUSD",first_lexical.getSymbol());
-            assertEquals("60",first_lexical.getInterval());
+            assertEquals(60,first_lexical.getInterval());
     
             assertEquals(5,first_lexical.getBase10PriceDigits());  //15 bits => 2^15 => 32768 (base10) => 5 digits
             assertEquals(5,first_lexical.getBase10VolumeDigits()); //15 bits => 2^15 => 32768 (base10) => 5 digits

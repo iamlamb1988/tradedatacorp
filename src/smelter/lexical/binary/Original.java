@@ -65,16 +65,6 @@ import java.util.ArrayList;
  * </table>
  */
 public class Original implements BinaryLexical<StickDouble>{
-    private String interval; //probably should be an int or long
-    private ArrayList<StickDouble> stickList;
-
-    private int h2_total_len;
-    private int h_total_len;
-
-    //Cache/memoization variables for speedy reference
-    private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
-    private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
-
     private static final long[] tenToPow;
     private static final long[] maxFraction;
     private static final byte[] bitsNeededForTenPow;
@@ -155,9 +145,6 @@ public class Original implements BinaryLexical<StickDouble>{
         bitsNeededForMaxFraction[15] = 50; //log2(999,999,999,999,999) =~ 49.8 => 50
     }
 
-    //Binary Header
-    boolean[][] header;
-
     //Binary Header Index
     public static final byte H_INDEX_BYID = 0;
     public static final byte H_INDEX_INT = 1;
@@ -200,6 +187,18 @@ public class Original implements BinaryLexical<StickDouble>{
         H1_VF_LEN_LEN +
         H1_SYM_LEN_LEN;
 
+    private ArrayList<StickDouble> stickList;
+
+    private int h2_total_len;
+    private int h_total_len;
+
+    //Cache/memoization variables for speedy reference
+    private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
+    private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
+    
+    //Binary Header
+    private boolean[][] header;
+
     //Binary Lexical H1
     private boolean[] h1_byid;
     private boolean[] h1_int;
@@ -238,9 +237,20 @@ public class Original implements BinaryLexical<StickDouble>{
     private int t_h2_data_ct;
 
     //Constructor
+    private static byte constructorGapCalculator(String symbol){
+        int headerExceptGapLength = 
+            H1_TOTAL_LEN + 
+            (symbol.length() << 3) + //symbol length * 8
+            1; //Data count for 0 elements
+        int remainder = headerExceptGapLength%8;
+
+        if(remainder != 0) return (byte)(8-remainder);
+        else return (byte)0;
+    }
+
     private void constructHeaderFromTranslatedValues(
         boolean T_byid,
-        String T_int,
+        int T_int,
         byte T_h_gap_len,
         byte T_utc_len,
         byte T_pw_len,
@@ -258,8 +268,7 @@ public class Original implements BinaryLexical<StickDouble>{
         header[H_INDEX_BYID] = h1_byid;
 
         //Header 1: int
-        interval = T_int; //Need strictly parse different String formats in the future
-        t_h1_int = Integer.parseUnsignedInt(interval); //interval will be evaluated to correct integer in the future
+        t_h1_int = T_int; //interval will be evaluated to correct integer in the future
         h1_int = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_int,H1_INT_LEN);
         header[H_INDEX_INT] = h1_int;
 
@@ -332,26 +341,15 @@ public class Original implements BinaryLexical<StickDouble>{
         h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
 
-    public static Original genFatLexical(String symbol, String interval, byte numberOfFloatingValueDigits, byte numberOfFloatingVolumeDigits){
+    public static Original genFatAlignedLexical(String symbol, int interval, byte numberOfFloatingValueDigits, byte numberOfFloatingVolumeDigits){
         byte valueWholeDigits=(byte)(52-numberOfFloatingValueDigits);
         byte volumeWholeDigits=(byte)(52-numberOfFloatingVolumeDigits);
 
-        //Calculate Gap
-        int headerExceptGapLength = 
-            H1_TOTAL_LEN + 
-            (symbol.length() << 3) + 
-            1;
-        int remainder = headerExceptGapLength%8;
-        byte T_gap;
-
-        if(remainder != 0) T_gap = (byte)(8-remainder);
-        else T_gap=(byte)0;
-
         return new Original(
             false,// boolean T_byid,
-            interval,// String T_int,
-            T_gap,// byte T_h_gap_len,
-            (byte)44,// byte T_utc_len,
+            interval,// int T_int,
+            constructorGapCalculator(symbol),// byte T_h_gap_len,
+            (byte)63,// byte T_utc_len,
             valueWholeDigits,// byte T_pw_len,
             numberOfFloatingValueDigits,// byte T_pf_len,
             volumeWholeDigits,// byte T_vw_len,
@@ -360,21 +358,11 @@ public class Original implements BinaryLexical<StickDouble>{
         );
     }
 
-    public static Original genStandardAlignedLexical(String symbol, String interval){
-        //Calculate Gap
-        int headerExceptGapLength = 
-            H1_TOTAL_LEN + 
-            (symbol.length() << 3) + 
-            1;
-        int remainder = headerExceptGapLength%8;
-        byte T_gap;
-
-        if(remainder != 0) T_gap = (byte)(8-remainder);
-        else T_gap=(byte)0;
+    public static Original genStandardAlignedLexical(String symbol, int interval){
         return new Original(
             false,// boolean T_byid,
-            interval,// String T_int,
-            T_gap,// byte T_h_gap_len,
+            interval,// int T_int,
+            constructorGapCalculator(symbol),// byte T_h_gap_len,
             (byte)44,// byte T_utc_len,
             (byte)31,// byte T_pw_len,
             (byte)15,// byte T_pf_len,
@@ -384,10 +372,10 @@ public class Original implements BinaryLexical<StickDouble>{
         );
     }
 
-    public static Original genStandardLexical(String symbol, String interval, byte gapLength){
+    public static Original genStandardLexical(String symbol, int interval, byte gapLength){
         return new Original(
             false,// boolean T_byid,
-            interval,// String T_int,
+            interval,// int T_int,
             gapLength,// byte T_h_gap_len,
             (byte)44,// byte T_utc_len,
             (byte)31,// byte T_pw_len,
@@ -400,7 +388,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
     public Original(
         boolean T_h1_byid,
-        String T_h1_interval,
+        int T_h1_interval,
         byte T_h1_HeaderGap,
         byte T_h1_utc_len,
         byte T_h1_pw_len,
@@ -411,7 +399,7 @@ public class Original implements BinaryLexical<StickDouble>{
     ){
         constructHeaderFromTranslatedValues(
             T_h1_byid,// boolean T_byid,
-            T_h1_interval,// String T_int,
+            T_h1_interval,// int T_int,
             T_h1_HeaderGap,// byte T_h_gap_len,
             T_h1_utc_len,// byte T_utc_len,
             T_h1_pw_len,// byte T_pw_len,
@@ -422,21 +410,7 @@ public class Original implements BinaryLexical<StickDouble>{
         );
     }
 
-    public Original(String symbol, String interval, byte headerGap){
-        constructHeaderFromTranslatedValues(
-            false,// boolean T_byid,
-            interval,// String T_int,
-            headerGap,// byte T_h_gap_len,
-            (byte)44,// byte T_utc_len,
-            (byte)31,// byte T_pw_len,
-            (byte)15,// byte T_pf_len,
-            (byte)31,// byte T_vw_len,
-            (byte)15,// byte T_vf_len,
-            symbol// String T_sym
-        );
-    }
-
-    public Original(String symbol, String interval){
+    public Original(String symbol, int interval){
         //Calculate Gap
         int headerExceptGapLength = 
             H1_TOTAL_LEN + 
@@ -450,7 +424,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         constructHeaderFromTranslatedValues(
             false,// boolean T_byid,
-            interval,// String T_int,
+            interval,// int T_int,
             T_gap,// byte T_h_gap_len,
             (byte)44,// byte T_utc_len,
             (byte)31,// byte T_pw_len,
@@ -871,7 +845,7 @@ public class Original implements BinaryLexical<StickDouble>{
     public int getHeader2BitLength(){return h2_total_len;}
 
     public String getSymbol(){return t_h2_sym;}
-    public String getInterval(){return interval;}
+    public int getInterval(){return t_h1_int;}
 
     public boolean getByID(){return t_h1_byid;}
     public int getDataBitLength(){return t_h1_data_len;}
