@@ -187,8 +187,6 @@ public class Original implements BinaryLexical<StickDouble>{
         H1_VF_LEN_LEN +
         H1_SYM_LEN_LEN;
 
-    private ArrayList<StickDouble> stickList; //Not necessary for this class?
-
     private int h2_total_len;
     private int h_total_len;
 
@@ -260,7 +258,6 @@ public class Original implements BinaryLexical<StickDouble>{
         String T_sym
     ){
         header = new boolean[14][];
-        stickList = new ArrayList<StickDouble>();
 
         //Header 0: by_id
         t_h1_byid = T_byid;
@@ -860,27 +857,5 @@ public class Original implements BinaryLexical<StickDouble>{
             h2_h_gap = header[H_INDEX_H_GAP] = BinaryTools.genBoolArrayFromUnsignedInt(0, gapBitLength);
             updateHeaderLengths();
         }
-    }
-
-    public boolean[][] processDataStick(){
-        if(stickList.size() == 0) return new boolean[0][0];
-        return getBinaryData(stickList.remove(0));
-    }
-
-    public boolean[] processDataStickFlat(){
-        if(stickList.size() == 0) return new boolean[0];
-        return getBinaryDataFlat(stickList.remove(0));
-    }
-
-    public boolean[][][] processDataSticks(){
-        boolean[][][] r = getBinaryDataPoints(stickList);
-        stickList.clear();
-        return r;
-    }
-
-    public boolean[] processDataSticksFlat(){
-        boolean[] r = getBinaryDataPointsFlat(stickList);
-        stickList.clear();
-        return r;
     }
 }
