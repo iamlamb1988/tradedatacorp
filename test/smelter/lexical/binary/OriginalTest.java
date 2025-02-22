@@ -21,6 +21,18 @@ import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 public class OriginalTest{
     Original first_lexical = Original.genStandardAlignedLexical("BTCUSD",60);
+    Original tiny_lexical = new Original(
+        false,
+        60,
+        (byte)0,
+        (byte)5,
+        (byte)4,
+        (byte)4,
+        (byte)4,
+        (byte)4,
+        "TINY"
+    );
+
     int expected_h1_len =
     1 +  //h1_byid
     25 + //h1_int 

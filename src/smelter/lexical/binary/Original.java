@@ -187,7 +187,7 @@ public class Original implements BinaryLexical<StickDouble>{
         H1_VF_LEN_LEN +
         H1_SYM_LEN_LEN;
 
-    private ArrayList<StickDouble> stickList;
+    private ArrayList<StickDouble> stickList; //Not necessary for this class?
 
     private int h2_total_len;
     private int h_total_len;
@@ -195,7 +195,7 @@ public class Original implements BinaryLexical<StickDouble>{
     //Cache/memoization variables for speedy reference
     private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
     private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
-    
+
     //Binary Header
     private boolean[][] header;
 
@@ -407,31 +407,6 @@ public class Original implements BinaryLexical<StickDouble>{
             T_h1_vw_len,// byte T_vw_len,
             T_h1_vf_len,// byte T_vf_len,
             T_h2_sym// String T_sym
-        );
-    }
-
-    public Original(String symbol, int interval){
-        //Calculate Gap
-        int headerExceptGapLength = 
-            H1_TOTAL_LEN + 
-            (symbol.length() << 3) + 
-            1;
-        int remainder = headerExceptGapLength%8;
-        byte T_gap;
-
-        if(remainder != 0) T_gap = (byte)(8-remainder);
-        else T_gap=(byte)0;
-
-        constructHeaderFromTranslatedValues(
-            false,// boolean T_byid,
-            interval,// int T_int,
-            T_gap,// byte T_h_gap_len,
-            (byte)44,// byte T_utc_len,
-            (byte)31,// byte T_pw_len,
-            (byte)15,// byte T_pf_len,
-            (byte)31,// byte T_vw_len,
-            (byte)15,// byte T_vf_len,
-            symbol// String T_sym
         );
     }
 
@@ -841,17 +816,50 @@ public class Original implements BinaryLexical<StickDouble>{
         startIndex+=t_h1_vf_len;
     }
 
+    private void updateHeaderLengths(){
+        int newUpdatedHeader2Length = 0;
+        for(int i=11; i<header.length; ++i){
+            newUpdatedHeader2Length += header[i].length;
+        }
+        h2_total_len=newUpdatedHeader2Length;
+        h_total_len = H1_TOTAL_LEN + h2_total_len;
+    }
+
     public int getHeaderBitLength(){return h_total_len;}
     public int getHeader2BitLength(){return h2_total_len;}
 
+    public boolean getByID(){return t_h1_byid;}
     public String getSymbol(){return t_h2_sym;}
     public int getInterval(){return t_h1_int;}
 
-    public boolean getByID(){return t_h1_byid;}
     public int getDataBitLength(){return t_h1_data_len;}
 
+    public void setDataCount(int numberOfDataPoints){
+        if(numberOfDataPoints < 0)
+            throw new IllegalArgumentException("numberOfDataPoints must be between 0 and 7 inclusively. Received: "+numberOfDataPoints);
+        t_h2_data_ct = numberOfDataPoints;
+
+        BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h1_ct_len);
+
+        int minimumBitLength = BinaryTools.getMinimumNumberOfBits(numberOfDataPoints);
+        if(h2_data_ct.length != minimumBitLength){
+            h2_data_ct = header[H_INDEX_DATA_CT] = BinaryTools.genBoolArrayFromUnsignedInt(numberOfDataPoints, minimumBitLength);
+            updateHeaderLengths();
+        }
+        else BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h2_data_ct);
+    }
+
     public void setHeaderGap(byte gapBitLength){
-        
+        if(gapBitLength < 0 || gapBitLength > 7)
+            throw new IllegalArgumentException("gapBitLength must be between 0 and 7 inclusively. Received: "+gapBitLength);
+        t_h1_h_gap_len = gapBitLength;
+
+        BinaryTools.setUnsignedIntToBoolArray(gapBitLength, h1_h_gap_len);
+
+        if(h2_h_gap.length != gapBitLength){
+            h2_h_gap = header[H_INDEX_H_GAP] = BinaryTools.genBoolArrayFromUnsignedInt(0, gapBitLength);
+            updateHeaderLengths();
+        }
     }
 
     public boolean[][] processDataStick(){
