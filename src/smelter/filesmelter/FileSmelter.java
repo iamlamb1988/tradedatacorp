@@ -8,7 +8,7 @@ import tradedatacorp.smelter.Smelter;
 import java.nio.file.Path;
 
 /**
- * Filebased smelter specifically for reading and writing to files.
+ * The purpose of this interface is to behave as a file writing stream to save files.
  */
 public interface FileSmelter<RawT,RefinedT,ParamT> extends Smelter<RawT,RefinedT,ParamT>{
     public void smeltToFile(Path destinationPathName);
