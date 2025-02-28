@@ -1,41 +1,39 @@
 /**
  * @author Bruce Lamb
- * @since 8 AUG 2024
+ * @since 28 FEB 2025
  */
 
 package tradedatacorp.smelter;
 
+import java.util.Collection;
+
 /**
- * This interface:
- * - Put data into a standby collection of type RefinedT.
- * - Permantly place standby data into permanet location.
+ * The purpose of this generic interface is to process data of type T.
+ * The word "process", in this interface could mean:
+ * - Saving or modifying a file on a system.
+ * - Inserting or Updating records in a database.
+ * - Making an API call to a 3rd party site with the data.
+ * It will depend on the implementing class
+ * 
+ * In general, this interface is designed to make a permanent change somewhere external of it's running Java process.
+ * @param <T> the type of a single data instance this smelter processes.
  */
-public interface Smelter<RawT, RefinedT, ParamT>{
+public interface Smelter<T>{
     /**
-     * Add raw data that be processed into RefinedT data and added to the standby collection.
-     * @param rawData
-     * The raw data that will be transformed into RefinedT data to be added to standby collection.
+     * Processes a single data element.
+     * @param rawDataElement
      */
-    public void addRawData(RawT rawData);
+    public void smelt(T rawDataElement);
 
     /**
-     * Add refined data to the standby collection.
-     * @param refinedData
+     * Processes an array of data elements.
+     * @param rawDataArray
      */
-    public void addRefinedData(RefinedT refinedData);
-
-    /*
-     * Empties the StandBy collection.
-     */
-    public void clearStandBy();
+    public void smelt(T[] rawDataArray);
 
     /**
-     * Permanently place any standby data to it's final destination or form
+     * Processes a collection of data elements.
+     * @param rawDataArray
      */
-    public void smelt();
-
-    /**
-     * Removes data from standby collection and returns the RefinedT
-     */
-    public RefinedT fetch(ParamT criteria);
+    public void smelt(Collection<T> rawDataArray);
 }
