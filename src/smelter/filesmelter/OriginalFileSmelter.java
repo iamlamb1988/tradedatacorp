@@ -1,28 +1,48 @@
 /**
  * @author Bruce Lamb
- * @since 28 FEB 2025
+ * @since 1 MAR 2025
  */
 package tradedatacorp.smelter.filesmelter;
+
+import tradedatacorp.item.stick.primitive.StickDouble;
+import tradedatacorp.smelter.lexical.binary.Original;
 
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.ArrayList;
 
-import tradedatacorp.smelter.filesmelter.FileSmelterStateful;
+//TODO: This is the skeleton of what needs to be implemented.
+public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
+    private Original binaryTranslator; //Translates from ? to flattened bin (type boolean[])
+    private Path targetFile;
+    private ArrayList<boolean[]> crucible; //Perhaps a Queus (FIFO) instead of list?
 
-//TODO: This is the skeleton of what needs to be implemented
-public class OriginalFileSmelter implements FileSmelterStateful<boolean[]>{
-    // private ArrayList<Byte> crucible; Working on what fields this class should have
+    //Constructor
+    //TODO
+    public OriginalFileSmelter(Original originalTranslator){
+        //TODO
+    }
 
     //Smelter Overrides
-    public void smelt(boolean[] rawDataElement){}
-    public void smelt(boolean[][] rawDataArray){}
-    public void smelt(Collection<boolean[]> rawDataArray){}
+    public void smelt(StickDouble dataStick){}
+    public void smelt(StickDouble[] rawDataArray){}
+    public void smelt(Collection<StickDouble> rawDataArray){}
 
     //SmelterStateful Overrides
-    public void addData(boolean[] rawData){}
-    public void addData(boolean[][] rawData){}
-    public void addData(Collection<boolean[]> rawData){}
+    public void addData(StickDouble dataStick){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
+
+    public void addData(StickDouble[] dataStickArray){
+        for(StickDouble dataStick : dataStickArray){
+            crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        }
+    }
+
+    public void addData(Collection<StickDouble> dataStickCollection){
+        for(StickDouble dataStick : dataStickCollection){
+            crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        }
+    }
+
     public void smelt(){}
 
     //FileSmelterStateful Overrides
