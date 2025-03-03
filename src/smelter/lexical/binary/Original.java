@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 15 FEB 2025
+ * @since 3 MAR 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -64,7 +64,7 @@ import java.util.ArrayList;
  * <tr><td>Volume Fractional Value</td><td>t_h1_vf_len</td><td>The unsigned integer that represents the fractional side of the Volume price.</td></tr>
  * </table>
  */
-public class Original implements BinaryLexical<StickDouble>{
+public class Original implements BinaryLexical<StickDouble>, Cloneable{
     private static final long[] tenToPow;
     private static final long[] maxFraction;
     private static final byte[] bitsNeededForTenPow;
@@ -187,13 +187,6 @@ public class Original implements BinaryLexical<StickDouble>{
         H1_VF_LEN_LEN +
         H1_SYM_LEN_LEN;
 
-    private int h2_total_len;
-    private int h_total_len;
-
-    //Cache/memoization variables for speedy reference
-    private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
-    private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
-
     //Binary Header
     private boolean[][] header;
 
@@ -234,6 +227,14 @@ public class Original implements BinaryLexical<StickDouble>{
     private String t_h2_sym;
     private int t_h2_data_ct;
 
+    //Header lengths
+    private int h2_total_len;
+    private int h_total_len;
+
+    //Cache/memoization variables for speedy reference
+    private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
+    private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
+
     //Constructor
     private static byte constructorGapCalculator(String symbol){
         int headerExceptGapLength = 
@@ -244,6 +245,87 @@ public class Original implements BinaryLexical<StickDouble>{
 
         if(remainder != 0) return (byte)(8-remainder);
         else return (byte)0;
+    }
+
+    private void constructHeaderFromBinaryHeaderFields(
+        boolean[] H_h1_byid,
+        boolean[] H_h1_int,
+        boolean[] H_h1_ct_len,
+        boolean[] H_h1_data_len,
+        boolean[] H_h1_h_gap_len,
+        boolean[] H_h1_utc_len,
+        boolean[] H_h1_pw_len,
+        boolean[] H_h1_pf_len,
+        boolean[] H_h1_vw_len,
+        boolean[] H_h1_vf_len,
+        boolean[] H_h1_sym_len,
+        boolean[] H_h2_sym,
+        boolean[] H_h2_data_ct,
+        boolean[] H_h2_h_gap
+    ){
+        //Header
+        //Header 0
+        h1_byid = header[H_INDEX_BYID] = BinaryTools.genClone(H_h1_byid);
+        t_h1_byid = h1_byid[0];
+
+        //Header 1
+        h1_int = header[H_INDEX_INT] = BinaryTools.genClone(H_h1_int);
+        t_h1_int = BinaryTools.toUnsignedInt(h1_int);
+
+        //Header 2
+        h1_ct_len = header[H_INDEX_CT_LEN] = BinaryTools.genClone(H_h1_ct_len);
+        t_h1_ct_len = BinaryTools.toUnsignedInt(h1_ct_len);
+
+        //Header 3
+        h1_data_len = header[H_INDEX_DATA_LEN] = BinaryTools.genClone(H_h1_data_len);
+        t_h1_data_len = BinaryTools.toUnsignedInt(h1_data_len);
+
+        //Header 4
+        h1_h_gap_len = header[H_INDEX_H_GAP_LEN] = BinaryTools.genClone(H_h1_h_gap_len);
+        t_h1_h_gap_len = (byte)BinaryTools.toUnsignedInt(h1_h_gap_len);
+
+        //Header 5
+        h1_utc_len = header[H_INDEX_UTC_LEN] = BinaryTools.genClone(H_h1_utc_len);
+        t_h1_utc_len = (byte)BinaryTools.toUnsignedInt(h1_utc_len);
+
+        //Header 6
+        h1_pw_len = header[H_INDEX_PW_LEN] = BinaryTools.genClone(H_h1_pw_len);
+        t_h1_pw_len = (byte)BinaryTools.toUnsignedInt(h1_pw_len);
+
+        //Header 7
+        h1_pf_len = header[H_INDEX_PF_LEN] = BinaryTools.genClone(H_h1_pf_len);
+        t_h1_pf_len = (byte)BinaryTools.toUnsignedInt(H_h1_pf_len);
+
+        //Header 8
+        h1_vw_len = header[H_INDEX_VW_LEN] = BinaryTools.genClone(H_h1_vw_len);
+        t_h1_vw_len = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
+
+        //Header 9
+        h1_vf_len = header[H_INDEX_VF_LEN] = BinaryTools.genClone(H_h1_vf_len);
+        t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
+
+        //Header 10
+        h1_sym_len = header[H_INDEX_SYM_LEN] = BinaryTools.genClone(H_h1_sym_len);
+        t_h1_sym_len = (byte)BinaryTools.toUnsignedInt(h1_sym_len);
+
+        //Header 11
+        h2_sym = header[H_INDEX_SYM] = BinaryTools.genClone(H_h2_sym);
+        t_h2_sym = BinaryTools.genStringFrom8BitBoolCharRep(h2_sym);
+
+        //Header 12
+        h2_data_ct = header[H_INDEX_DATA_CT] = BinaryTools.genClone(H_h2_data_ct);
+        t_h2_data_ct = BinaryTools.toUnsignedInt(h2_data_ct);
+
+        //Header 13
+        h2_h_gap = header[H_INDEX_H_GAP] = BinaryTools.genClone(H_h2_h_gap);
+
+        //Header length
+        h2_total_len = getHeader2BitLength();
+        h_total_len = getHeaderBitLength();
+
+        //Cache/memoization
+        base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
+        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
     }
 
     private void constructHeaderFromTranslatedValues(
@@ -380,6 +462,40 @@ public class Original implements BinaryLexical<StickDouble>{
             (byte)31,// byte T_vw_len,
             (byte)15,// byte T_vf_len,
             symbol // String T_sym
+        );
+    }
+
+    private Original(
+        boolean[] H_h1_byid,
+        boolean[] H_h1_int,
+        boolean[] H_h1_ct_len,
+        boolean[] H_h1_data_len,
+        boolean[] H_h1_h_gap_len,
+        boolean[] H_h1_utc_len,
+        boolean[] H_h1_pw_len,
+        boolean[] H_h1_pf_len,
+        boolean[] H_h1_vw_len,
+        boolean[] H_h1_vf_len,
+        boolean[] H_h1_sym_len,
+        boolean[] H_h2_sym,
+        boolean[] H_h2_data_ct,
+        boolean[] H_h2_h_gap
+    ){
+        constructHeaderFromBinaryHeaderFields(
+            H_h1_byid,
+            H_h1_int,
+            H_h1_ct_len,
+            H_h1_data_len,
+            H_h1_h_gap_len,
+            H_h1_utc_len,
+            H_h1_pw_len,
+            H_h1_pf_len,
+            H_h1_vw_len,
+            H_h1_vf_len,
+            H_h1_sym_len,
+            H_h2_sym,
+            H_h2_data_ct,
+            H_h2_h_gap
         );
     }
 
@@ -682,6 +798,28 @@ public class Original implements BinaryLexical<StickDouble>{
     }
 
     // Original methods
+    @Override
+    public Original clone(){
+        synchronized (this){
+            return new Original(
+                h1_byid,
+                h1_int,
+                h1_ct_len,
+                h1_data_len,
+                h1_h_gap_len,
+                h1_utc_len,
+                h1_pw_len,
+                h1_pf_len,
+                h1_vw_len,
+                h1_vf_len,
+                h1_sym_len,
+                h2_sym,
+                h2_data_ct,
+                h2_h_gap
+            );
+        }
+    }
+
     //Get methods
     public boolean[][] genBinaryHeader1(){
         boolean[][] h1=new boolean[11][];
