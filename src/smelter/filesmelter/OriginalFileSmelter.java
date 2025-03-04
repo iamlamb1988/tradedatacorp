@@ -16,7 +16,7 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
     private Original binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
-    //private ArrayList<char> preProcessedCrucible ? will change if allignment changes.
+    // private ArrayList<char> preProcessedCrucible ? will change if allignment changes.
 
     //Constructor
     //TODO

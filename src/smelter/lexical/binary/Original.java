@@ -439,6 +439,10 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    public static Original genFatAlignedLexical(String symbol, int interval){
+        return genFatAlignedLexical(symbol,interval,(byte)16,(byte)16);
+    }
+
     public static Original genStandardAlignedLexical(String symbol, int interval){
         return new Original(
             false, // boolean T_byid,
@@ -975,19 +979,15 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
     public int getDataBitLength(){return t_h1_data_len;}
 
+    /**
+     * Alters the data count of header (h2_data_ct). Depends on h1_data_len, there must be enough bits to set to the new value.
+     * @param numberOfDataPoints The new number of data points the header represents.
+     */
     public void setDataCount(int numberOfDataPoints){
         if(numberOfDataPoints < 0)
-            throw new IllegalArgumentException("numberOfDataPoints must be between 0 and 7 inclusively. Received: "+numberOfDataPoints);
+            throw new IllegalArgumentException("numberOfDataPoints must be greater than or equal to 0. Received: "+numberOfDataPoints);
         t_h2_data_ct = numberOfDataPoints;
-
-        BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h1_ct_len);
-
-        int minimumBitLength = BinaryTools.getMinimumNumberOfBits(numberOfDataPoints);
-        if(h2_data_ct.length != minimumBitLength){
-            h2_data_ct = header[H_INDEX_DATA_CT] = BinaryTools.genBoolArrayFromUnsignedInt(numberOfDataPoints, minimumBitLength);
-            updateHeaderLengths();
-        }
-        else BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h2_data_ct);
+        BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h2_data_ct);
     }
 
     public void setHeaderGap(byte gapBitLength){
