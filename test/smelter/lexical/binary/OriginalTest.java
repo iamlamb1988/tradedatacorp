@@ -23,6 +23,7 @@ public class OriginalTest{
     Original first_lexical = Original.genStandardAlignedLexical("BTCUSD",60);
     Original tiny_lexical = new Original(
         false,
+        (byte)1,
         60,
         (byte)0,
         (byte)5,
@@ -36,7 +37,7 @@ public class OriginalTest{
     int expected_h1_len =
     1 +  //h1_byid
     25 + //h1_int 
-    26 + //h1_ct_len
+    5 +  //h1_ct_len
     9 +  //h1_data_len
     3 +  //h1_h_gap_len
     6 +  //h1_utc_len
@@ -49,7 +50,7 @@ public class OriginalTest{
 int expected_h2_len = 
     48 + //h2_sym characters "BTCUSD" x 8 bits
     1 +  //h2_data_ct_len 1 bit to represent the value 0
-    2;   //h2_h_gap (only need to add 0 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
+    7;   //h2_h_gap (only need to add 7 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
 
     int expected_h_len = expected_h1_len + expected_h2_len;
     int expected_data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
@@ -138,8 +139,8 @@ int expected_h2_len =
             @Test
             public void testDefault_DataCountLength(){
                 boolean[] bin_h1_ct_len = generatedHeader1[2];
-                assertEquals(26,bin_h1_ct_len.length);
-                assertEquals(0,BinaryTools.toUnsignedInt(bin_h1_ct_len)); //0 data points
+                assertEquals(5,bin_h1_ct_len.length);
+                assertEquals(16,BinaryTools.toUnsignedInt(bin_h1_ct_len));
             }
 
             @Test
@@ -251,8 +252,8 @@ int expected_h2_len =
                     first_lexical.H1_TOTAL_LEN +
                     48 +
                     1 +
-                    2; //This is the gap, With
-                int expected_gap_bit_length = 2; 
+                    7; //This is the gap, With
+                int expected_gap_bit_length = 7; 
 
                 assertEquals(expected_gap_bit_length,bin_h2_h_gap.length);
             }
@@ -269,7 +270,7 @@ int expected_h2_len =
 
         @Test
         public void testDefaultHeader1(){
-            assertEquals(101,expected_h1_len);
+            assertEquals(80,expected_h1_len);
             assertEquals(expected_h1_len,first_lexical.H1_TOTAL_LEN);
             assertEquals(first_lexical.H1_TOTAL_LEN,flatHeader1.length);
             assertEquals(flatHeader1.length,first_lexical.H1_TOTAL_LEN);
@@ -277,14 +278,14 @@ int expected_h2_len =
 
         @Test
         public void testDefaultHeader2(){
-            assertEquals(51,expected_h2_len);
+            assertEquals(56,expected_h2_len);
             assertEquals(expected_h2_len,first_lexical.getHeader2BitLength());
         }
 
         @Test
         public void testDefaultHeader(){
-            assertEquals(152,expected_h1_len + expected_h2_len); // 101 + 51 = 144
-            assertEquals(152,expected_h_len);
+            assertEquals(136,expected_h1_len + expected_h2_len); // 80 + 51 = 131
+            assertEquals(136,expected_h_len);
             assertEquals(expected_h_len,first_lexical.getHeaderBitLength());
             assertEquals(0,expected_h_len%8);
         }

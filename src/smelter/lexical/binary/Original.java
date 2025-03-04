@@ -164,7 +164,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     // Binary Fixed field bit lengths
     public static final byte H1_BYID_LEN = 1;
     public static final byte H1_INT_LEN = 25;
-    public static final byte H1_CT_LEN_LEN = 26;
+    public static final byte H1_CT_LEN_LEN = 5; //Clarity max number of bits 2^5 -1, 31 h2_ct max = 2^32 -1 
     public static final byte H1_DATA_LEN_LEN = 9;
     public static final byte H1_H_GAP_LEN_LEN = 3;
     public static final byte H1_UTC_LEN_LEN = 6;
@@ -331,6 +331,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     private void constructHeaderFromTranslatedValues(
         boolean T_byid,
         int T_int,
+        byte T_ct_len,
         byte T_h_gap_len,
         byte T_utc_len,
         byte T_pw_len,
@@ -351,8 +352,8 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h1_int = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_int,H1_INT_LEN);
         header[H_INDEX_INT] = h1_int;
 
-        //Header 2: ct_len Always empty upon construction therefor 0
-        t_h1_ct_len = 0;
+        //Header 2: ct_len
+        t_h1_ct_len = T_ct_len;
         h1_ct_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_ct_len,H1_CT_LEN_LEN);
         header[H_INDEX_CT_LEN] = h1_ct_len;
 
@@ -426,6 +427,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
         return new Original(
             false,// boolean T_byid,
+            (byte)32,
             interval,// int T_int,
             constructorGapCalculator(symbol),// byte T_h_gap_len,
             (byte)63,// byte T_utc_len,
@@ -439,14 +441,15 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
     public static Original genStandardAlignedLexical(String symbol, int interval){
         return new Original(
-            false,// boolean T_byid,
-            interval,// int T_int,
-            constructorGapCalculator(symbol),// byte T_h_gap_len,
-            (byte)44,// byte T_utc_len,
-            (byte)31,// byte T_pw_len,
-            (byte)15,// byte T_pf_len,
-            (byte)31,// byte T_vw_len,
-            (byte)15,// byte T_vf_len,
+            false, // boolean T_byid,
+            (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
+            interval, // int T_int,
+            constructorGapCalculator(symbol), // byte T_h_gap_len,
+            (byte)44, // byte T_utc_len,
+            (byte)31, // byte T_pw_len,
+            (byte)15, // byte T_pf_len,
+            (byte)31, // byte T_vw_len,
+            (byte)15, // byte T_vf_len,
             symbol // String T_sym
         );
     }
@@ -454,6 +457,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     public static Original genStandardLexical(String symbol, int interval, byte gapLength){
         return new Original(
             false,// boolean T_byid,
+            (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
             interval,// int T_int,
             gapLength,// byte T_h_gap_len,
             (byte)44,// byte T_utc_len,
@@ -501,6 +505,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
     public Original(
         boolean T_h1_byid,
+        byte T_h1_ct_len,
         int T_h1_interval,
         byte T_h1_HeaderGap,
         byte T_h1_utc_len,
@@ -513,6 +518,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         constructHeaderFromTranslatedValues(
             T_h1_byid,// boolean T_byid,
             T_h1_interval,// int T_int,
+            T_h1_ct_len, //int T_ct_len
             T_h1_HeaderGap,// byte T_h_gap_len,
             T_h1_utc_len,// byte T_utc_len,
             T_h1_pw_len,// byte T_pw_len,
