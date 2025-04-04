@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 4 MAR 2025
+ * @since 4 APR 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -8,16 +8,65 @@ import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.smelter.lexical.binary.BinaryTools;
 import tradedatacorp.smelter.lexical.binary.Original;
 
+import java.io.FileOutputStream;
+import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.ArrayDeque;
 
-//TODO: Planning in progress. This class is intended to write all data to a file all at once.
-//NOTE: This is meant for "small" files. "small" may mean different things based on Java version and system.
+//NOTE: This is meant for "small" files. Will write to entire file all at once.
 public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble>{
     private Original binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
+    private int fileWriteByteChunkSize = 64;
+
+    //Thread safe handling variables for binaryLexical instance
+    private int lexicalReaderCount;
+    private int lexicalWriterRequestCount;
+    private boolean isLexicalWriting;
+
+    private void threadSafeLexicalRead(Runnable readMethod){
+        synchronized(binaryTranslator){
+            while(isLexicalWriting || lexicalWriterRequestCount > 0){
+                try{
+                    wait();
+                }
+                catch(Exception err){
+                    err.printStackTrace();
+                }
+            }
+            ++lexicalReaderCount;
+        }
+        readMethod.run();
+        synchronized(binaryTranslator){
+            --lexicalReaderCount;
+            notifyAll();
+        }
+    }
+
+    private void threadSafeLexicalWrite(Runnable writeMethod){
+        boolean requested = false;
+        synchronized(binaryTranslator){
+            if(lexicalReaderCount > 0 || isLexicalWriting){
+                requested = true;
+                ++lexicalWriterRequestCount;
+                while(lexicalReaderCount > 0 || isLexicalWriting){
+                    try{
+                        wait();
+                    }
+                    catch(Exception err){
+                        err.printStackTrace();
+                    }
+                }
+            }
+            isLexicalWriting = true;
+            if(requested) --lexicalWriterRequestCount;
+            writeMethod.run();
+            isLexicalWriting = false;
+            notifyAll();
+        }
+    }
 
     //Constructor
     //TODO
@@ -25,6 +74,9 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         binaryTranslator = originalTranslator.clone();
         targetFile = null;
         crucible = new ArrayDeque<boolean[]>();
+
+        lexicalReaderCount = lexicalWriterRequestCount = 0;
+        isLexicalWriting = false;
     }
 
     //Smelter Overrides
@@ -33,25 +85,38 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
     public void smelt(Collection<StickDouble> rawDataArray){}
 
     //SmelterStateful Overrides
-    public void addData(StickDouble dataStick){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
+    @Override
+    public void addData(StickDouble dataStick){
+        synchronized(crucible){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
+    }
 
+    @Override
     public void addData(StickDouble[] dataStickArray){
-        for(StickDouble dataStick : dataStickArray){
-            crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        synchronized(crucible){
+            for(StickDouble dataStick : dataStickArray){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
         }
     }
 
+    @Override
     public void addData(Collection<StickDouble> dataStickCollection){
-        for(StickDouble dataStick : dataStickCollection){
-            crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        synchronized(crucible){
+            for(StickDouble dataStick : dataStickCollection){
+                crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
+            }
         }
     }
 
-    //TODO
+    @Override
     public void smelt(){
-        
         //1. Open this.targetFile to begin writing (OutputFileStream)
-        //TODO
+        FileOutputStream file;
+        try{
+            file = new FileOutputStream(targetFile.toFile(),false);
+        }
+        catch(Exception err){
+            err.printStackTrace();
+            return;
+        }
 
         ArrayDeque<boolean[]> hotCrucible;
         ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
@@ -59,8 +124,9 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         boolean[] header;
         boolean[] currentDataStick; //tmp variable to sqeeze into a byte.
         boolean[] currentByte = new boolean[8]; // tmp variable, current byte being "smelted".
-        byte moltenByte; //tmp variable, current byte actively being written to file
-        synchronized (binaryTranslator) {
+        byte moltenByte; //tmp variable, current byte actively being added to the moltenByteChunk
+        byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
+        synchronized (binaryTranslator){
             //2. Empty crucible into local ArrayList (will keep this as the only Thread adding elements to it)
             synchronized (crucible) {
                 hotCrucible = new ArrayDeque<boolean[]>(crucible.size());
@@ -75,7 +141,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         }
 
         //4. Write full bytes of header.
-        int fullHeaderBytes = header.length >>> 3;
+        int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
         for(int i=0; i<fullHeaderBytes; ++i){
             moltenData.add((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i,8));
         }
@@ -100,28 +166,72 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
                 moltenData.add((byte)BinaryTools.toUnsignedInt(currentByte));
             }
 
-            //TODO: handle writing, either one char at a time, or wait until it fills up a little bit..
-            while(!moltenData.isEmpty()){
-                moltenByte = moltenData.remove();
-                //TODO: Write the moltenByte to the file.
+            while(moltenData.size() >= fileWriteByteChunkSize){
+                for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
+                try{file.write(moltenByteChunk);}
+                catch(Exception err){ err.printStackTrace();}
             }
         }
 
-        //7. Finish last bits (should be 7 or less) and fill with 0's until a 8 bits are complete
-        //TODO
+        //7. Finish writing final bytes to file
+        //7.1 Write as many full chunks as possible
+        while(bitAligner.size() >= 8){
+            for(int i=0; i<8; ++i){
+                currentByte[i] = bitAligner.remove();
+            }
+            moltenData.add((byte)BinaryTools.toUnsignedInt(currentByte));
+        }
+
+        while(moltenData.size() >= fileWriteByteChunkSize){
+            for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
+            try{file.write(moltenByteChunk);}
+            catch(Exception err){ err.printStackTrace();}
+        }
+        
+        //7.2 Write as many full bytes as possible (if any)
+        if(moltenData.size()>0){
+            moltenByteChunk = new byte[moltenData.size()];
+            for(int i=0; moltenData.size()>0; ++i){
+                moltenByteChunk[i] = moltenData.remove().byteValue();
+            }
+            try{file.write(moltenByteChunk);}
+            catch(Exception err){ err.printStackTrace();}
+        }
+
+        //7.3 Write last incomplete byte to file with appropriate left shift (extra bits will be)
+        if(bitAligner.size() > 0){
+            boolean[] lastByte = new boolean[8];
+            for(int i=0; bitAligner.size()>0; ++i){
+                lastByte[i]=bitAligner.remove().booleanValue();
+            }
+            try{file.write((byte)(BinaryTools.toUnsignedInt(lastByte)));}
+            catch(Exception err){ err.printStackTrace();}
+        }
 
         //8. Close file.
+        try{file.close();}catch(Exception err){ err.printStackTrace();}
     }
 
     //FileSmelterStateful Overrides
-    //TODO
+    @Override
     public void smeltToFile(Path destinationPathName){
-        //1. Set destinationPathName to this.targetFile
-        //2. Smelt the file (smelt())
-   
+        targetFile = destinationPathName;
+        smelt();
     }
 
     //OriginalFileSmelter methods
-    public void setTargetFile(String relativePathName){}
-    public void setAbsoluteTargetFile(String absolutePathName){}
+    //TODO Need to validate input
+    public void setTargetFile(String relativePathName){
+        targetFile = Path.of(relativePathName);
+    }
+
+    //TODO Need to validate input
+    public void setAbsoluteTargetFile(String absolutePathName){
+        targetFile = Paths.get(absolutePathName);
+    }
+
+    //TODO Need to validate input
+    public void setAbsoluteFromRelativeTargetFile(String relativePathName){
+        targetFile = Path.of(relativePathName).toAbsolutePath();
+    }
 }
