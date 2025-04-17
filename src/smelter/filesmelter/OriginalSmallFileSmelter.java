@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 4 APR 2025
+ * @since 5 APR 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -80,8 +80,13 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
     }
 
     //Smelter Overrides
+    //TODO
     public void smelt(StickDouble dataStick){}
+
+    //TODO
     public void smelt(StickDouble[] rawDataArray){}
+
+    //TODO
     public void smelt(Collection<StickDouble> rawDataArray){}
 
     //SmelterStateful Overrides
@@ -209,7 +214,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         }
 
         //8. Close file.
-        try{file.close();}catch(Exception err){ err.printStackTrace();}
+        try{file.close();}catch(Exception err){err.printStackTrace();}
     }
 
     //FileSmelterStateful Overrides
@@ -233,5 +238,10 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
     //TODO Need to validate input
     public void setAbsoluteFromRelativeTargetFile(String relativePathName){
         targetFile = Path.of(relativePathName).toAbsolutePath();
+    }
+
+    //TODO Make this reusable
+    private void writeDataToNewFile(Path file, Collection<boolean[]> data){
+
     }
 }
