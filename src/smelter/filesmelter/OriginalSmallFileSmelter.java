@@ -112,117 +112,11 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
     }
 
     @Override
-    public void smelt(){
-        //1. Open this.targetFile to begin writing (OutputFileStream)
-        FileOutputStream file;
-        try{
-            file = new FileOutputStream(targetFile.toFile(),false);
-        }
-        catch(Exception err){
-            err.printStackTrace();
-            return;
-        }
-
-        ArrayDeque<boolean[]> hotCrucible;
-        ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
-        ArrayDeque<Byte> moltenData; //bytes ready to be written
-        boolean[] header;
-        boolean[] currentDataStick; //tmp variable to sqeeze into a byte.
-        boolean[] currentByte = new boolean[8]; // tmp variable, current byte being "smelted".
-        byte moltenByte; //tmp variable, current byte actively being added to the moltenByteChunk
-        byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
-        synchronized (binaryTranslator){
-            //2. Empty crucible into local ArrayList (will keep this as the only Thread adding elements to it)
-            synchronized (crucible) {
-                hotCrucible = new ArrayDeque<boolean[]>(crucible.size());
-                while(!crucible.isEmpty()){
-                    hotCrucible.add(crucible.remove());
-                }
-            }
-            //3. Set boolean[] header based on binaryLexical settings and localCrubible size.
-            binaryTranslator.setDataCount(hotCrucible.size());
-            header = binaryTranslator.getBinaryHeaderFlat();
-            moltenData = new ArrayDeque<Byte>(((crucible.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
-        }
-
-        //4. Write full bytes of header.
-        int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
-        for(int i=0; i<fullHeaderBytes; ++i){
-            moltenData.add((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i,8));
-        }
-
-        //5. If not memory alligned, write last part of header. (Should skip loop if perfectly aligned by 8 bits)
-        for(int i=fullHeaderBytes; i<header.length; ++i){
-            bitAligner.add(header[i]);
-        }
-
-        //6. Stuff and write 8 bits at a time.
-        while(!hotCrucible.isEmpty()){
-            currentDataStick = hotCrucible.remove();
-            for(int i=0; i<currentDataStick.length; ++i){
-                bitAligner.add(currentDataStick[i]);
-            }
-
-            //Squeeze as many full 8 bit sets to a moltenByte as possible.
-            while(bitAligner.size() >= 8){
-                for(int i=0; i<8; ++i){
-                    currentByte[i] = bitAligner.remove();
-                }
-                moltenData.add((byte)BinaryTools.toUnsignedInt(currentByte));
-            }
-
-            while(moltenData.size() >= fileWriteByteChunkSize){
-                for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
-                try{file.write(moltenByteChunk);}
-                catch(Exception err){ err.printStackTrace();}
-            }
-        }
-
-        //7. Finish writing final bytes to file
-        //7.1 Write as many full chunks as possible
-        while(bitAligner.size() >= 8){
-            for(int i=0; i<8; ++i){
-                currentByte[i] = bitAligner.remove();
-            }
-            moltenData.add((byte)BinaryTools.toUnsignedInt(currentByte));
-        }
-
-        while(moltenData.size() >= fileWriteByteChunkSize){
-            for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
-            try{file.write(moltenByteChunk);}
-            catch(Exception err){ err.printStackTrace();}
-        }
-        
-        //7.2 Write as many full bytes as possible (if any)
-        if(moltenData.size()>0){
-            moltenByteChunk = new byte[moltenData.size()];
-            for(int i=0; moltenData.size()>0; ++i){
-                moltenByteChunk[i] = moltenData.remove().byteValue();
-            }
-            try{file.write(moltenByteChunk);}
-            catch(Exception err){ err.printStackTrace();}
-        }
-
-        //7.3 Write last incomplete byte to file with appropriate left shift (extra bits will be)
-        if(bitAligner.size() > 0){
-            boolean[] lastByte = new boolean[8];
-            for(int i=0; bitAligner.size()>0; ++i){
-                lastByte[i]=bitAligner.remove().booleanValue();
-            }
-            try{file.write((byte)(BinaryTools.toUnsignedInt(lastByte)));}
-            catch(Exception err){ err.printStackTrace();}
-        }
-
-        //8. Close file.
-        try{file.close();}catch(Exception err){err.printStackTrace();}
-    }
+    public void smelt(){writeDataToNewFile(targetFile,crucible);}
 
     //FileSmelterStateful Overrides
     @Override
-    public void smeltToFile(Path destinationPathName){
-        targetFile = destinationPathName;
-        smelt();
-    }
+    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
 
     //OriginalFileSmelter methods
     //TODO Need to validate input
@@ -242,6 +136,112 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
 
     //TODO Make this reusable
     private void writeDataToNewFile(Path file, Collection<boolean[]> data){
+        //1. Initialize variables
+        //1.1 Open resultFile to begin writing (OutputFileStream)
+        FileOutputStream resultFile;
+        try{
+            resultFile = new FileOutputStream(file.toFile(),false);
+        }
+        catch(Exception err){
+            err.printStackTrace();
+            return;
+        }
 
+        //1.2 Initialize working variables
+        ArrayDeque<boolean[]> hotCrucible;
+        ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
+        ArrayDeque<Byte> moltenData; //bytes ready to be written
+        boolean[] header;
+        boolean[] currentDataStick; //tmp variable to sqeeze into a byte.
+        boolean[] currentByte = new boolean[8]; // tmp variable, current byte being "smelted".
+        byte moltenByte; //tmp variable, current byte actively being added to the moltenByteChunk
+        byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
+
+        synchronized (binaryTranslator){
+            //2. Empty crucible into local ArrayList (will keep this as the only Thread adding elements to it)
+            synchronized (crucible) {
+                hotCrucible = new ArrayDeque<boolean[]>(crucible.size());
+                while(!crucible.isEmpty()){
+                    hotCrucible.add(crucible.remove());
+                }
+            }
+
+            //3. Set boolean[] header based on binaryLexical settings and localCrubible size.
+            binaryTranslator.setDataCount(hotCrucible.size());
+            header = binaryTranslator.getBinaryHeaderFlat();
+            moltenData = new ArrayDeque<Byte>(((crucible.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
+        }
+
+        //4. Add full bytes of header to molten data.
+        int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
+        for(int i=0; i<fullHeaderBytes; ++i){
+            moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));
+        }
+
+        //5. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
+        for(int i=fullHeaderBytes << 3; i<header.length; ++i){
+            bitAligner.add(Boolean.valueOf(header[i]));
+        }
+
+        //6. Stuff and write 8 bits at a time.
+        while(!hotCrucible.isEmpty()){
+            currentDataStick = hotCrucible.remove();
+            for(int i=0; i<currentDataStick.length; ++i){bitAligner.add(currentDataStick[i]);}
+
+            //Squeeze as many full 8 bit sets to a moltenByte as possible.
+            while(bitAligner.size() >= 8){
+                for(int i=0; i<8; ++i){currentByte[i] = bitAligner.remove();}
+                moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));
+            }
+
+            while(moltenData.size() >= fileWriteByteChunkSize){
+                for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
+                try{resultFile.write(moltenByteChunk);}
+                catch(Exception err){ err.printStackTrace();}
+            }
+        }
+
+        //7. Finish writing final bytes to file
+        //7.1 Write as many full chunks as possible
+        while(bitAligner.size() >= 8){
+            for(int i=0; i<8; ++i){currentByte[i] = bitAligner.remove();}
+            moltenData.add((byte)BinaryTools.toUnsignedInt(currentByte));
+        }
+
+        while(moltenData.size() >= fileWriteByteChunkSize){
+            for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
+            try{resultFile.write(moltenByteChunk);}
+            catch(Exception err){ err.printStackTrace();}
+        }
+
+        //7.2 Write as many full bytes as possible (if any, should be less than fileWriteByteChunkSize)
+        if(moltenData.size()>0){
+            moltenByteChunk = new byte[moltenData.size()];
+            for(int i=0; moltenData.size()>0; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
+            try{resultFile.write(moltenByteChunk);}
+            catch(Exception err){ err.printStackTrace();}
+        }
+
+        //7.3 Write last incomplete byte to file with appropriate left shift (extra bits will be)
+        if(bitAligner.size() > 0){
+            boolean[] lastByte = new boolean[8];
+            int i=0;
+            //7.3.1 Fill in bits from the left
+            while(bitAligner.size()>0){
+                lastByte[i]=bitAligner.remove().booleanValue();
+                ++i;
+            }
+
+            //7.3.2 Pad remaining 0s to the right
+            while(i<8){
+                lastByte[i]=false;
+                ++i;
+            }
+            try{resultFile.write((byte)(BinaryTools.toUnsignedInt(lastByte)));}
+            catch(Exception err){ err.printStackTrace();}
+        }
+
+        //8. Close file.
+        try{resultFile.close();}catch(Exception err){err.printStackTrace();}
     }
 }

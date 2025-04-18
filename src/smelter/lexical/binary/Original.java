@@ -264,6 +264,8 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         boolean[] H_h2_h_gap
     ){
         //Header
+        header = new boolean[14][];
+
         //Header 0
         h1_byid = header[H_INDEX_BYID] = BinaryTools.genClone(H_h1_byid);
         t_h1_byid = h1_byid[0];
