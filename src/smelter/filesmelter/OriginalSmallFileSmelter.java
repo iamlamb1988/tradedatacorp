@@ -170,6 +170,17 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
             binaryTranslator.setDataCount(hotCrucible.size());
             header = binaryTranslator.getBinaryHeaderFlat();
             moltenData = new ArrayDeque<Byte>(((crucible.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
+
+            //DEBUG SECTION
+            boolean[][] DEBUGfatHeader = binaryTranslator.getBinaryHeader();
+            int DEBUG_fullIndexCounter=0;
+            for(int i=0;i<DEBUGfatHeader.length;++i){
+                for(int j=0;j<DEBUGfatHeader[i].length;++j){
+                    System.out.println("DEBUG H"+i+"["+DEBUG_fullIndexCounter+":"+j+"] "+DEBUGfatHeader[i][j]);
+                    ++DEBUG_fullIndexCounter;
+                }
+            }
+            //END DEBUG SECTION
         }
 
         //4. Add full bytes of header to molten data.
@@ -186,6 +197,12 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         //6. Stuff and write 8 bits at a time.
         while(!hotCrucible.isEmpty()){
             currentDataStick = hotCrucible.remove();
+            //DEBUG SECTION
+            int DEBUG_DataPointIndex=0;
+            for(int i=0;i<currentDataStick.length;++i){
+                System.out.println("D["+DEBUG_DataPointIndex+"]["+i+"] "+currentDataStick[i]);
+            }
+            //END DEBUG SECTION
             for(int i=0; i<currentDataStick.length; ++i){bitAligner.add(currentDataStick[i]);}
 
             //Squeeze as many full 8 bit sets to a moltenByte as possible.

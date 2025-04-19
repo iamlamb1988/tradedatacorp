@@ -326,8 +326,8 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h_total_len = getHeaderBitLength();
 
         //Cache/memoization
-        base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
-        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
+        base10PriceMaxFractionDigit  = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1))-1);
+        base10VolumeMaxFractionDigit = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1))-1);
     }
 
     private void constructHeaderFromTranslatedValues(
@@ -394,8 +394,8 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h1_vf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vf_len,H1_VF_LEN_LEN);
         header[H_INDEX_VF_LEN] = h1_vf_len;
 
-        base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
-        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
+        base10PriceMaxFractionDigit  = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1))-1);
+        base10VolumeMaxFractionDigit = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1))-1);
 
         //Header 10: sym_len
         t_h1_sym_len = (byte)(T_sym.length() << 3);
@@ -409,7 +409,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
         //Header 12: data_ct
         t_h2_data_ct = 0; //Initially 0 datapoints
-        h2_data_ct = new boolean[]{false};
+        h2_data_ct = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_data_ct,t_h1_ct_len);
         header[H_INDEX_DATA_CT] = h2_data_ct;
 
         //Header 13: gap
@@ -475,6 +475,20 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    public static Original genMiniLexical(String symbol, int interval, byte gapLength){
+        return new Original(
+            false,// boolean T_byid,
+            (byte)3, //int T_ct_len That is 8 maximum stick data points
+            interval,// int T_int,
+            gapLength,// byte T_h_gap_len,
+            (byte)4,// byte T_utc_len, NOTE integer is 15
+            (byte)4,// byte T_pw_len, NOTE integer is 15
+            (byte)4,// byte T_pf_len, NOTE integer is 15
+            (byte)4,// byte T_vw_len, NOTE integer is 15
+            (byte)4,// byte T_vf_len, NOTE integer is 15
+            symbol // String T_sym
+        );
+    }
     private Original(
         boolean[] H_h1_byid,
         boolean[] H_h1_int,
