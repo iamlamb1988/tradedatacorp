@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 19 APR 2025
+ */
 import javax.lang.model.util.Elements.Origin;
 
 import tradedatacorp.smelter.filesmelter.OriginalSmallFileSmelter;

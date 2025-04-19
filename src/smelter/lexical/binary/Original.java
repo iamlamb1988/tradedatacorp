@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 3 MAR 2025
+ * @since 19 APR 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -236,11 +236,11 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
 
     //Constructor
-    private static byte constructorGapCalculator(String symbol){
+    private static byte constructorGapCalculator(String symbol, int count_len){
         int headerExceptGapLength = 
             H1_TOTAL_LEN + 
             (symbol.length() << 3) + //symbol length * 8
-            1; //Data count for 0 elements
+            count_len; //Data count for 0 elements
         int remainder = headerExceptGapLength%8;
 
         if(remainder != 0) return (byte)(8-remainder);
@@ -429,9 +429,9 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
         return new Original(
             false,// boolean T_byid,
-            (byte)32,
+            (byte)32,// byte T_h1_ct_len
             interval,// int T_int,
-            constructorGapCalculator(symbol),// byte T_h_gap_len,
+            constructorGapCalculator(symbol,32),// byte T_h_gap_len, T_h1_ct_len
             (byte)63,// byte T_utc_len,
             valueWholeDigits,// byte T_pw_len,
             numberOfFloatingValueDigits,// byte T_pf_len,
@@ -450,7 +450,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
             false, // boolean T_byid,
             (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
             interval, // int T_int,
-            constructorGapCalculator(symbol), // byte T_h_gap_len,
+            constructorGapCalculator(symbol,16), // byte T_h_gap_len, T_ct_len
             (byte)44, // byte T_utc_len,
             (byte)31, // byte T_pw_len,
             (byte)15, // byte T_pf_len,

@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 9 FEB 2025
+ * @since 19 APR 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -49,8 +49,8 @@ public class OriginalTest{
 
 int expected_h2_len = 
     48 + //h2_sym characters "BTCUSD" x 8 bits
-    1 +  //h2_data_ct_len 1 bit to represent the value 0
-    7;   //h2_h_gap (only need to add 7 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
+    16 + //h2_data_ct bit length are defined by value h1_data_ct_len
+    0;   //h2_h_gap (only need to add 7 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
 
     int expected_h_len = expected_h1_len + expected_h2_len;
     int expected_data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
@@ -154,7 +154,6 @@ int expected_h2_len =
             public void testDefaultGap(){
                 boolean[] bin_h1_gap = generatedHeader1[4];
                 assertEquals(3,bin_h1_gap.length);
-                //Value not applicable yet...
             }
 
             @Test
@@ -242,7 +241,7 @@ int expected_h2_len =
                 boolean[] bin_h2_data_ct = generatedHeader2[1];
 
                 assertEquals(0,BinaryTools.toUnsignedInt(bin_h2_data_ct));
-                assertEquals(1,bin_h2_data_ct.length); //should match h1_data_ct_len
+                assertEquals(16,bin_h2_data_ct.length); //should match h1_data_ct_len
             }
 
             @Test
@@ -252,8 +251,8 @@ int expected_h2_len =
                     first_lexical.H1_TOTAL_LEN +
                     48 +
                     1 +
-                    7; //This is the gap, With
-                int expected_gap_bit_length = 7; 
+                    0; //This is the gap, With
+                int expected_gap_bit_length = 0; 
 
                 assertEquals(expected_gap_bit_length,bin_h2_h_gap.length);
             }
@@ -264,8 +263,8 @@ int expected_h2_len =
             assertEquals("BTCUSD",first_lexical.getSymbol());
             assertEquals(60,first_lexical.getInterval());
     
-            assertEquals(5,first_lexical.getBase10PriceDigits());  //15 bits => 2^15 => 32768 (base10) => 5 digits
-            assertEquals(5,first_lexical.getBase10VolumeDigits()); //15 bits => 2^15 => 32768 (base10) => 5 digits
+            assertEquals(4,first_lexical.getBase10PriceDigits());  //15 bits => 2^15 => 32768 (base10) => 5 digits
+            assertEquals(4,first_lexical.getBase10VolumeDigits()); //15 bits => 2^15 => 32768 (base10) => 5 digits
         }
 
         @Test
@@ -278,16 +277,16 @@ int expected_h2_len =
 
         @Test
         public void testDefaultHeader2(){
-            assertEquals(56,expected_h2_len);
+            assertEquals(64,expected_h2_len);
             assertEquals(expected_h2_len,first_lexical.getHeader2BitLength());
         }
 
         @Test
         public void testDefaultHeader(){
-            assertEquals(136,expected_h1_len + expected_h2_len); // 80 + 51 = 131
-            assertEquals(136,expected_h_len);
+            assertEquals(144,expected_h1_len + expected_h2_len); // 80 + 71 = 151
+            assertEquals(144,expected_h_len);
             assertEquals(expected_h_len,first_lexical.getHeaderBitLength());
-            assertEquals(0,expected_h_len%8);
+            assertEquals(0,expected_h_len%8); //Used aligned constructor
         }
     }
 
@@ -411,7 +410,7 @@ int expected_h2_len =
             assertEquals(1,BinaryTools.toUnsignedInt(volumeWholeBin1));
 
             assertEquals(15,volumeFractionBin1.length);
-            assertEquals(25000,BinaryTools.toUnsignedInt(volumeFractionBin1)); //5 Decimal Digits
+            assertEquals(2500,BinaryTools.toUnsignedInt(volumeFractionBin1)); //4 Decimal Digits
 
             //Total Data length
             assertEquals(274,expected_data_len); //44 + 4*31 + 4*15 + 31 + 15
