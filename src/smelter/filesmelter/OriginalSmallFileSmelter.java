@@ -14,7 +14,11 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.ArrayDeque;
 
-//NOTE: This is meant for "small" files. Will write to entire file all at once.
+/**
+ * This class writes StickDouble types to a compressed binary file that is formated to an Original binaryTranslator.
+ * This class is a functional prototype that will be used as a blueprint to write a fully streamlined thread safe filewriter.
+ * NOTE: If binary Lexical changes while data is in the crucible, the crucible data may be corrupt. Will change on full class implementation.
+ */
 public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble>{
     private Original binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
@@ -69,7 +73,10 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
     }
 
     //Constructor
-    //TODO
+    /**
+     * Creates an instance of this class from a clone of {@code originalTranslator}
+     * @param originalTranslator
+     */
     public OriginalSmallFileSmelter(Original originalTranslator){
         binaryTranslator = originalTranslator.clone();
         targetFile = null;
@@ -80,21 +87,63 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
     }
 
     //Smelter Overrides
-    //TODO
-    public void smelt(StickDouble dataStick){}
+    /**
+     * Writes stored {@code dataStick} to {@code targetFile} in accordance with the {@code binaryLexical}.
+     * @param dataStick The data stick that will be written to binary file.
+     */
+    public void smelt(StickDouble dataStick){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(dataStick){
+            rawDataQueue = new ArrayDeque<>(1);
+            rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        }
+        writeDataToNewFile(targetFile, rawDataQueue);
+    }
 
-    //TODO
-    public void smelt(StickDouble[] rawDataArray){}
+    /**
+     * Writes stored {@code stickArray} to {@code targetFile} in accordance with the {@code binaryLexical}.
+     * @param stickArray The array of data sticks that will be written to binary file.
+     */
+    public void smelt(StickDouble[] stickArray){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(stickArray){
+            rawDataQueue = new ArrayDeque<>(stickArray.length);
+            for(StickDouble stick : stickArray){
+                rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
+            }
+        }
+        writeDataToNewFile(targetFile, rawDataQueue);
+    }
 
-    //TODO
-    public void smelt(Collection<StickDouble> rawDataArray){}
+    /**
+     * Writes stored {@code stickDataCollection} to {@code targetFile} in accordance with the {@code binaryLexical}.
+     * @param stickDataCollection The collection of data sticks that will be written to binary file.
+     */
+    public void smelt(Collection<StickDouble> stickDataCollection){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(stickDataCollection){
+            rawDataQueue = new ArrayDeque<boolean[]>(stickDataCollection.size());
+            for(StickDouble stick : stickDataCollection){
+                rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
+            }
+        }
+        writeDataToNewFile(targetFile, rawDataQueue);
+    }
 
     //SmelterStateful Overrides
+    /**
+     * Adds {@code dataStick} to {@code crucible}.
+     * @param dataStick The value to be added to the {@code crucible} after binary conversion with {@code binaryLexical}.
+     */
     @Override
     public void addData(StickDouble dataStick){
         synchronized(crucible){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
     }
 
+    /**
+     * Adds {@code dataStickArray} to {@code crucible}.
+     * @param dataStickArray The values to be added to the {@code crucible} after binary conversion with {@code binaryLexical}.
+     */
     @Override
     public void addData(StickDouble[] dataStickArray){
         synchronized(crucible){
@@ -102,6 +151,10 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         }
     }
 
+    /**
+     * Adds {@code dataStickCollection} to {@code crucible}.
+     * @param dataStickCollection The values to be added to {@code crucible} after binary conversion with {@code binaryLexical}.
+     */
     @Override
     public void addData(Collection<StickDouble> dataStickCollection){
         synchronized(crucible){
@@ -111,31 +164,28 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         }
     }
 
+    /**
+     * Writes stored data in {@code crucible} to {@code targetFile} in accordance with the {@code binaryLexical}.
+     */
     @Override
     public void smelt(){writeDataToNewFile(targetFile,crucible);}
 
     //FileSmelterStateful Overrides
+    /**
+     * Writes stored data in {@code crucible} to {@code destinationPathName} in accordance with the {@code binaryLexical}.
+     * @param destinationPathName The file where the binary data will be written to.
+     */
     @Override
     public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
 
     //OriginalFileSmelter methods
-    //TODO Need to validate input
-    public void setTargetFile(String relativePathName){
-        targetFile = Path.of(relativePathName);
-    }
-
-    //TODO Need to validate input
-    public void setAbsoluteTargetFile(String absolutePathName){
-        targetFile = Paths.get(absolutePathName);
-    }
-
-    //TODO Need to validate input
-    public void setAbsoluteFromRelativeTargetFile(String relativePathName){
-        targetFile = Path.of(relativePathName).toAbsolutePath();
-    }
-
-    //TODO Make this reusable
-    private void writeDataToNewFile(Path file, Collection<boolean[]> data){
+    /**
+     * The core function that is used to write binary data in {@code dataQueue} to  to {@code file}.
+     * @param file The file where the binary data will be written to.
+     * @param dataQueue The queue containing the binary data that adheres to {@code binaryLexical}.
+     * NOTE: If binaryLexical bits change, the dataQueue boolean[] may be incompatible with change.
+     */
+    public void writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue){
         //1. Initialize variables
         //1.1 Open resultFile to begin writing (OutputFileStream)
         FileOutputStream resultFile;
@@ -154,22 +204,21 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         boolean[] header;
         boolean[] currentDataStick; //tmp variable to sqeeze into a byte.
         boolean[] currentByte = new boolean[8]; // tmp variable, current byte being "smelted".
-        byte moltenByte; //tmp variable, current byte actively being added to the moltenByteChunk
         byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
 
         synchronized (binaryTranslator){
-            //2. Empty crucible into local ArrayList (will keep this as the only Thread adding elements to it)
-            synchronized (crucible) {
-                hotCrucible = new ArrayDeque<boolean[]>(crucible.size());
-                while(!crucible.isEmpty()){
-                    hotCrucible.add(crucible.remove());
+            //2. Empty dataCollection into local ArrayList (will keep this as the only Thread adding elements to it)
+            synchronized (dataQueue) {
+                hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
+                while(!dataQueue.isEmpty()){
+                    hotCrucible.add(dataQueue.remove());
                 }
             }
 
             //3. Set boolean[] header based on binaryLexical settings and localCrubible size.
             binaryTranslator.setDataCount(hotCrucible.size());
             header = binaryTranslator.getBinaryHeaderFlat();
-            moltenData = new ArrayDeque<Byte>(((crucible.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
+            moltenData = new ArrayDeque<Byte>(((dataQueue.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
         }
 
         //4. Add full bytes of header to molten data.
@@ -243,5 +292,32 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
 
         //8. Close file.
         try{resultFile.close();}catch(Exception err){err.printStackTrace();}
+    }
+
+    /**
+     * Sets the relative path and name to target file.
+     * The relative path is based on the location of current working directory.
+     * @param relativePathName The path of the file for default write operations.
+     */
+    public void setTargetFile(String relativePathName){
+        targetFile = Path.of(relativePathName);
+    }
+
+    /**
+     * Sets the absolute path and name to target file.
+     * The relative path is based on the location of current working directory.
+     * @param relativePathName The path of the file for default write operations.
+     */
+    public void setAbsoluteTargetFile(String absolutePathName){
+        targetFile = Paths.get(absolutePathName);
+    }
+
+    /**
+     * Sets the absolute path from a relative name respective to current working directory.
+     * The relative path is based on the location of current working directory.
+     * @param relativePathName The path of the file for default write operations.
+     */
+    public void setAbsoluteFromRelativeTargetFile(String relativePathName){
+        targetFile = Path.of(relativePathName).toAbsolutePath();
     }
 }
