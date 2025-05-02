@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 19 APR 2025
+ * @since 1 MAY 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -65,16 +65,62 @@ import java.util.ArrayList;
  * </table>
  */
 public class Original implements BinaryLexical<StickDouble>, Cloneable{
+    private static final byte[] H1_LEN;
     private static final long[] tenToPow;
     private static final long[] maxFraction;
     private static final byte[] bitsNeededForTenPow;
     private static final byte[] bitsNeededForMaxFraction;
 
+    //Binary Header Index
+    public static final byte H1_COUNT = 11; //Number of H1 Fields
+    public static final byte H2_COUNT = 3;  //Number of H2 Fields
+
+    public static final byte H_INDEX_BYID = 0;
+    public static final byte H_INDEX_INT = 1;
+    public static final byte H_INDEX_CT_LEN = 2;
+    public static final byte H_INDEX_DATA_LEN = 3;
+    public static final byte H_INDEX_H_GAP_LEN = 4;
+    public static final byte H_INDEX_UTC_LEN = 5;
+    public static final byte H_INDEX_PW_LEN = 6;
+    public static final byte H_INDEX_PF_LEN = 7;
+    public static final byte H_INDEX_VW_LEN = 8;
+    public static final byte H_INDEX_VF_LEN = 9;
+    public static final byte H_INDEX_SYM_LEN = 10;
+    public static final byte H_INDEX_SYM = 11;
+    public static final byte H_INDEX_DATA_CT = 12;
+    public static final byte H_INDEX_H_GAP = 13;
+
+    // Binary Fixed field bit lengths
+    public static final byte H1_BYID_LEN = 1;
+    public static final byte H1_INT_LEN = 25;
+    public static final byte H1_CT_LEN_LEN = 5; //Clarity max number of bits 2^5 -1, 31 h2_ct max = 2^32 -1 
+    public static final byte H1_DATA_LEN_LEN = 9;
+    public static final byte H1_H_GAP_LEN_LEN = 3;
+    public static final byte H1_UTC_LEN_LEN = 6;
+    public static final byte H1_PW_LEN_LEN = 6;
+    public static final byte H1_PF_LEN_LEN = 6;
+    public static final byte H1_VW_LEN_LEN = 6;
+    public static final byte H1_VF_LEN_LEN = 6;
+    public static final byte H1_SYM_LEN_LEN = 7;
+
     static {
+        H1_LEN = new byte[H1_COUNT];
         tenToPow = new long[16];
         maxFraction = new long[16];
         bitsNeededForTenPow = new byte[16];
         bitsNeededForMaxFraction = new byte[16];
+
+        H1_LEN[H_INDEX_BYID] = H1_BYID_LEN;           // Index 0
+        H1_LEN[H_INDEX_INT] = H1_INT_LEN;             // Index 1
+        H1_LEN[H_INDEX_CT_LEN] = H1_CT_LEN_LEN;       // Index 2
+        H1_LEN[H_INDEX_DATA_LEN] = H1_DATA_LEN_LEN;   // Index 3
+        H1_LEN[H_INDEX_H_GAP_LEN] = H1_H_GAP_LEN_LEN; // Index 4
+        H1_LEN[H_INDEX_UTC_LEN] = H1_UTC_LEN_LEN;     // Index 5
+        H1_LEN[H_INDEX_PW_LEN] = H1_PW_LEN_LEN;       // Index 6
+        H1_LEN[H_INDEX_PF_LEN] = H1_PF_LEN_LEN;       // Index 7
+        H1_LEN[H_INDEX_VW_LEN] = H1_VW_LEN_LEN;       // Index 8
+        H1_LEN[H_INDEX_VF_LEN] = H1_VF_LEN_LEN;       // Index 9
+        H1_LEN[H_INDEX_SYM_LEN] = H1_SYM_LEN_LEN;     // Index 10
 
         tenToPow[0] = 1; //10^0 == 1
         tenToPow[1] = 10; //10^1 == 10
@@ -144,35 +190,6 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         bitsNeededForMaxFraction[14] = 47; //log2(99,999,999,999,999) =~ 46.5 => 47
         bitsNeededForMaxFraction[15] = 50; //log2(999,999,999,999,999) =~ 49.8 => 50
     }
-
-    //Binary Header Index
-    public static final byte H_INDEX_BYID = 0;
-    public static final byte H_INDEX_INT = 1;
-    public static final byte H_INDEX_CT_LEN = 2;
-    public static final byte H_INDEX_DATA_LEN = 3;
-    public static final byte H_INDEX_H_GAP_LEN = 4;
-    public static final byte H_INDEX_UTC_LEN = 5;
-    public static final byte H_INDEX_PW_LEN = 6;
-    public static final byte H_INDEX_PF_LEN = 7;
-    public static final byte H_INDEX_VW_LEN = 8;
-    public static final byte H_INDEX_VF_LEN = 9;
-    public static final byte H_INDEX_SYM_LEN = 10;
-    public static final byte H_INDEX_SYM = 11;
-    public static final byte H_INDEX_DATA_CT = 12;
-    public static final byte H_INDEX_H_GAP = 13;
-
-    // Binary Fixed field bit lengths
-    public static final byte H1_BYID_LEN = 1;
-    public static final byte H1_INT_LEN = 25;
-    public static final byte H1_CT_LEN_LEN = 5; //Clarity max number of bits 2^5 -1, 31 h2_ct max = 2^32 -1 
-    public static final byte H1_DATA_LEN_LEN = 9;
-    public static final byte H1_H_GAP_LEN_LEN = 3;
-    public static final byte H1_UTC_LEN_LEN = 6;
-    public static final byte H1_PW_LEN_LEN = 6;
-    public static final byte H1_PF_LEN_LEN = 6;
-    public static final byte H1_VW_LEN_LEN = 6;
-    public static final byte H1_VF_LEN_LEN = 6;
-    public static final byte H1_SYM_LEN_LEN = 7;
 
     public static final int H1_TOTAL_LEN = 
         H1_BYID_LEN +
@@ -264,7 +281,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         boolean[] H_h2_h_gap
     ){
         //Header
-        header = new boolean[14][];
+        header = new boolean[H1_COUNT+H2_COUNT][];
 
         //Header 0
         h1_byid = header[H_INDEX_BYID] = BinaryTools.genClone(H_h1_byid);
@@ -342,7 +359,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         byte T_vf_len,
         String T_sym
     ){
-        header = new boolean[14][];
+        header = new boolean[H1_COUNT+H2_COUNT][];
 
         //Header 0: by_id
         t_h1_byid = T_byid;
@@ -489,7 +506,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
             symbol // String T_sym
         );
     }
-    private Original(
+    public Original(
         boolean[] H_h1_byid,
         boolean[] H_h1_int,
         boolean[] H_h1_ct_len,
@@ -549,6 +566,9 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    public Original(byte[] compressedHeader){
+        
+    }
     // BinaryLexical Overrides
     /**
      * Returns a deep copy of the current state of binary header.
@@ -985,6 +1005,8 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h2_total_len=newUpdatedHeader2Length;
         h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
+
+    public static byte getHeader1BitLength(int index){return H1_LEN[index];}
 
     public int getHeaderBitLength(){return h_total_len;}
     public int getHeader2BitLength(){return h2_total_len;}
