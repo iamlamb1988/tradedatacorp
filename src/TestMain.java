@@ -16,15 +16,16 @@ public class TestMain{
 
 		System.out.println("Testing 1 data point");
 		smelter.addData(new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5));
+		smelter.addData(new CandleStickFixedDouble(13, 4.1, 9.7, 2.2, 5, 15.6));
 
-		System.out.println("Setting file to: my1datapoint.brclmb");
-		smelter.setTargetFile("my1datapoint.brclmb");
+		System.out.println("Setting file to: mydatapoints.brclmb");
+		smelter.setTargetFile("mydatapoints.brclmb");
 
 		System.out.println("Write the binary file");
 		smelter.smelt();
 
 		OriginalFileUnsmelter unsmelter = new OriginalFileUnsmelter();
 		System.out.println("Reading file now");
-		unsmelter.unsmelt("my1datapoint.brclmb");
+		unsmelter.unsmelt("mydatapoints.brclmb");
 	}
 }
