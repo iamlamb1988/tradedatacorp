@@ -220,9 +220,8 @@ public class OriginalFileUnsmelter{
             //4. Set all bits from byteCHunk
             for(int i=0; i<byteCount; ++i){
                 int tmp=byteArray[i] & 0xFF;
-                for(int j=0; j<8; ++j){
-                    bitQueue.add(Boolean.valueOf(tmp%2 == 1));
-                    tmp >>>= 1;
+                for (int j=7; j>=0; --j) {
+                    bitQueue.add(((tmp >> j) & 1) == 1);
                 }
             }
 
