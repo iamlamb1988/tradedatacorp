@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 1 MAY 2025
+ * @since 10 MAY 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
