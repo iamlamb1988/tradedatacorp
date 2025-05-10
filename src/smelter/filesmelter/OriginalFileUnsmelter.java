@@ -8,7 +8,6 @@ import tradedatacorp.smelter.lexical.binary.Original;
 import tradedatacorp.smelter.lexical.binary.BinaryTools;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
-import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 import java.io.FileInputStream;
 import java.nio.file.Path;
