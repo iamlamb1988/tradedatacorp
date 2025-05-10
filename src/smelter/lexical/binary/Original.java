@@ -1011,11 +1011,11 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     public int getHeaderBitLength(){return h_total_len;}
     public int getHeader2BitLength(){return h2_total_len;}
 
-    public boolean getByID(){return t_h1_byid;}
-    public String getSymbol(){return t_h2_sym;}
-    public int getInterval(){return t_h1_int;}
-
-    public int getDataBitLength(){return t_h1_data_len;}
+    public boolean getByID(){return t_h1_byid;} //H0
+    public int getInterval(){return t_h1_int;} //H1
+    public int getDataBitLength(){return t_h1_data_len;} //H3
+    public String getSymbol(){return t_h2_sym;} //H11
+    public int getDataCount(){return t_h2_data_ct;} //H12
 
     /**
      * Alters the data count of header (h2_data_ct). Depends on h1_data_len, there must be enough bits to set to the new value.
