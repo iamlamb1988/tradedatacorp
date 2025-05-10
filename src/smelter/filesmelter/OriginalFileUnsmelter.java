@@ -202,7 +202,7 @@ public class OriginalFileUnsmelter{
         for(int i=flatIndex; i<binArray.length; ++i){
             bitQueue.add(Boolean.valueOf(binArray[i]));
             //DEBUG SECTION
-            System.out.println("DEBUG: excess data bit: "+binArray[i]);
+            System.out.println("DEBUG: excess data bit["+i+"]: "+binArray[i]);
             //END DEBUG SECTION
         }
 
@@ -212,13 +212,17 @@ public class OriginalFileUnsmelter{
         //Main loop for gathering data
         try{byteCount=binFile.read(byteArray);}catch(Exception err){}
 
+        //DEBUG SECTION
+        System.out.println("DEBUG: First Full ByteCount: "+byteCount);
+        //END DEBUG SECTION
+
         do{
             //4. Set all bits from byteCHunk
             for(int i=0; i<byteCount; ++i){
-                byte tmp=byteArray[i];
+                int tmp=byteArray[i] & 0xFF;
                 for(int j=0; j<8; ++j){
                     bitQueue.add(Boolean.valueOf(tmp%2 == 1));
-                    tmp = (byte)(tmp >>> 1);
+                    tmp >>>= 1;
                 }
             }
 
@@ -227,6 +231,10 @@ public class OriginalFileUnsmelter{
                 //5.1 Set data point bits
                 for(int i=0; i<lexical.getDataBitLength(); ++i){
                     binArray[i]=bitQueue.remove();
+
+                    //DEBUG SECTION
+                    System.out.println("DEBUG: dataPoint["+stickList.size()+"]["+i+"]: "+binArray[i]);
+                    //END DEBUG SECTION
                 }
 
                 //5.2 Add data point to collection

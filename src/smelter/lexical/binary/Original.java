@@ -67,7 +67,7 @@ import java.util.ArrayList;
 public class Original implements BinaryLexical<StickDouble>, Cloneable{
     private static final byte[] H1_LEN;
     private static final long[] tenToPow;
-    private static final long[] maxFraction;
+    private static final byte[] maxFractionFrombits;
     private static final byte[] bitsNeededForTenPow;
     private static final byte[] bitsNeededForMaxFraction;
 
@@ -106,9 +106,9 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     static {
         H1_LEN = new byte[H1_COUNT];
         tenToPow = new long[16];
-        maxFraction = new long[16];
+        maxFractionFrombits = new byte[64];
         bitsNeededForTenPow = new byte[16];
-        bitsNeededForMaxFraction = new byte[16];
+        bitsNeededForMaxFraction = new byte[20];
 
         H1_LEN[H_INDEX_BYID] = H1_BYID_LEN;           // Index 0
         H1_LEN[H_INDEX_INT] = H1_INT_LEN;             // Index 1
@@ -156,23 +156,72 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         bitsNeededForTenPow[14] = 47; //log2(10^14) =~ 46.5 => 47
         bitsNeededForTenPow[15] = 50; //log2(10^15) =~ 49.8 => 50
 
-        maxFraction[0] = 0; // no digit to represent no fractional point
-        maxFraction[1] = 9;
-        maxFraction[2] = 99;
-        maxFraction[3] = 999;
-        maxFraction[4] = 9999;
-        maxFraction[5] = 99_999L;
-        maxFraction[6] = 999_999L;
-        maxFraction[7] = 9_999_999L;
-        maxFraction[8] = 99_999_999L;
-        maxFraction[9] = 999_999_999L;
-        maxFraction[10] = 9_999_999_999L;
-        maxFraction[11] = 99_999_999_999L;
-        maxFraction[12] = 999_999_999_999L;
-        maxFraction[13] = 9_999_999_999_999L;
-        maxFraction[14] = 99_999_999_999_999L;
-        maxFraction[15] = 999_999_999_999_999L;
+        maxFractionFrombits[0] = 0; // edge case: no digit to represent no fractional point
+        maxFractionFrombits[1] = 0;
+        maxFractionFrombits[2] = 0;
+        maxFractionFrombits[3] = 0;
+        maxFractionFrombits[4] = 1; // Encapsulates 10ths base 10 .0 to .9
+        maxFractionFrombits[5] = 1;
+        maxFractionFrombits[6] = 1;
+        maxFractionFrombits[7] = 2; // Encapsulates 100ths base 10 .0 to .99
+        maxFractionFrombits[8] = 2;
+        maxFractionFrombits[9] = 2;
+        maxFractionFrombits[10] = 3; // Encapsulates 1000ths base 10 .0 to .999
+        maxFractionFrombits[11] = 3;
+        maxFractionFrombits[12] = 3;
+        maxFractionFrombits[13] = 3;
+        maxFractionFrombits[14] = 4; // Encapsulates 1000ths base 10 .0 to .9999
+        maxFractionFrombits[15] = 4;
+        maxFractionFrombits[16] = 4;
+        maxFractionFrombits[17] = 5; // Encapsulates 10000ths base 10 .0 to .99_999
+        maxFractionFrombits[18] = 5;
+        maxFractionFrombits[19] = 5;
+        maxFractionFrombits[20] = 6; // Encapsulates 100000ths base 10 .0 to .999_999
+        maxFractionFrombits[21] = 6;
+        maxFractionFrombits[22] = 6;
+        maxFractionFrombits[23] = 6;
+        maxFractionFrombits[24] = 7; // Encapsulates 7 base 10 digits .0 to .9_999_999
+        maxFractionFrombits[25] = 7;
+        maxFractionFrombits[26] = 7;
+        maxFractionFrombits[27] = 8; // Encapsulates 8 base 10 digits .0 to .99_999_999
+        maxFractionFrombits[28] = 8;
+        maxFractionFrombits[29] = 8;
+        maxFractionFrombits[30] = 9; // Encapsulates 9 base 10 .0 to .999_999_999
+        maxFractionFrombits[31] = 9;
+        maxFractionFrombits[32] = 9;
+        maxFractionFrombits[33] = 9;
+        maxFractionFrombits[34] = 10; // Encapsulates 10 base 10 .0 to .9_999_999_999
+        maxFractionFrombits[35] = 10;
+        maxFractionFrombits[36] = 10;
+        maxFractionFrombits[37] = 11; // Encapsulates 11 base 10 .0 to .99_999_999_999
+        maxFractionFrombits[38] = 11;
+        maxFractionFrombits[39] = 11;
+        maxFractionFrombits[40] = 12; // Encapsulates 12 base 10 .0 to .999_999_999_999
+        maxFractionFrombits[41] = 12;
+        maxFractionFrombits[42] = 12;
+        maxFractionFrombits[43] = 12;
+        maxFractionFrombits[44] = 13; // Encapsulates 13 base 10 .0 to .9_999_999_999_999
+        maxFractionFrombits[45] = 13;
+        maxFractionFrombits[46] = 13;
+        maxFractionFrombits[47] = 14; // Encapsulates 14 base 10 .0 to .99_999_999_999_999
+        maxFractionFrombits[48] = 14;
+        maxFractionFrombits[49] = 14;
+        maxFractionFrombits[50] = 15; // Encapsulates 15 base 10 .0 to .999_999_999_999_999
+        maxFractionFrombits[51] = 15;
+        maxFractionFrombits[52] = 15;
+        maxFractionFrombits[53] = 15;
+        maxFractionFrombits[54] = 16; // Encapsulates 16 base 10 .0 to .9_999_999_999_999_999
+        maxFractionFrombits[55] = 16;
+        maxFractionFrombits[56] = 16;
+        maxFractionFrombits[57] = 17; // Encapsulates 17 base 10 .0 to .99_999_999_999_999_999
+        maxFractionFrombits[58] = 17;
+        maxFractionFrombits[59] = 17;
+        maxFractionFrombits[60] = 18; // Encapsulates 18 base 10 .0 to .999_999_999_999_999_999
+        maxFractionFrombits[61] = 18;
+        maxFractionFrombits[62] = 18;
+        maxFractionFrombits[63] = 19; // Encapsulates 19 base 10 .0 to .9_999_999_999_999_999_999
 
+        //Reverse min lookup for maxFractionFrombits
         bitsNeededForMaxFraction[0] = 0; //No bits needed for no fraction
         bitsNeededForMaxFraction[1] = 4; //log2(9) =~ 3.1 => 4
         bitsNeededForMaxFraction[2] = 7; //log2(99) =~ 6.6 => 7
@@ -189,6 +238,10 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         bitsNeededForMaxFraction[13] = 44; //log2(9,999,999,999,999) =~ 43.1 => 44
         bitsNeededForMaxFraction[14] = 47; //log2(99,999,999,999,999) =~ 46.5 => 47
         bitsNeededForMaxFraction[15] = 50; //log2(999,999,999,999,999) =~ 49.8 => 50
+        bitsNeededForMaxFraction[16] = 54;
+        bitsNeededForMaxFraction[17] = 57;
+        bitsNeededForMaxFraction[18] = 60;
+        bitsNeededForMaxFraction[19] = 63;
     }
 
     public static final int H1_TOTAL_LEN = 
@@ -343,8 +396,8 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h_total_len = getHeaderBitLength();
 
         //Cache/memoization
-        base10PriceMaxFractionDigit  = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1))-1);
-        base10VolumeMaxFractionDigit = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1))-1);
+        base10PriceMaxFractionDigit  = maxFractionFrombits[t_h1_pf_len];
+        base10VolumeMaxFractionDigit = maxFractionFrombits[t_h1_vf_len];
     }
 
     private void constructHeaderFromTranslatedValues(
@@ -411,8 +464,9 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h1_vf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vf_len,H1_VF_LEN_LEN);
         header[H_INDEX_VF_LEN] = h1_vf_len;
 
-        base10PriceMaxFractionDigit  = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1))-1);
-        base10VolumeMaxFractionDigit = (int)(Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1))-1);
+        //Cache/memoization
+        base10PriceMaxFractionDigit  = maxFractionFrombits[t_h1_pf_len];
+        base10VolumeMaxFractionDigit = maxFractionFrombits[t_h1_vf_len];
 
         //Header 10: sym_len
         t_h1_sym_len = (byte)(T_sym.length() << 3);
@@ -729,7 +783,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double open = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //High
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -737,7 +791,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double high = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //Low
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -745,7 +799,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double low = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //Close
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -753,14 +807,14 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double close = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //Volume
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vw_len);
         nextIndex += t_h1_vw_len;
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vf_len);
-        double volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+        double volume = tmpWhole + (double)tmpFraction/tenToPow[base10VolumeMaxFractionDigit];
 
         return new CandleStickFixedDouble(utc, open, high, low, close, volume);
     }
