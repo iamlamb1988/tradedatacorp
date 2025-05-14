@@ -15,9 +15,19 @@ import java.util.Collection;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
+/**
+ * The purpose of this class is to return a {@link Collection} of {@link StickDouble} objects from a file encoded by an {@code Original} binary Lexical.
+ * This is intended for small files and may have perfomance issues with large files.
+ * This is the prototype class that will be the basis for handling large files.
+ */
 public class OriginalFileUnsmelter{
     private int fileReadByteChunkSize = 64;
 
+    /**
+     * Returns a {@link Collection} of {@link StickDouble} objects read in by an encoded file by an {@link Original}.
+     * @param originalBinaryFile The file pathname that will be decoded to construct return value. This file must be in the format provided by {@link Original} instance.
+     * @return a {@link Collection} of {@link StickDouble} objects read in by {@code originalBinaryFile}.
+     */
     public Collection<StickDouble> unsmelt(String originalBinaryFile){
         //1. Open binary file in Original binary format.
         //1.0 Open binary file in Original binary format.
@@ -147,9 +157,7 @@ public class OriginalFileUnsmelter{
             try{byteCount=binFile.read(byteArray);}catch(Exception err){}
         }while(byteCount == fileReadByteChunkSize);
 
-        //6. Handle last chunk where possible
-
-        //7. Close file and return
+        //6. Close file and return
         try{binFile.close();}catch(Exception err){err.printStackTrace();}
 
         return stickList;

@@ -678,6 +678,14 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return binData;
     }
 
+    /**
+     * Returns an inflated binary array of all Stick elements in the {@code dataArray}.
+     * @param dataArray An array of elements that will be converted into binary.
+     * @return A 3 dimensional array where:
+     * The first element is 1 Stick
+     * The second element is associated field (11 fields so this length is always 11)
+     * The third element is bit associated with the field.
+     */
     @Override
     public boolean[][][] getBinaryDataPoints(StickDouble[] dataArray){
         boolean[][][] r = new boolean[dataArray.length][][];
@@ -697,6 +705,14 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return r;
     }
 
+    /**
+     * Returns an inflated binary array of all Stick elements in the {@code dataCollection}.
+     * @param dataCollection An array of elements that will be converted into binary.
+     * @return A 3 dimensional array where:
+     * The first element is 1 Stick
+     * The second element is associated field (11 fields so this length is always 11)
+     * The third element is bit associated with the field.
+     */
     @Override
     public boolean[][][] getBinaryDataPoints(Collection<StickDouble> dataCollection){
         boolean[][][] r = new boolean[dataCollection.size()][][];
@@ -716,6 +732,12 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return r;
     }
 
+    /**
+     * Returns an flattened binary array of all Stick elements in the {@code dataArray}.
+     * This is similar to {@code getBinaryDataPoints} except the results are flattened to a single array.
+     * @param dataArray An array of elements that will be converted into binary.
+     * @return A flattened array of all datapoints. length be a multiple of {@code t_h1_data_len}.
+     */
     @Override
     public boolean[] getBinaryDataPointsFlat(StickDouble[] dataArray){
         boolean[] r = new boolean[t_h1_data_len * dataArray.length];
@@ -730,6 +752,12 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return r;
     }
 
+    /**
+     * Returns an flattened binary array of all Stick elements in the {@code dataArray}.
+     * This is similar to {@code getBinaryDataPoints} except the results are flattened to a single array.
+     * @param dataCollection An array of elements that will be converted into binary.
+     * @return A flattened array of all datapoints. length be a multiple of {@code t_h1_data_len}.
+     */
     @Override
     public boolean[] getBinaryDataPointsFlat(Collection<StickDouble> dataCollection){
         boolean[] r = new boolean[t_h1_data_len * dataCollection.size()];
