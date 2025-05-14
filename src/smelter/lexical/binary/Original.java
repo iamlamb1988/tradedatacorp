@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 15 FEB 2025
+ * @since 10 MAY 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -64,17 +64,63 @@ import java.util.ArrayList;
  * <tr><td>Volume Fractional Value</td><td>t_h1_vf_len</td><td>The unsigned integer that represents the fractional side of the Volume price.</td></tr>
  * </table>
  */
-public class Original implements BinaryLexical<StickDouble>{
+public class Original implements BinaryLexical<StickDouble>, Cloneable{
+    private static final byte[] H1_LEN;
     private static final long[] tenToPow;
-    private static final long[] maxFraction;
+    private static final byte[] maxFractionFrombits;
     private static final byte[] bitsNeededForTenPow;
     private static final byte[] bitsNeededForMaxFraction;
 
+    //Binary Header Index
+    public static final byte H1_COUNT = 11; //Number of H1 Fields
+    public static final byte H2_COUNT = 3;  //Number of H2 Fields
+
+    public static final byte H_INDEX_BYID = 0;
+    public static final byte H_INDEX_INT = 1;
+    public static final byte H_INDEX_CT_LEN = 2;
+    public static final byte H_INDEX_DATA_LEN = 3;
+    public static final byte H_INDEX_H_GAP_LEN = 4;
+    public static final byte H_INDEX_UTC_LEN = 5;
+    public static final byte H_INDEX_PW_LEN = 6;
+    public static final byte H_INDEX_PF_LEN = 7;
+    public static final byte H_INDEX_VW_LEN = 8;
+    public static final byte H_INDEX_VF_LEN = 9;
+    public static final byte H_INDEX_SYM_LEN = 10;
+    public static final byte H_INDEX_SYM = 11;
+    public static final byte H_INDEX_DATA_CT = 12;
+    public static final byte H_INDEX_H_GAP = 13;
+
+    // Binary Fixed field bit lengths
+    public static final byte H1_BYID_LEN = 1;
+    public static final byte H1_INT_LEN = 25;
+    public static final byte H1_CT_LEN_LEN = 5; //Clarity max number of bits 2^5 -1, 31 h2_ct max = 2^32 -1 
+    public static final byte H1_DATA_LEN_LEN = 9;
+    public static final byte H1_H_GAP_LEN_LEN = 3;
+    public static final byte H1_UTC_LEN_LEN = 6;
+    public static final byte H1_PW_LEN_LEN = 6;
+    public static final byte H1_PF_LEN_LEN = 6;
+    public static final byte H1_VW_LEN_LEN = 6;
+    public static final byte H1_VF_LEN_LEN = 6;
+    public static final byte H1_SYM_LEN_LEN = 7;
+
     static {
+        H1_LEN = new byte[H1_COUNT];
         tenToPow = new long[16];
-        maxFraction = new long[16];
+        maxFractionFrombits = new byte[64];
         bitsNeededForTenPow = new byte[16];
-        bitsNeededForMaxFraction = new byte[16];
+        bitsNeededForMaxFraction = new byte[20];
+
+        H1_LEN[H_INDEX_BYID] = H1_BYID_LEN;           // Index 0
+        H1_LEN[H_INDEX_INT] = H1_INT_LEN;             // Index 1
+        H1_LEN[H_INDEX_CT_LEN] = H1_CT_LEN_LEN;       // Index 2
+        H1_LEN[H_INDEX_DATA_LEN] = H1_DATA_LEN_LEN;   // Index 3
+        H1_LEN[H_INDEX_H_GAP_LEN] = H1_H_GAP_LEN_LEN; // Index 4
+        H1_LEN[H_INDEX_UTC_LEN] = H1_UTC_LEN_LEN;     // Index 5
+        H1_LEN[H_INDEX_PW_LEN] = H1_PW_LEN_LEN;       // Index 6
+        H1_LEN[H_INDEX_PF_LEN] = H1_PF_LEN_LEN;       // Index 7
+        H1_LEN[H_INDEX_VW_LEN] = H1_VW_LEN_LEN;       // Index 8
+        H1_LEN[H_INDEX_VF_LEN] = H1_VF_LEN_LEN;       // Index 9
+        H1_LEN[H_INDEX_SYM_LEN] = H1_SYM_LEN_LEN;     // Index 10
 
         tenToPow[0] = 1; //10^0 == 1
         tenToPow[1] = 10; //10^1 == 10
@@ -110,23 +156,72 @@ public class Original implements BinaryLexical<StickDouble>{
         bitsNeededForTenPow[14] = 47; //log2(10^14) =~ 46.5 => 47
         bitsNeededForTenPow[15] = 50; //log2(10^15) =~ 49.8 => 50
 
-        maxFraction[0] = 0; // no digit to represent no fractional point
-        maxFraction[1] = 9;
-        maxFraction[2] = 99;
-        maxFraction[3] = 999;
-        maxFraction[4] = 9999;
-        maxFraction[5] = 99_999L;
-        maxFraction[6] = 999_999L;
-        maxFraction[7] = 9_999_999L;
-        maxFraction[8] = 99_999_999L;
-        maxFraction[9] = 999_999_999L;
-        maxFraction[10] = 9_999_999_999L;
-        maxFraction[11] = 99_999_999_999L;
-        maxFraction[12] = 999_999_999_999L;
-        maxFraction[13] = 9_999_999_999_999L;
-        maxFraction[14] = 99_999_999_999_999L;
-        maxFraction[15] = 999_999_999_999_999L;
+        maxFractionFrombits[0] = 0; // edge case: no digit to represent no fractional point
+        maxFractionFrombits[1] = 0;
+        maxFractionFrombits[2] = 0;
+        maxFractionFrombits[3] = 0;
+        maxFractionFrombits[4] = 1; // Encapsulates 10ths base 10 .0 to .9
+        maxFractionFrombits[5] = 1;
+        maxFractionFrombits[6] = 1;
+        maxFractionFrombits[7] = 2; // Encapsulates 100ths base 10 .0 to .99
+        maxFractionFrombits[8] = 2;
+        maxFractionFrombits[9] = 2;
+        maxFractionFrombits[10] = 3; // Encapsulates 1000ths base 10 .0 to .999
+        maxFractionFrombits[11] = 3;
+        maxFractionFrombits[12] = 3;
+        maxFractionFrombits[13] = 3;
+        maxFractionFrombits[14] = 4; // Encapsulates 1000ths base 10 .0 to .9999
+        maxFractionFrombits[15] = 4;
+        maxFractionFrombits[16] = 4;
+        maxFractionFrombits[17] = 5; // Encapsulates 10000ths base 10 .0 to .99_999
+        maxFractionFrombits[18] = 5;
+        maxFractionFrombits[19] = 5;
+        maxFractionFrombits[20] = 6; // Encapsulates 100000ths base 10 .0 to .999_999
+        maxFractionFrombits[21] = 6;
+        maxFractionFrombits[22] = 6;
+        maxFractionFrombits[23] = 6;
+        maxFractionFrombits[24] = 7; // Encapsulates 7 base 10 digits .0 to .9_999_999
+        maxFractionFrombits[25] = 7;
+        maxFractionFrombits[26] = 7;
+        maxFractionFrombits[27] = 8; // Encapsulates 8 base 10 digits .0 to .99_999_999
+        maxFractionFrombits[28] = 8;
+        maxFractionFrombits[29] = 8;
+        maxFractionFrombits[30] = 9; // Encapsulates 9 base 10 .0 to .999_999_999
+        maxFractionFrombits[31] = 9;
+        maxFractionFrombits[32] = 9;
+        maxFractionFrombits[33] = 9;
+        maxFractionFrombits[34] = 10; // Encapsulates 10 base 10 .0 to .9_999_999_999
+        maxFractionFrombits[35] = 10;
+        maxFractionFrombits[36] = 10;
+        maxFractionFrombits[37] = 11; // Encapsulates 11 base 10 .0 to .99_999_999_999
+        maxFractionFrombits[38] = 11;
+        maxFractionFrombits[39] = 11;
+        maxFractionFrombits[40] = 12; // Encapsulates 12 base 10 .0 to .999_999_999_999
+        maxFractionFrombits[41] = 12;
+        maxFractionFrombits[42] = 12;
+        maxFractionFrombits[43] = 12;
+        maxFractionFrombits[44] = 13; // Encapsulates 13 base 10 .0 to .9_999_999_999_999
+        maxFractionFrombits[45] = 13;
+        maxFractionFrombits[46] = 13;
+        maxFractionFrombits[47] = 14; // Encapsulates 14 base 10 .0 to .99_999_999_999_999
+        maxFractionFrombits[48] = 14;
+        maxFractionFrombits[49] = 14;
+        maxFractionFrombits[50] = 15; // Encapsulates 15 base 10 .0 to .999_999_999_999_999
+        maxFractionFrombits[51] = 15;
+        maxFractionFrombits[52] = 15;
+        maxFractionFrombits[53] = 15;
+        maxFractionFrombits[54] = 16; // Encapsulates 16 base 10 .0 to .9_999_999_999_999_999
+        maxFractionFrombits[55] = 16;
+        maxFractionFrombits[56] = 16;
+        maxFractionFrombits[57] = 17; // Encapsulates 17 base 10 .0 to .99_999_999_999_999_999
+        maxFractionFrombits[58] = 17;
+        maxFractionFrombits[59] = 17;
+        maxFractionFrombits[60] = 18; // Encapsulates 18 base 10 .0 to .999_999_999_999_999_999
+        maxFractionFrombits[61] = 18;
+        maxFractionFrombits[62] = 18;
+        maxFractionFrombits[63] = 19; // Encapsulates 19 base 10 .0 to .9_999_999_999_999_999_999
 
+        //Reverse min lookup for maxFractionFrombits
         bitsNeededForMaxFraction[0] = 0; //No bits needed for no fraction
         bitsNeededForMaxFraction[1] = 4; //log2(9) =~ 3.1 => 4
         bitsNeededForMaxFraction[2] = 7; //log2(99) =~ 6.6 => 7
@@ -143,36 +238,11 @@ public class Original implements BinaryLexical<StickDouble>{
         bitsNeededForMaxFraction[13] = 44; //log2(9,999,999,999,999) =~ 43.1 => 44
         bitsNeededForMaxFraction[14] = 47; //log2(99,999,999,999,999) =~ 46.5 => 47
         bitsNeededForMaxFraction[15] = 50; //log2(999,999,999,999,999) =~ 49.8 => 50
+        bitsNeededForMaxFraction[16] = 54;
+        bitsNeededForMaxFraction[17] = 57;
+        bitsNeededForMaxFraction[18] = 60;
+        bitsNeededForMaxFraction[19] = 63;
     }
-
-    //Binary Header Index
-    public static final byte H_INDEX_BYID = 0;
-    public static final byte H_INDEX_INT = 1;
-    public static final byte H_INDEX_CT_LEN = 2;
-    public static final byte H_INDEX_DATA_LEN = 3;
-    public static final byte H_INDEX_H_GAP_LEN = 4;
-    public static final byte H_INDEX_UTC_LEN = 5;
-    public static final byte H_INDEX_PW_LEN = 6;
-    public static final byte H_INDEX_PF_LEN = 7;
-    public static final byte H_INDEX_VW_LEN = 8;
-    public static final byte H_INDEX_VF_LEN = 9;
-    public static final byte H_INDEX_SYM_LEN = 10;
-    public static final byte H_INDEX_SYM = 11;
-    public static final byte H_INDEX_DATA_CT = 12;
-    public static final byte H_INDEX_H_GAP = 13;
-
-    // Binary Fixed field bit lengths
-    public static final byte H1_BYID_LEN = 1;
-    public static final byte H1_INT_LEN = 25;
-    public static final byte H1_CT_LEN_LEN = 26;
-    public static final byte H1_DATA_LEN_LEN = 9;
-    public static final byte H1_H_GAP_LEN_LEN = 3;
-    public static final byte H1_UTC_LEN_LEN = 6;
-    public static final byte H1_PW_LEN_LEN = 6;
-    public static final byte H1_PF_LEN_LEN = 6;
-    public static final byte H1_VW_LEN_LEN = 6;
-    public static final byte H1_VF_LEN_LEN = 6;
-    public static final byte H1_SYM_LEN_LEN = 7;
 
     public static final int H1_TOTAL_LEN = 
         H1_BYID_LEN +
@@ -186,13 +256,6 @@ public class Original implements BinaryLexical<StickDouble>{
         H1_VW_LEN_LEN + 
         H1_VF_LEN_LEN +
         H1_SYM_LEN_LEN;
-
-    private int h2_total_len;
-    private int h_total_len;
-
-    //Cache/memoization variables for speedy reference
-    private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
-    private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
 
     //Binary Header
     private boolean[][] header;
@@ -234,21 +297,113 @@ public class Original implements BinaryLexical<StickDouble>{
     private String t_h2_sym;
     private int t_h2_data_ct;
 
+    //Header lengths
+    private int h2_total_len;
+    private int h_total_len;
+
+    //Cache/memoization variables for speedy reference
+    private int base10PriceMaxFractionDigit;  //used internally as a cache for splitWholeFraction functions
+    private int base10VolumeMaxFractionDigit; //used internally as a cache for splitWholeFraction functions
+
     //Constructor
-    private static byte constructorGapCalculator(String symbol){
+    private static byte constructorGapCalculator(String symbol, int count_len){
         int headerExceptGapLength = 
             H1_TOTAL_LEN + 
             (symbol.length() << 3) + //symbol length * 8
-            1; //Data count for 0 elements
+            count_len; //Data count for 0 elements
         int remainder = headerExceptGapLength%8;
 
         if(remainder != 0) return (byte)(8-remainder);
         else return (byte)0;
     }
 
+    private void constructHeaderFromBinaryHeaderFields(
+        boolean[] H_h1_byid,
+        boolean[] H_h1_int,
+        boolean[] H_h1_ct_len,
+        boolean[] H_h1_data_len,
+        boolean[] H_h1_h_gap_len,
+        boolean[] H_h1_utc_len,
+        boolean[] H_h1_pw_len,
+        boolean[] H_h1_pf_len,
+        boolean[] H_h1_vw_len,
+        boolean[] H_h1_vf_len,
+        boolean[] H_h1_sym_len,
+        boolean[] H_h2_sym,
+        boolean[] H_h2_data_ct,
+        boolean[] H_h2_h_gap
+    ){
+        //Header
+        header = new boolean[H1_COUNT+H2_COUNT][];
+
+        //Header 0
+        h1_byid = header[H_INDEX_BYID] = BinaryTools.genClone(H_h1_byid);
+        t_h1_byid = h1_byid[0];
+
+        //Header 1
+        h1_int = header[H_INDEX_INT] = BinaryTools.genClone(H_h1_int);
+        t_h1_int = BinaryTools.toUnsignedInt(h1_int);
+
+        //Header 2
+        h1_ct_len = header[H_INDEX_CT_LEN] = BinaryTools.genClone(H_h1_ct_len);
+        t_h1_ct_len = BinaryTools.toUnsignedInt(h1_ct_len);
+
+        //Header 3
+        h1_data_len = header[H_INDEX_DATA_LEN] = BinaryTools.genClone(H_h1_data_len);
+        t_h1_data_len = BinaryTools.toUnsignedInt(h1_data_len);
+
+        //Header 4
+        h1_h_gap_len = header[H_INDEX_H_GAP_LEN] = BinaryTools.genClone(H_h1_h_gap_len);
+        t_h1_h_gap_len = (byte)BinaryTools.toUnsignedInt(h1_h_gap_len);
+
+        //Header 5
+        h1_utc_len = header[H_INDEX_UTC_LEN] = BinaryTools.genClone(H_h1_utc_len);
+        t_h1_utc_len = (byte)BinaryTools.toUnsignedInt(h1_utc_len);
+
+        //Header 6
+        h1_pw_len = header[H_INDEX_PW_LEN] = BinaryTools.genClone(H_h1_pw_len);
+        t_h1_pw_len = (byte)BinaryTools.toUnsignedInt(h1_pw_len);
+
+        //Header 7
+        h1_pf_len = header[H_INDEX_PF_LEN] = BinaryTools.genClone(H_h1_pf_len);
+        t_h1_pf_len = (byte)BinaryTools.toUnsignedInt(H_h1_pf_len);
+
+        //Header 8
+        h1_vw_len = header[H_INDEX_VW_LEN] = BinaryTools.genClone(H_h1_vw_len);
+        t_h1_vw_len = (byte)BinaryTools.toUnsignedInt(h1_vw_len);
+
+        //Header 9
+        h1_vf_len = header[H_INDEX_VF_LEN] = BinaryTools.genClone(H_h1_vf_len);
+        t_h1_vf_len = (byte)BinaryTools.toUnsignedInt(h1_vf_len);
+
+        //Header 10
+        h1_sym_len = header[H_INDEX_SYM_LEN] = BinaryTools.genClone(H_h1_sym_len);
+        t_h1_sym_len = (byte)BinaryTools.toUnsignedInt(h1_sym_len);
+
+        //Header 11
+        h2_sym = header[H_INDEX_SYM] = BinaryTools.genClone(H_h2_sym);
+        t_h2_sym = BinaryTools.genStringFrom8BitBoolCharRep(h2_sym);
+
+        //Header 12
+        h2_data_ct = header[H_INDEX_DATA_CT] = BinaryTools.genClone(H_h2_data_ct);
+        t_h2_data_ct = BinaryTools.toUnsignedInt(h2_data_ct);
+
+        //Header 13
+        h2_h_gap = header[H_INDEX_H_GAP] = BinaryTools.genClone(H_h2_h_gap);
+
+        //Header length
+        h2_total_len = getHeader2BitLength();
+        h_total_len = getHeaderBitLength();
+
+        //Cache/memoization
+        base10PriceMaxFractionDigit  = maxFractionFrombits[t_h1_pf_len];
+        base10VolumeMaxFractionDigit = maxFractionFrombits[t_h1_vf_len];
+    }
+
     private void constructHeaderFromTranslatedValues(
         boolean T_byid,
         int T_int,
+        byte T_ct_len,
         byte T_h_gap_len,
         byte T_utc_len,
         byte T_pw_len,
@@ -257,7 +412,7 @@ public class Original implements BinaryLexical<StickDouble>{
         byte T_vf_len,
         String T_sym
     ){
-        header = new boolean[14][];
+        header = new boolean[H1_COUNT+H2_COUNT][];
 
         //Header 0: by_id
         t_h1_byid = T_byid;
@@ -269,8 +424,8 @@ public class Original implements BinaryLexical<StickDouble>{
         h1_int = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_int,H1_INT_LEN);
         header[H_INDEX_INT] = h1_int;
 
-        //Header 2: ct_len Always empty upon construction therefor 0
-        t_h1_ct_len = 0;
+        //Header 2: ct_len
+        t_h1_ct_len = T_ct_len;
         h1_ct_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_ct_len,H1_CT_LEN_LEN);
         header[H_INDEX_CT_LEN] = h1_ct_len;
 
@@ -309,8 +464,9 @@ public class Original implements BinaryLexical<StickDouble>{
         h1_vf_len = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_vf_len,H1_VF_LEN_LEN);
         header[H_INDEX_VF_LEN] = h1_vf_len;
 
-        base10PriceMaxFractionDigit  = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_pf_len)-1));
-        base10VolumeMaxFractionDigit = (int)Math.ceil(Math.log10(Math.pow(2,t_h1_vf_len)-1));
+        //Cache/memoization
+        base10PriceMaxFractionDigit  = maxFractionFrombits[t_h1_pf_len];
+        base10VolumeMaxFractionDigit = maxFractionFrombits[t_h1_vf_len];
 
         //Header 10: sym_len
         t_h1_sym_len = (byte)(T_sym.length() << 3);
@@ -324,7 +480,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         //Header 12: data_ct
         t_h2_data_ct = 0; //Initially 0 datapoints
-        h2_data_ct = new boolean[]{false};
+        h2_data_ct = BinaryTools.genBoolArrayFromUnsignedInt(t_h2_data_ct,t_h1_ct_len);
         header[H_INDEX_DATA_CT] = h2_data_ct;
 
         //Header 13: gap
@@ -344,8 +500,9 @@ public class Original implements BinaryLexical<StickDouble>{
 
         return new Original(
             false,// boolean T_byid,
+            (byte)32,// byte T_h1_ct_len
             interval,// int T_int,
-            constructorGapCalculator(symbol),// byte T_h_gap_len,
+            constructorGapCalculator(symbol,32),// byte T_h_gap_len, T_h1_ct_len
             (byte)63,// byte T_utc_len,
             valueWholeDigits,// byte T_pw_len,
             numberOfFloatingValueDigits,// byte T_pf_len,
@@ -355,16 +512,21 @@ public class Original implements BinaryLexical<StickDouble>{
         );
     }
 
+    public static Original genFatAlignedLexical(String symbol, int interval){
+        return genFatAlignedLexical(symbol,interval,(byte)16,(byte)16);
+    }
+
     public static Original genStandardAlignedLexical(String symbol, int interval){
         return new Original(
-            false,// boolean T_byid,
-            interval,// int T_int,
-            constructorGapCalculator(symbol),// byte T_h_gap_len,
-            (byte)44,// byte T_utc_len,
-            (byte)31,// byte T_pw_len,
-            (byte)15,// byte T_pf_len,
-            (byte)31,// byte T_vw_len,
-            (byte)15,// byte T_vf_len,
+            false, // boolean T_byid,
+            (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
+            interval, // int T_int,
+            constructorGapCalculator(symbol,16), // byte T_h_gap_len, T_ct_len
+            (byte)44, // byte T_utc_len,
+            (byte)31, // byte T_pw_len,
+            (byte)15, // byte T_pf_len,
+            (byte)31, // byte T_vw_len,
+            (byte)15, // byte T_vf_len,
             symbol // String T_sym
         );
     }
@@ -372,6 +534,7 @@ public class Original implements BinaryLexical<StickDouble>{
     public static Original genStandardLexical(String symbol, int interval, byte gapLength){
         return new Original(
             false,// boolean T_byid,
+            (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
             interval,// int T_int,
             gapLength,// byte T_h_gap_len,
             (byte)44,// byte T_utc_len,
@@ -383,8 +546,57 @@ public class Original implements BinaryLexical<StickDouble>{
         );
     }
 
+    public static Original genMiniLexical(String symbol, int interval, byte gapLength){
+        return new Original(
+            false,// boolean T_byid,
+            (byte)3, //int T_ct_len That is 8 maximum stick data points
+            interval,// int T_int,
+            gapLength,// byte T_h_gap_len,
+            (byte)4,// byte T_utc_len, NOTE integer is 15
+            (byte)4,// byte T_pw_len, NOTE integer is 15
+            (byte)4,// byte T_pf_len, NOTE integer is 15
+            (byte)4,// byte T_vw_len, NOTE integer is 15
+            (byte)4,// byte T_vf_len, NOTE integer is 15
+            symbol // String T_sym
+        );
+    }
+    public Original(
+        boolean[] H_h1_byid,
+        boolean[] H_h1_int,
+        boolean[] H_h1_ct_len,
+        boolean[] H_h1_data_len,
+        boolean[] H_h1_h_gap_len,
+        boolean[] H_h1_utc_len,
+        boolean[] H_h1_pw_len,
+        boolean[] H_h1_pf_len,
+        boolean[] H_h1_vw_len,
+        boolean[] H_h1_vf_len,
+        boolean[] H_h1_sym_len,
+        boolean[] H_h2_sym,
+        boolean[] H_h2_data_ct,
+        boolean[] H_h2_h_gap
+    ){
+        constructHeaderFromBinaryHeaderFields(
+            H_h1_byid,
+            H_h1_int,
+            H_h1_ct_len,
+            H_h1_data_len,
+            H_h1_h_gap_len,
+            H_h1_utc_len,
+            H_h1_pw_len,
+            H_h1_pf_len,
+            H_h1_vw_len,
+            H_h1_vf_len,
+            H_h1_sym_len,
+            H_h2_sym,
+            H_h2_data_ct,
+            H_h2_h_gap
+        );
+    }
+
     public Original(
         boolean T_h1_byid,
+        byte T_h1_ct_len,
         int T_h1_interval,
         byte T_h1_HeaderGap,
         byte T_h1_utc_len,
@@ -397,6 +609,7 @@ public class Original implements BinaryLexical<StickDouble>{
         constructHeaderFromTranslatedValues(
             T_h1_byid,// boolean T_byid,
             T_h1_interval,// int T_int,
+            T_h1_ct_len, //int T_ct_len
             T_h1_HeaderGap,// byte T_h_gap_len,
             T_h1_utc_len,// byte T_utc_len,
             T_h1_pw_len,// byte T_pw_len,
@@ -407,6 +620,9 @@ public class Original implements BinaryLexical<StickDouble>{
         );
     }
 
+    public Original(byte[] compressedHeader){
+        
+    }
     // BinaryLexical Overrides
     /**
      * Returns a deep copy of the current state of binary header.
@@ -462,6 +678,14 @@ public class Original implements BinaryLexical<StickDouble>{
         return binData;
     }
 
+    /**
+     * Returns an inflated binary array of all Stick elements in the {@code dataArray}.
+     * @param dataArray An array of elements that will be converted into binary.
+     * @return A 3 dimensional array where:
+     * The first element is 1 Stick
+     * The second element is associated field (11 fields so this length is always 11)
+     * The third element is bit associated with the field.
+     */
     @Override
     public boolean[][][] getBinaryDataPoints(StickDouble[] dataArray){
         boolean[][][] r = new boolean[dataArray.length][][];
@@ -481,6 +705,14 @@ public class Original implements BinaryLexical<StickDouble>{
         return r;
     }
 
+    /**
+     * Returns an inflated binary array of all Stick elements in the {@code dataCollection}.
+     * @param dataCollection An array of elements that will be converted into binary.
+     * @return A 3 dimensional array where:
+     * The first element is 1 Stick
+     * The second element is associated field (11 fields so this length is always 11)
+     * The third element is bit associated with the field.
+     */
     @Override
     public boolean[][][] getBinaryDataPoints(Collection<StickDouble> dataCollection){
         boolean[][][] r = new boolean[dataCollection.size()][][];
@@ -500,6 +732,12 @@ public class Original implements BinaryLexical<StickDouble>{
         return r;
     }
 
+    /**
+     * Returns an flattened binary array of all Stick elements in the {@code dataArray}.
+     * This is similar to {@code getBinaryDataPoints} except the results are flattened to a single array.
+     * @param dataArray An array of elements that will be converted into binary.
+     * @return A flattened array of all datapoints. length be a multiple of {@code t_h1_data_len}.
+     */
     @Override
     public boolean[] getBinaryDataPointsFlat(StickDouble[] dataArray){
         boolean[] r = new boolean[t_h1_data_len * dataArray.length];
@@ -514,6 +752,12 @@ public class Original implements BinaryLexical<StickDouble>{
         return r;
     }
 
+    /**
+     * Returns an flattened binary array of all Stick elements in the {@code dataArray}.
+     * This is similar to {@code getBinaryDataPoints} except the results are flattened to a single array.
+     * @param dataCollection An array of elements that will be converted into binary.
+     * @return A flattened array of all datapoints. length be a multiple of {@code t_h1_data_len}.
+     */
     @Override
     public boolean[] getBinaryDataPointsFlat(Collection<StickDouble> dataCollection){
         boolean[] r = new boolean[t_h1_data_len * dataCollection.size()];
@@ -567,7 +811,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double open = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //High
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -575,7 +819,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double high = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //Low
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -583,7 +827,7 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double low = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //Close
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pw_len);
@@ -591,14 +835,14 @@ public class Original implements BinaryLexical<StickDouble>{
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_pf_len);
         nextIndex += t_h1_pf_len;
-        double close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+        double close = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
         //Volume
         tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vw_len);
         nextIndex += t_h1_vw_len;
 
         tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(singleFlatBinaryData, nextIndex, t_h1_vf_len);
-        double volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+        double volume = tmpWhole + (double)tmpFraction/tenToPow[base10VolumeMaxFractionDigit];
 
         return new CandleStickFixedDouble(utc, open, high, low, close, volume);
     }
@@ -682,6 +926,28 @@ public class Original implements BinaryLexical<StickDouble>{
     }
 
     // Original methods
+    @Override
+    public Original clone(){
+        synchronized (this){
+            return new Original(
+                h1_byid,
+                h1_int,
+                h1_ct_len,
+                h1_data_len,
+                h1_h_gap_len,
+                h1_utc_len,
+                h1_pw_len,
+                h1_pf_len,
+                h1_vw_len,
+                h1_vf_len,
+                h1_sym_len,
+                h2_sym,
+                h2_data_ct,
+                h2_h_gap
+            );
+        }
+    }
+
     //Get methods
     public boolean[][] genBinaryHeader1(){
         boolean[][] h1=new boolean[11][];
@@ -822,28 +1088,26 @@ public class Original implements BinaryLexical<StickDouble>{
         h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
 
+    public static byte getHeader1BitLength(int index){return H1_LEN[index];}
+
     public int getHeaderBitLength(){return h_total_len;}
     public int getHeader2BitLength(){return h2_total_len;}
 
-    public boolean getByID(){return t_h1_byid;}
-    public String getSymbol(){return t_h2_sym;}
-    public int getInterval(){return t_h1_int;}
+    public boolean getByID(){return t_h1_byid;} //H0
+    public int getInterval(){return t_h1_int;} //H1
+    public int getDataBitLength(){return t_h1_data_len;} //H3
+    public String getSymbol(){return t_h2_sym;} //H11
+    public int getDataCount(){return t_h2_data_ct;} //H12
 
-    public int getDataBitLength(){return t_h1_data_len;}
-
+    /**
+     * Alters the data count of header (h2_data_ct). Depends on h1_data_len, there must be enough bits to set to the new value.
+     * @param numberOfDataPoints The new number of data points the header represents.
+     */
     public void setDataCount(int numberOfDataPoints){
         if(numberOfDataPoints < 0)
-            throw new IllegalArgumentException("numberOfDataPoints must be between 0 and 7 inclusively. Received: "+numberOfDataPoints);
+            throw new IllegalArgumentException("numberOfDataPoints must be greater than or equal to 0. Received: "+numberOfDataPoints);
         t_h2_data_ct = numberOfDataPoints;
-
-        BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h1_ct_len);
-
-        int minimumBitLength = BinaryTools.getMinimumNumberOfBits(numberOfDataPoints);
-        if(h2_data_ct.length != minimumBitLength){
-            h2_data_ct = header[H_INDEX_DATA_CT] = BinaryTools.genBoolArrayFromUnsignedInt(numberOfDataPoints, minimumBitLength);
-            updateHeaderLengths();
-        }
-        else BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h2_data_ct);
+        BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h2_data_ct);
     }
 
     public void setHeaderGap(byte gapBitLength){
