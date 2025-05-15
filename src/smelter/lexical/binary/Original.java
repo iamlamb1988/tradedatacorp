@@ -786,19 +786,19 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
             BinaryTools.toUnsignedLong(singleBinaryData[0]), //UTC
 
             BinaryTools.toUnsignedInt(singleBinaryData[1]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[2])/Math.pow(10,base10PriceMaxFractionDigit), //Open
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[2])/tenToPow[base10PriceMaxFractionDigit], //Open
 
             BinaryTools.toUnsignedInt(singleBinaryData[3]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[4])/Math.pow(10,base10PriceMaxFractionDigit), //High
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[4])/tenToPow[base10PriceMaxFractionDigit], //High
             
             BinaryTools.toUnsignedInt(singleBinaryData[5]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[6])/Math.pow(10,base10PriceMaxFractionDigit), //Low
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[6])/tenToPow[base10PriceMaxFractionDigit], //Low
             
             BinaryTools.toUnsignedInt(singleBinaryData[7]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[8])/Math.pow(10,base10PriceMaxFractionDigit), //Close
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[8])/tenToPow[base10PriceMaxFractionDigit], //Close
 
             BinaryTools.toUnsignedInt(singleBinaryData[9]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[10])/Math.pow(10,base10VolumeMaxFractionDigit) //Volume
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[10])/tenToPow[base10VolumeMaxFractionDigit] //Volume
         );
     }
 
@@ -910,7 +910,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            open = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //High
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
@@ -918,7 +918,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            high = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //Low
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
@@ -926,7 +926,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            low = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //Close
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
@@ -934,7 +934,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            close = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //Volume
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_vw_len);
@@ -942,7 +942,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_vf_len);
             nextIndex += t_h1_vf_len;
-            volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+            volume = tmpWhole + (double)tmpFraction/tenToPow[base10VolumeMaxFractionDigit];
 
             r[i] = new CandleStickFixedDouble(utc, open, high, low, close, volume);
         }
@@ -1049,7 +1049,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         valueParts[0] = whole;
 
         //Initial fraction digit
-        int fraction = (int)Math.round(Math.pow(10,maxDigits)*(value - whole));
+        int fraction = (int)Math.round(tenToPow[maxDigits]*(value - whole));
         valueParts[1] = fraction;
         valueParts[2] = maxDigits;
     }
@@ -1079,7 +1079,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         valueParts[0] = whole;
 
         //Initial fraction digit
-        int fraction = (int)Math.round(Math.pow(10,maxDigits)*(value - whole));
+        int fraction = (int)Math.round(tenToPow[maxDigits]*(value - whole));
         int trimmedFraction = fraction;
         while(maxDigits>0){
             if(trimmedFraction % 10 == 0){
