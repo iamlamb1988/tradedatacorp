@@ -30,28 +30,26 @@ public class PolygonIO_CryptoMiner implements StickMiner{
     /**
      * Specific documentation located at: https://polygon.io/docs/rest/crypto/aggregates/custom-bars
      * 
-     * At time of documentation here is the general use GET request format.
+     * At time of documentation here is the general use GET request format from polygon.io.
      * GET
      * /v2/aggs/ticker/{cryptoTicker}/range/{multiplier}/{timespan}/{from}/{to}
+     * @param ticker
+     * @param timespan
+     * @param utc_from
+     * @param utc_to
      * @return
      */
     public String mine(String ticker, String timespan, long utc_from, long utc_to){
         HttpRequest req = HttpRequest.newBuilder()
             .GET()
-            .uri(URI.create("https://api.polygon.io/v2/aggs/ticker/X:BTCUSD/range/1/day/2025-01-01/2025-05-01?adjusted=true&sort=asc&limit=120&apiKey=NuslrjAqkue1coRYRnJVSMv1vgUh_GN8"))
+            .uri(URI.create("https://api.polygon.io/v2/aggs/ticker/X:BTCUSD/range/1/minute/"+utc_from+'/'+utc_to+"?adjusted=true&sort=asc&limit="+apiKey))
             .build();
 
-        
         HttpResponse<String> rawOre;
         try{
             rawOre = pickaxe.send(req,BodyHandlers.ofString());
             System.out.println("Status: "+rawOre.statusCode());
-            System.out.println("Body: \n"+rawOre.body());
-        }catch(Exception err){}
-
-        
-
-        
-        return "";
+            return rawOre.body();
+        }catch(Exception err){return "Issue";}
     }
 }
