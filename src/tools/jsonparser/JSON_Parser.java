@@ -23,88 +23,39 @@ public final class JSON_Parser{
         Stack<JSON_Token> tokenStack = new Stack<JSON_Token>();
         tokenStack.push(new JSON_OpenBrace(nextID, rootOpenBraceIndex));
 
-        //DEBUG SECTION
-        System.out.println("DEBUG ROOT TOKEN: id: "+tokenStack.peek().id + " , index: "+tokenStack.peek().strIndex+" , "+(tokenStack.peek().isOpen() ? "open" : "closed")+" , "+(tokenStack.peek().isBrace() ? "brace" : "no-brace"));
-        //END DEBUG SECTION
-
         ++nextID;
         controlIndex=rootOpenBraceIndex+1;
 
-        //Obtain ALL 4 tokens
-        boolean bracketsRemain=true;
-        boolean bracesRemain=true;
-        ArrayList<JSON_Token> nextTokenL = new ArrayList<JSON_Token>(4); 
-        do{
-            nextOpenBraceIndex=jsonString.indexOf('{',controlIndex);
-            nextCloseBraceIndex=jsonString.indexOf('}',controlIndex);
-            nextOpenBracketIndex=jsonString.indexOf('[',controlIndex);
-            nextCloseBracketIndex=jsonString.indexOf(']',controlIndex);
-
-            if(nextOpenBraceIndex != -1){
-                nextTokenL.add(new JSON_OpenBrace(-1, nextOpenBraceIndex)); //tmp assign -1 to id until next tokens are added
+        while(controlIndex < LENGTH){
+            switch(jsonString.charAt(controlIndex)){
+                case '{':
+                    tokenStack.push(new JSON_OpenBrace(nextID, controlIndex));
+                    ++nextID;
+                    break;
+                case '}':
+                    --nextID;
+                    tokenStack.push(new JSON_CloseBrace(nextID, controlIndex));
+                    break;
+                case '[':
+                    tokenStack.push(new JSON_OpenBracket(nextID, controlIndex));
+                    ++nextID;
+                    break;
+                case ']':
+                    --nextID;
+                    tokenStack.push(new JSON_CloseBracket(nextID, controlIndex));
+                    break;            
             }
-
-            if(nextCloseBraceIndex != -1){
-                nextTokenL.add(new JSON_CloseBrace(-1, nextCloseBraceIndex)); //tmp assign -1 to id until next tokens are added
-            }
-
-            if(nextOpenBracketIndex != -1){
-                nextTokenL.add(new JSON_OpenBracket(-1, nextOpenBracketIndex)); //tmp assign -1 to id until next tokens are added
-            }
-
-            if(nextCloseBracketIndex != -1){
-                nextTokenL.add(new JSON_CloseBracket(-1, nextCloseBracketIndex)); //tmp assign -1 to id until next tokens are added
-            }
-
-            Collections.sort(nextTokenL);
-            for(JSON_Token t : nextTokenL){
-                t.id=nextID;
-                tokenStack.push(t);
-                //DEBUG SECTION
-                System.out.println("DEBUG TOKEN: id: "+t.id+" , index: "+tokenStack.peek().strIndex+" , "+(t.isOpen() ? "open" : "closed")+" , "+(t.isBrace() ? "brace" : "no-brace"));
-                //END DEBUG SECTION
-                if(t.isOpen()) ++nextID;
-                else --nextID;
-            }
-            controlIndex = nextTokenL.get(nextTokenL.size()-1).strIndex+1;
-            nextTokenL.clear();
-
-            if(nextOpenBracketIndex == nextCloseBracketIndex) bracketsRemain=false;
-        }while(controlIndex<LENGTH && bracketsRemain && nextID >= 0);
-
-        //Same loop but not searching for brackets
-        while(controlIndex<LENGTH && nextID >= 0){
-            nextOpenBraceIndex=jsonString.indexOf('{',controlIndex);
-            nextCloseBraceIndex=jsonString.indexOf('}',controlIndex);
-
-            if(nextOpenBraceIndex != -1){
-                nextTokenL.add(new JSON_OpenBrace(-1, nextOpenBraceIndex)); //tmp assign -1 to id until next tokens are added
-            }
-
-            if(nextCloseBraceIndex != -1){
-                nextTokenL.add(new JSON_CloseBrace(-1, nextCloseBraceIndex)); //tmp assign -1 to id until next tokens are added
-            }
-
-            Collections.sort(nextTokenL);
-            for(JSON_Token t : nextTokenL){
-                t.id=nextID;
-                tokenStack.push(t);
-                //DEBUG SECTION
-                System.out.println("DEBUG NO-BRACKET TOKEN: id: "+t.id+" , index: "+tokenStack.peek().strIndex+" , "+(t.isOpen() ? "open" : "closed")+" , "+(t.isBrace() ? "brace" : "no-brace"));
-                //END DEBUG SECTION
-                if(t.isOpen()) ++nextID;
-                else --nextID;
-            }
-            controlIndex = nextTokenL.get(nextTokenL.size()-1).strIndex+1;
-            nextTokenL.clear();
+            ++controlIndex;
         }
+
+        //Should probably validate integrity of tokens to ensure ther is an even number and properly paired.
 
         return parseJSON_Tokens(jsonString, tokenStack);
     }
 
     private static JSON_Object parseJSON_Tokens(String jsonString, Stack<JSON_Token> tokenStack){
         //DEBUG SECTION
-        System.out.println("DEBUG: print tokens");
+        System.out.println("DEBUG: print "+tokenStack.size()+" tokens");
         for(JSON_Token t : tokenStack){
             System.out.println("DEBUG: id: "+t.id+" , index: "+t.strIndex+" , "+(t.isOpen() ? "open" : "closed")+" , "+(t.isBrace() ? "brace" : "no-brace"));
         }
