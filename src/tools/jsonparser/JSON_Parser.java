@@ -7,21 +7,20 @@ import java.util.ArrayList;
 public final class JSON_Parser{
 
     public static JSON_Object parse(String jsonString){
-        //0. Preflight check
         int controlIndex = 0;
         int nextID = 0;
-        int nextOpenBraceIndex;
-        int nextCloseBraceIndex;
-        int nextOpenBracketIndex;
-        int nextCloseBracketIndex;
         int rootOpenBraceIndex;
         int LENGTH = jsonString.length();
 
         //1. find root brace
         rootOpenBraceIndex=jsonString.indexOf('{');
         if(rootOpenBraceIndex == -1) return null; //not valid JSON
-        Stack<JSON_Token> tokenStack = new Stack<JSON_Token>();
-        tokenStack.push(new JSON_OpenBrace(nextID, rootOpenBraceIndex));
+
+        Stack<JSON_Token> tokenStack = new Stack<JSON_Token>(); //tmp used to easily pair tokens
+        ArrayList<JSON_Token> tokenList = new ArrayList<>(); //preserve ordering
+        JSON_Token tmpToken = new JSON_OpenBrace(nextID, rootOpenBraceIndex);
+        tokenStack.push(tmpToken);
+        tokenList.add(tmpToken);
 
         ++nextID;
         controlIndex=rootOpenBraceIndex+1;
@@ -29,20 +28,26 @@ public final class JSON_Parser{
         while(controlIndex < LENGTH){
             switch(jsonString.charAt(controlIndex)){
                 case '{':
-                    tokenStack.push(new JSON_OpenBrace(nextID, controlIndex));
+                    tmpToken = new JSON_OpenBrace(nextID, controlIndex);
+                    tokenStack.push(tmpToken);
+                    tokenList.add(tmpToken);
                     ++nextID;
                     break;
                 case '}':
-                    --nextID;
-                    tokenStack.push(new JSON_CloseBrace(nextID, controlIndex));
+                    tmpToken = new JSON_CloseBrace(tokenStack.peek().id, controlIndex);
+                    tokenList.add(tmpToken);
+                    tokenStack.pop();
                     break;
                 case '[':
-                    tokenStack.push(new JSON_OpenBracket(nextID, controlIndex));
+                    tmpToken = new JSON_OpenBracket(nextID, controlIndex);
+                    tokenStack.push(tmpToken);
+                    tokenList.add(tmpToken);
                     ++nextID;
                     break;
                 case ']':
-                    --nextID;
-                    tokenStack.push(new JSON_CloseBracket(nextID, controlIndex));
+                    tmpToken = new JSON_CloseBracket(tokenStack.peek().id, controlIndex);
+                    tokenList.add(tmpToken);
+                    tokenStack.pop();
                     break;            
             }
             ++controlIndex;
@@ -50,17 +55,19 @@ public final class JSON_Parser{
 
         //Should probably validate integrity of tokens to ensure ther is an even number and properly paired.
 
-        return parseJSON_Tokens(jsonString, tokenStack);
+        return parseJSON_Tokens(jsonString, tokenList);
     }
 
-    private static JSON_Object parseJSON_Tokens(String jsonString, Stack<JSON_Token> tokenStack){
+    private static JSON_Object parseJSON_Tokens(String jsonString, ArrayList<JSON_Token> tokenArray){
         //DEBUG SECTION
-        System.out.println("DEBUG: print "+tokenStack.size()+" tokens");
-        for(JSON_Token t : tokenStack){
+        System.out.println("DEBUG: print "+tokenArray.size()+" tokens");
+        for(JSON_Token t : tokenArray){
             System.out.println("DEBUG: id: "+t.id+" , index: "+t.strIndex+" , "+(t.isOpen() ? "open" : "closed")+" , "+(t.isBrace() ? "brace" : "no-brace"));
         }
         System.out.println("DEBUG: done printing tokens");
         //END DEBUG SECTION
+
+        
         return null;
     }
 
