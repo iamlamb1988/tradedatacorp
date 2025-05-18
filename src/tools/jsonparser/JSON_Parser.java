@@ -11,10 +11,17 @@ import java.util.ArrayList;
 public final class JSON_Parser{
 
     public static final String ESCAPES;
+    public static final String[] VALID_UNQUOTED_VALUES;
 
     static{
         char[] escapes = {'"','\\','/','b','f','n','r','t'};
         ESCAPES = String.copyValueOf(escapes);
+
+        VALID_UNQUOTED_VALUES = new String[3];
+
+        VALID_UNQUOTED_VALUES[0]="true";
+        VALID_UNQUOTED_VALUES[1]="false";
+        VALID_UNQUOTED_VALUES[2]="null";
     }
 
     public static JSON_Object parse(String jsonString, String attributeName){
@@ -123,57 +130,141 @@ public final class JSON_Parser{
         int keyEndIndex;
         int valueStartIndex;
         int valueEndIndex;
+        boolean isColonSeparated;
 
-        char nextChar;
+        char nextChar = 0;
         String keyString;
         String valueString;
 
+        String[] tmpStringArr = new String[2];
         int controlIndex=startBodyIndex;
 
         //base case
         if(controlIndex >= endBodyIndex) return r;
 
-        //BRACES ONLY Parse, create, add attributes 1 at a time.
-        if(openToken.isBrace() && closeToken.isBrace()) System.out.println("DEBUG: IS BRACE");
-        while(controlIndex <= endBodyIndex){
-            //1.1 Find first quotation (if any) otherwise no attributes in this object
-            attrStartIndex = -1; //marker to indicate beginning of attribute not found
-            for(int i=controlIndex; i<=endBodyIndex; ++i){
-                nextChar = jsonString.charAt(i);
-                if(nextChar == '"'){
-                    attrStartIndex=i;
-                    controlIndex=attrStartIndex+1;
-                    break;
-                }else if(!Character.isWhitespace(nextChar)) return null; //only whitespace is allowed prior to attribute
-            }
-            if(attrStartIndex == -1) return r; //no attriubtes found
-            else keyStartIndex=attrStartIndex;
+        while(controlIndex < endBodyIndex){
+            controlIndex = obtainJSON_StringParse(tmpStringArr,jsonString,controlIndex)+1;
+            if(controlIndex == -1) return null;
+            keyString = tmpStringArr[0];
+            System.out.println("DEBUG KEY VALUE: "+keyString);
 
-            // 1.2 Obtain key string
-            attrEndIndex = -1;
-            for(int i=controlIndex; i<=endBodyIndex; ++i){
+            // 1.3 find ':' to begin parsing corresponding value
+            isColonSeparated=false; //marker to indicate colon is not yet found to corresponding the value for key.
+            for(int i=controlIndex; i<endBodyIndex; ++i){
                 nextChar = jsonString.charAt(i);
-                if(nextChar != '"'){
-                    if(nextChar == '\\'){
-                        ++i; //should be safe from out of bounds because private function guarantees proper params were passed in.
-                        if(ESCAPES.indexOf(jsonString.charAt(i)) == -1) return null; //invalid escape sequence
-                    }
-                    else if(nextChar < 32) return null; //Invalid control character
-                }else{
-                    keyEndIndex=i;
-                    controlIndex=keyEndIndex+1;
-                    keyString=jsonString.substring(keyStartIndex+1,keyEndIndex);
-                    System.out.println("DEBUG: KEY ATTR: "+keyString);
+                if(nextChar == ':'){
+                    isColonSeparated=true;
+                    controlIndex=i+1;
+                    break;
+                }else if(!Character.isWhitespace(nextChar)) return null;
+            }
+            if(!isColonSeparated) return null; //Missing colon, invalid JSON body format.
+
+            //1.4 Find value
+            //1.4.1 Find first valid character
+            valueStartIndex = -1;
+            while(controlIndex <= endBodyIndex){
+                nextChar=jsonString.charAt(controlIndex);
+                if(!Character.isWhitespace(nextChar)){
+                    valueStartIndex=controlIndex;
+                    ++controlIndex;
                     break;
                 }
             }
-            
-            
-            // 1.3 find ':' to begin parsing corresponding value
-            break;
+            if(valueStartIndex == -1) return null; //value cannot be empty
+
+            // //1.4.2 Determine if type is primitive base (String, Boolean, Number, Null) or Compound (Object, Array)
+            if(nextChar == '"'){
+                System.out.println("DEBUG: Handle string");
+            }else if(jsonString.indexOf("true",valueStartIndex) != 1){
+                System.out.println("DEBUG: Handle boolean with value TRUE");
+            }else if(jsonString.indexOf("false",valueStartIndex) != 1){
+                System.out.println("DEBUG: Handle boolean with value FALSE");
+            }else if(jsonString.indexOf("null",valueStartIndex) != 1){
+                System.out.println("DEBUG: Handle value NULL");
+            }else if(nextChar == '{'){
+                System.out.println("DEBUG: Handle Recursive object call");
+            }else if(nextChar == '['){
+                System.out.println("DEBUG: Handle Recursive array call");
+            }
+            break; //temporary break until completion of this function
         }
 
         return null;
+    }
+
+    /**
+     * A helper function that modifies an existing array tailored to parsing json bodies.
+     * @param resultArray Must have at least 2 elements
+     * index 0 -> be unquoted value with no surounding quotes and all escape characters resolved to their raw values. null if invalid
+     * index 1 -> quoted Attribute including quoations. Will be an exact substring. null if invalid.
+     * @return the index of the terminating quotation of the JSON string. -1 if invalid
+     */
+    private static int obtainJSON_StringParse(String[] resultArray, String jsonString, int startIndex){
+        int attrStartIndex;
+        int attrEndIndex;
+        int controlIndex = startIndex;
+
+        char nextChar;
+        //1 Find first quotation (if any) otherwise no attributes in this object
+        attrStartIndex = -1; //marker to indicate beginning of attribute not found yet.
+        for(int i=startIndex; i<=jsonString.length(); ++i){
+            nextChar = jsonString.charAt(i);
+            if(nextChar == '"'){
+                attrStartIndex=i;
+                controlIndex=attrStartIndex+1;
+                break;
+            }else if(!Character.isWhitespace(nextChar)){ //only whitespace is allowed prior to attribute
+                resultArray[0] = null;
+                resultArray[1] = null;
+                return -1;
+            }
+        }
+        if(attrStartIndex == -1){
+            resultArray[0] = null;
+            resultArray[1] = null;
+            return -1;
+        };
+
+        StringBuilder substring = new StringBuilder();
+        StringBuilder rendered = new StringBuilder();
+
+        substring.append('"'); //
+
+        // 2 Obtain key string (A terminating quote must exist or invalid)
+        attrEndIndex = -1; //marker to indicate terminating quote not found yet.
+        for(int i=controlIndex; i<=jsonString.length(); ++i){
+            nextChar = jsonString.charAt(i);
+            if(nextChar != '"'){
+                if(nextChar == '\\'){
+                    ++i; //should be safe from out of bounds because private function guarantees proper params were passed in.
+                    if(ESCAPES.indexOf(jsonString.charAt(i)) == -1){ //invalid escape sequence
+                        resultArray[0] = null;
+                        resultArray[1] = null;
+                        return -1;
+                    };
+                }
+                else if(nextChar < 32){ //Invalid control character
+                    resultArray[0] = null;
+                    resultArray[1] = null;
+                    return -1;
+                }
+                substring.append(nextChar);
+                rendered.append(nextChar);
+            }else{
+                attrEndIndex=i;
+                substring.append('"');
+                resultArray[0]=rendered.toString();
+                resultArray[1]=substring.toString();
+                return attrEndIndex;
+            }
+        }
+        if(attrEndIndex == -1) {//open quote was found but not a terminating closing quote
+            resultArray[0] = null;
+            resultArray[1] = null;
+            return -1;
+        }
+        return -1; //Should never return at this location
     }
 
     private static abstract class JSON_Token implements Comparable<JSON_Token>{
