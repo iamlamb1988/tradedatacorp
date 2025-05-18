@@ -18,11 +18,6 @@ public class JSON_Object implements JSON_Attribute{
     private String key;
     private ArrayList<JSON_Attribute> attributeList;
 
-    public JSON_Object(){
-        key = null;
-        attributeList = new ArrayList<JSON_Attribute>();
-    }
-
     public JSON_Object(String key){
         this.key = key;
         attributeList = new ArrayList<JSON_Attribute>();
