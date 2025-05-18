@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 17 MAY 2025
+ */
 package tradedatacorp.tools.jsonparser;
 
 import java.util.Collections;
@@ -62,12 +66,14 @@ public final class JSON_Parser{
             ++controlIndex;
         }
 
+        //Check Validation
         if(!tokenStack.empty() && tokenList.size()%2 != 0) return null;
+        if(tokenList.get(0).pairID != tokenList.get(tokenList.size()-1).pairID) return null;
 
-        return parseJSON_Tokens(jsonString, tokenList);
+        return parseJSON_Tokens(jsonString, tokenList, 0);
     }
 
-    private static JSON_Object parseJSON_Tokens(String jsonString, ArrayList<JSON_Token> tokenArray){
+    private static JSON_Object parseJSON_Tokens(String jsonString, ArrayList<JSON_Token> tokenArray, int arrayIDindex){
         //DEBUG SECTION
         System.out.println("DEBUG: print "+tokenArray.size()+" tokens");
         for(JSON_Token t : tokenArray){
@@ -83,7 +89,33 @@ public final class JSON_Parser{
         System.out.println("DEBUG: done printing tokens");
         //END DEBUG SECTION
 
-        //Implement the creation of a usable JSON object.
+        //0. Initialize token
+        JSON_Token tmpToken = tokenArray.get(arrayIDindex);
+        JSON_Token openToken;
+        JSON_Token closeToken;
+
+        if(tmpToken.isOpen()){
+            openToken=tmpToken;
+            closeToken=tokenArray.get(openToken.partnerArrayIndex);
+        }else{
+            closeToken=tmpToken;
+            openToken=tokenArray.get(closeToken.partnerArrayIndex);
+        }
+
+        //1. get attribute : value pairs (all attribute keys are in " ")
+        int controlIndex = openToken.strIndex+1;
+        int attributeStartIndex;
+        while(true){
+            //1.1 Find first quotation (if any) otherwise no attributes in this object
+            attributeStartIndex=jsonString.indexOf('"',controlIndex);
+            if(attributeStartIndex == -1){
+                return new JSON_Object();
+            }
+
+            // Find next quote but not escape \" sequence
+            break;
+        }
+
         return null;
     }
 
