@@ -98,7 +98,7 @@ public final class JSON_Parser{
                 " , String index: "+t.strIndex+
                 " , index "+t.arrayIndex+
                 " , partnerIndex "+t.partnerArrayIndex+
-                (t.isOpen() ? " , open" : " ,closed")+
+                (t.isOpen() ? " , open" : " , closed")+
                 (t.isBrace() ? " , brace" : " , no-brace")
             );
         }
@@ -111,6 +111,7 @@ public final class JSON_Parser{
         JSON_Token tmpToken = tokenArray.get(arrayIDindex);
         JSON_Token openToken;
         JSON_Token closeToken;
+        int nextTokenIndex; //if any
 
         if(tmpToken.isOpen()){
             openToken=tmpToken;
@@ -119,6 +120,7 @@ public final class JSON_Parser{
             closeToken=tmpToken;
             openToken=tokenArray.get(closeToken.partnerArrayIndex);
         }
+        nextTokenIndex=openToken.arrayIndex+1;
 
         //1. get attribute : value pairs (all attribute keys are in " ")
         //1.0 set temp variables for isolating key value pair in attributes
@@ -186,10 +188,22 @@ public final class JSON_Parser{
             }else if(jsonString.startsWith("null")){
                 System.out.println("DEBUG: Handle value NULL");
             }else if(nextChar == '{'){
-                System.out.println("DEBUG: Handle Recursive object call");
+                if(tokenArray.get(nextTokenIndex).getArrayIndexFromStrIndex(valueStartIndex) != nextTokenIndex) return null;
+                r.addJSON_Attribute(keyString, parseJSON_Tokens(jsonString, keyString, tokenArray, nextTokenIndex));
+                ++nextTokenIndex;
             }else if(nextChar == '['){
                 System.out.println("DEBUG: Handle Recursive array call");
+            }else return null; //invalid value
+
+            // 4. Search for a comma to begin to obtain next attribute
+            while(controlIndex < endBodyIndex){ //If no comma, main loop will be false
+                nextChar = jsonString.charAt(controlIndex);
+                if(nextChar == ','){
+                    controlIndex+=1;
+                    break;
+                }else if(!Character.isWhitespace(nextChar)) return null;
             }
+
             break; //temporary break until completion of this function
         }
 
