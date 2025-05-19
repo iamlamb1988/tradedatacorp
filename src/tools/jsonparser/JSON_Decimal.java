@@ -1,15 +1,13 @@
 /**
  * @author Bruce Lamb
- * @since 18 MAY 2025
+ * @since 19 MAY 2025
  */
 package tradedatacorp.tools.jsonparser;
 
-public class JSON_Decimal implements JSON_Item{
+public class JSON_Decimal implements JSON_Number{
     private Double decimal;
-    private String key;
 
     public JSON_Decimal(double value){
-        this.key=key;
         decimal=Double.valueOf(value);
     }
 
@@ -19,5 +17,5 @@ public class JSON_Decimal implements JSON_Item{
     @Override
     public JSON_Item getValue(){return this;}
 
-    public double getDoubleValue(){return decimal.doubleValue();}
+    public double getDecimalValue(){return decimal.doubleValue();}
 }

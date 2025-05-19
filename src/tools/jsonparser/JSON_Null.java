@@ -5,12 +5,6 @@
 package tradedatacorp.tools.jsonparser;
 
 public class JSON_Null implements JSON_Item{
-    private String key;
-
-    public JSON_Null(String key){
-        this.key=key;
-    }
-
     @Override
     public byte getType(){return JSON_Object.NULL;}
 

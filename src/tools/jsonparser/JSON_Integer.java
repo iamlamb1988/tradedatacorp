@@ -1,15 +1,13 @@
 /**
  * @author Bruce Lamb
- * @since 18 MAY 2025
+ * @since 19 MAY 2025
  */
 package tradedatacorp.tools.jsonparser;
 
-public class JSON_Integer implements JSON_Item{
-    private String key;
+public class JSON_Integer implements JSON_Number{
     private Long integer;
 
-    public JSON_Integer(String key, long value){
-        this.key=key;
+    public JSON_Integer(long value){
         integer=Long.valueOf(value);
     }
 
