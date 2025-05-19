@@ -1,5 +1,8 @@
 import tradedatacorp.miner.PolygonIO_CryptoMiner;
 import tradedatacorp.tools.jsonparser.JSON_Parser;
+import tradedatacorp.tools.jsonparser.JSON_Item;
+import tradedatacorp.tools.jsonparser.JSON_Object;
+import tradedatacorp.tools.jsonparser.JSON_String;
 
 import java.net.http.HttpResponse;
 
@@ -13,6 +16,23 @@ public class TestMiner{
         System.out.println("BODY:\n"+responseFromPolygonIO.body());
     
         System.out.println("Debug test for json parser.");
-        JSON_Parser.parse(responseFromPolygonIO.body());
+        JSON_Object x = JSON_Parser.parse(responseFromPolygonIO.body());
+        String[] xKey = x.getKeyArray();
+
+        for(String key : xKey){
+            System.out.println("Key: "+key);
+            JSON_Item item = x.getItem(key);
+
+            switch(item.getType()){
+                case 0:
+                    System.out.println("TYPE: NULL");
+                    break;
+                case 1:
+                    System.out.println("TYPE: String");
+                    JSON_String itemStr = (JSON_String)item;
+                    System.out.println("VALUE: "+itemStr.getStringValue());
+                    break;
+            }
+        }
     }
 }

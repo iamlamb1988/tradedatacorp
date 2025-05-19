@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 17 MAY 2025
+ * @since 18 MAY 2025
  */
 package tradedatacorp.tools.jsonparser;
 
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public final class JSON_Parser{
 
     public static final String ESCAPES;
-    public static final String[] VALID_UNQUOTED_VALUES;
+    private static final String[] VALID_UNQUOTED_VALUES;
 
     static{
         char[] escapes = {'"','\\','/','b','f','n','r','t'};
@@ -143,12 +143,13 @@ public final class JSON_Parser{
         if(controlIndex >= endBodyIndex) return r;
 
         while(controlIndex < endBodyIndex){
+            //1. obtain key value
             controlIndex = obtainJSON_StringParse(tmpStringArr,jsonString,controlIndex)+1;
             if(controlIndex == -1) return null;
             keyString = tmpStringArr[0];
             System.out.println("DEBUG KEY VALUE: "+keyString);
 
-            // 1.3 find ':' to begin parsing corresponding value
+            // 2 find ':' to begin parsing corresponding value
             isColonSeparated=false; //marker to indicate colon is not yet found to corresponding the value for key.
             for(int i=controlIndex; i<endBodyIndex; ++i){
                 nextChar = jsonString.charAt(i);
@@ -160,8 +161,8 @@ public final class JSON_Parser{
             }
             if(!isColonSeparated) return null; //Missing colon, invalid JSON body format.
 
-            //1.4 Find value
-            //1.4.1 Find first valid character
+            //3 Find value
+            //3.1 Find first valid character
             valueStartIndex = -1;
             while(controlIndex <= endBodyIndex){
                 nextChar=jsonString.charAt(controlIndex);
@@ -173,14 +174,16 @@ public final class JSON_Parser{
             }
             if(valueStartIndex == -1) return null; //value cannot be empty
 
-            // //1.4.2 Determine if type is primitive base (String, Boolean, Number, Null) or Compound (Object, Array)
+            //3.2 Determine if type is primitive base (String, Boolean, Number, Null) or Compound (Object, Array)
             if(nextChar == '"'){
-                System.out.println("DEBUG: Handle string");
-            }else if(jsonString.indexOf("true",valueStartIndex) != 1){
+                controlIndex = obtainJSON_StringParse(tmpStringArr,jsonString,valueStartIndex)+1;
+                valueString = tmpStringArr[0];
+                r.addJSON_Attribute(keyString, new JSON_String(valueString));
+            }else if(jsonString.startsWith("true")){
                 System.out.println("DEBUG: Handle boolean with value TRUE");
-            }else if(jsonString.indexOf("false",valueStartIndex) != 1){
+            }else if(jsonString.startsWith("false")){
                 System.out.println("DEBUG: Handle boolean with value FALSE");
-            }else if(jsonString.indexOf("null",valueStartIndex) != 1){
+            }else if(jsonString.startsWith("null")){
                 System.out.println("DEBUG: Handle value NULL");
             }else if(nextChar == '{'){
                 System.out.println("DEBUG: Handle Recursive object call");
@@ -190,7 +193,7 @@ public final class JSON_Parser{
             break; //temporary break until completion of this function
         }
 
-        return null;
+        return r;
     }
 
     /**
@@ -279,6 +282,7 @@ public final class JSON_Parser{
         }
         abstract boolean isOpen();
         abstract boolean isBrace();
+        int getArrayIndexFromStrIndex(int stringIndex){ return (stringIndex==strIndex ? arrayIndex : -1);}
 
         @Override
         public int compareTo(JSON_Token otherToken) {

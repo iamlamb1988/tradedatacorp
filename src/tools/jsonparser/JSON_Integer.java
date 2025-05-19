@@ -1,6 +1,10 @@
+/**
+ * @author Bruce Lamb
+ * @since 18 MAY 2025
+ */
 package tradedatacorp.tools.jsonparser;
 
-public class JSON_Integer implements JSON_Attribute{
+public class JSON_Integer implements JSON_Item{
     private String key;
     private Long integer;
 
@@ -13,7 +17,7 @@ public class JSON_Integer implements JSON_Attribute{
     public byte getType(){return JSON_Object.INTEGER;}
 
     @Override
-    public String getKey(){return key;}
+    public JSON_Item getValue(){return this;}
 
-    public long getValue(){return integer.longValue();}
+    public long getIntegerValue(){return integer.longValue();}
 }

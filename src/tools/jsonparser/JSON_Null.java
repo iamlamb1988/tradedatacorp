@@ -1,6 +1,10 @@
+/**
+ * @author Bruce Lamb
+ * @since 18 MAY 2025
+ */
 package tradedatacorp.tools.jsonparser;
 
-public class JSON_Null implements JSON_Attribute{
+public class JSON_Null implements JSON_Item{
     private String key;
 
     public JSON_Null(String key){
@@ -11,7 +15,5 @@ public class JSON_Null implements JSON_Attribute{
     public byte getType(){return JSON_Object.NULL;}
 
     @Override
-    public String getKey(){return key;}
-
-    public Object getValue(){return null;}
+    public JSON_Item getValue(){return null;}
 }
