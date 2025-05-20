@@ -187,7 +187,6 @@ public final class JSON_Parser{
                 nextChar=jsonString.charAt(controlIndex);
                 if(!Character.isWhitespace(nextChar)){
                     valueStartIndex=controlIndex;
-                    ++controlIndex;
                     break;
                 }
                 ++controlIndex;
@@ -204,7 +203,6 @@ public final class JSON_Parser{
                     ((JSON_Array)r).addJSON_Item(new JSON_String(valueString));
                 else return null; //Should not be possible to return at this line.
             }else if(jsonString.startsWith("true",controlIndex)){
-                System.out.println("DEBUG: Handle boolean with value TRUE");
                 if(r instanceof JSON_Object)
                     ((JSON_Object)r).addJSON_Attribute(keyString, new JSON_Boolean(true));
                 else if(r instanceof JSON_Array)
@@ -212,7 +210,6 @@ public final class JSON_Parser{
                 else return null; //Should not be possible to return at this line.
                 controlIndex += 4; //length of "true"
             }else if(jsonString.startsWith("false",controlIndex)){
-                System.out.println("DEBUG: Handle boolean with value FALSE");
                 if(r instanceof JSON_Object)
                     ((JSON_Object)r).addJSON_Attribute(keyString, new JSON_Boolean(false));
                 else if(r instanceof JSON_Array)
@@ -220,7 +217,6 @@ public final class JSON_Parser{
                 else return null; //Should not be possible to return at this line.
                 controlIndex += 5; //length of "false"
             }else if(jsonString.startsWith("null",controlIndex)){
-                System.out.println("DEBUG: Handle NULL");
                 if(r instanceof JSON_Object)
                     ((JSON_Object)r).addJSON_Attribute(keyString, new JSON_Null());
                 else if(r instanceof JSON_Array)

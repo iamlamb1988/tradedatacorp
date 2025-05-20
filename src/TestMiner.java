@@ -2,6 +2,7 @@ import tradedatacorp.miner.PolygonIO_CryptoMiner;
 import tradedatacorp.tools.jsonparser.JSON_Parser;
 import tradedatacorp.tools.jsonparser.*;
 
+import java.util.ArrayList;
 import java.net.http.HttpResponse;
 
 public class TestMiner{
@@ -19,6 +20,9 @@ public class TestMiner{
         String empty = "{}";
         String empty2 = "{    }";
         String testBool = "{\"A\" : true, \"B\":false, \"C\"   : true}";
+        String testNull = "{\"key\" : null}";
+        String recursive1 = "{\"key\" : null  , \"nested\" :{\"nestKey\" :\"val\" }}";
+        String recursive2 = "{\"key\" : null  , \"arr\" : [\"moe\", 2, 7.5]}";
 
         System.out.println(testBool);
     
@@ -30,7 +34,10 @@ public class TestMiner{
                     a = JSON_Parser.parse(pi),
                     b = JSON_Parser.parse(empty),
                     c = JSON_Parser.parse(empty2),
-                    d = JSON_Parser.parse(testBool);
+                    d = JSON_Parser.parse(testBool),
+                    e = JSON_Parser.parse(testNull),
+                    f = JSON_Parser.parse(recursive1),
+                    g = JSON_Parser.parse(recursive2);
         
         System.out.println("Praparing to iterate through keys");
         printValues(x);
@@ -40,6 +47,8 @@ public class TestMiner{
         printValues(b);
         printValues(c);
         printValues(d);
+        printValues(e);
+        printValues(f);
     }
 
     public static void printValues(JSON_Object json){
@@ -58,6 +67,7 @@ public class TestMiner{
                     System.out.println("TYPE: Boolean");
                     JSON_Boolean itemBool = (JSON_Boolean)item;
                     System.out.println("VALUE: "+itemBool.getBooleanValue());
+                    break;
                 case 2:
                     System.out.println("TYPE: String");
                     JSON_String itemStr = (JSON_String)item;
@@ -73,8 +83,59 @@ public class TestMiner{
                     JSON_Decimal itemDec = (JSON_Decimal)item;
                     System.out.println("VALUE: "+itemDec.getDecimalValue());
                     break;
+                case 5:
+                    System.out.println("TYPE: Array");
+                    JSON_Array itemArr = (JSON_Array)item;
+                    printArrayValues(itemArr);
+                    break;
+                case 6:
+                    System.out.println("TYPE: Object");
+                    JSON_Object itemObj = (JSON_Object)item;
+                    printValues(itemObj);
+                    break;
             }
         }
         System.out.println();
+    }
+
+    public static void printArrayValues(JSON_Array jsonArr){
+        ArrayList<JSON_Item> itemList = jsonArr.getArray();
+        for(JSON_Item item : itemList){
+            switch(item.getType()){
+                case 0:
+                    System.out.println("TYPE: NULL");
+                    break;
+                case 1:
+                    System.out.println("TYPE: Boolean");
+                    JSON_Boolean itemBool = (JSON_Boolean)item;
+                    System.out.println("VALUE: "+itemBool.getBooleanValue());
+                    break;
+                case 2:
+                    System.out.println("TYPE: String");
+                    JSON_String itemStr = (JSON_String)item;
+                    System.out.println("VALUE: "+itemStr.getStringValue());
+                    break;
+                case 3:
+                    System.out.println("TYPE: Integer");
+                    JSON_Integer itemInt = (JSON_Integer)item;
+                    System.out.println("VALUE: "+itemInt.getIntegerValue());
+                    break;
+                case 4:
+                    System.out.println("TYPE: Decimal");
+                    JSON_Decimal itemDec = (JSON_Decimal)item;
+                    System.out.println("VALUE: "+itemDec.getDecimalValue());
+                    break;
+                case 5:
+                    System.out.println("TYPE: Array");
+                    JSON_Array itemArr = (JSON_Array)item;
+                    printArrayValues(itemArr);
+                    break;
+                case 6:
+                    System.out.println("TYPE: Object");
+                    JSON_Object itemObj = (JSON_Object)item;
+                    printValues(itemObj);
+                    break;
+            }
+        }
     }
 }
