@@ -35,6 +35,12 @@ public class JSON_Object implements JSON_CompositeMap{
     @Override
     public void addJSON_Attribute(String key, JSON_Item attr){attributeMap.put(key,attr);}
 
+    @Override
+    public JSON_Item getJSON_Attribute(String key){return attributeMap.get(key);}
+
+    @Override
+    public int getKeyCount(){return attributeMap.size();}
+
     public Set<String> getKeySet(){return attributeMap.keySet();}
     public String[] getKeyArray(){
         String[] r=new String[attributeMap.size()];
@@ -46,8 +52,4 @@ public class JSON_Object implements JSON_CompositeMap{
         }
         return r;
     }
-
-    public int getAttributeCount(){return attributeMap.size();}
-
-    public JSON_Item getItem(String key){return attributeMap.get(key);}
 }

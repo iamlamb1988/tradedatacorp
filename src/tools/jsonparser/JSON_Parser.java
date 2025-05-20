@@ -122,7 +122,7 @@ public final class JSON_Parser{
             openToken=tokenArray.get(closeToken.partnerArrayIndex);
         }
         if(openToken.isBrace()){
-            r = new JSON_Object(); 
+            r = new JSON_Object();
         }else r = new JSON_Array();
         nextTokenIndex=openToken.arrayIndex+1;
 
@@ -266,7 +266,7 @@ public final class JSON_Parser{
                 else if(r instanceof JSON_Array)
                     ((JSON_Array)r).addJSON_Item(tmpNumber);
                 else return null; //Should not be possible to return at this line.
-                controlIndex += 4; //length of "null"
+                controlIndex = valueEndIndex + 1;; //length of "value"
             }else if(nextChar == '{' || nextChar == '['){
                 tmpToken = tokenArray.get(nextTokenIndex);
                 // if(tmpToken.getArrayIndexFromStrIndex(valueStartIndex) != nextTokenIndex) return null;
@@ -392,7 +392,7 @@ public final class JSON_Parser{
         int getArrayIndexFromStrIndex(int stringIndex){ return (stringIndex==strIndex ? arrayIndex : -1);}
 
         @Override
-        public int compareTo(JSON_Token otherToken) {
+        public int compareTo(JSON_Token otherToken){
             return strIndex - otherToken.strIndex;
         }
     }

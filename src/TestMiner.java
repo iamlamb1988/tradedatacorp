@@ -49,6 +49,7 @@ public class TestMiner{
         printValues(d);
         printValues(e);
         printValues(f);
+        printValues(g);
     }
 
     public static void printValues(JSON_Object json){
@@ -57,7 +58,7 @@ public class TestMiner{
 
         for(String key : jsonKey){
             System.out.println("KEY: "+key);
-            JSON_Item item = json.getItem(key);
+            JSON_Item item = json.getJSON_Attribute(key);
 
             switch(item.getType()){
                 case 0:
