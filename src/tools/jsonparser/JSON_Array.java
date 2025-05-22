@@ -24,8 +24,8 @@ public class JSON_Array implements JSON_CompositeArray{
 
     public ArrayList<JSON_Item> getArray(){return elementList;}
 
-    public int getElementCount(){return elementList.size();}
+    public int getItemCount(){return elementList.size();}
 
-    public byte getElementType(int index){return elementList.get(index).getType();}
+    public byte getItemType(int index){return elementList.get(index).getType();}
     public JSON_Item getItem(int index){return elementList.get(index);}
 }

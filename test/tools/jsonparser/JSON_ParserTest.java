@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import tradedatacorp.tools.jsonparser.JSON_Parser;
 import tradedatacorp.tools.jsonparser.JSON_Item;
 import tradedatacorp.tools.jsonparser.JSON_Object;
+import tradedatacorp.tools.jsonparser.JSON_Array;
 import tradedatacorp.tools.jsonparser.JSON_Boolean;
 import tradedatacorp.tools.jsonparser.JSON_String;
 import tradedatacorp.tools.jsonparser.JSON_Integer;
@@ -26,7 +27,8 @@ public class JSON_ParserTest{
     @DisplayName("Simple Basic non-recursive Tests")
     class SimpleBasicTest{
         final String empty1 = "{}";
-        final String empty2 = "{    }";
+        final String empty2= "{ }";
+        final String empty3 = "{    }";
         final String pi1 = "{\"pi\":3.1415}";
         final String pi2 = "{\"desc\": \"pi test\"  ,  \"pi\" : 3.14 }";
         final String bool1 = "{ \"is bool\" :true, \"desc\":\"bool test\"}";
@@ -43,6 +45,13 @@ public class JSON_ParserTest{
         @Test
         public void testEmpty2(){
             JSON_Object emtpy2Obj = JSON_Parser.parse(empty2);
+
+            assertEquals(0,emtpy2Obj.getKeyCount());
+        }
+    
+        @Test
+        public void testEmpty3(){
+            JSON_Object emtpy2Obj = JSON_Parser.parse(empty3);
 
             assertEquals(0,emtpy2Obj.getKeyCount());
         }
@@ -159,7 +168,10 @@ public class JSON_ParserTest{
     @DisplayName("Simple nested cases for recursion")
     class BasicNesting{
         final String empty1 = "{\"empty\":{}}";
-        final String empty2 = " \"empty\" : {  },\"extra\": {}";
+        final String empty2 = "{ \"empty\" : {  },\"extra\": {}}";
+        final String empty3 = "{\"empty\":[]}";
+        final String empty4 = "{\"L1\":[] ,\"L2\" :[ ], \"L3\": [    ]}";
+        final String array1 = "{  \"stuff\" : [1]  }";
 
         @Test
         public void testEmpty1(){
@@ -198,6 +210,65 @@ public class JSON_ParserTest{
 
             assertEquals(0,childObj1.getKeyCount());
             assertEquals(0,childObj2.getKeyArray().length);
+        }
+
+        @Test
+        public void testEmpty3(){
+            JSON_Object obj = JSON_Parser.parse(empty3);
+
+            assertEquals(1,obj.getKeyCount());
+            assertEquals(1,obj.getKeyArray().length);
+            String key = "empty";
+
+            JSON_Item childItem = obj.getJSON_Attribute(key);
+            assertEquals(childItem.getType(),JSON_Object.ARRAY);
+
+            JSON_Array childArr = (JSON_Array)childItem;
+
+            assertEquals(0,childArr.getItemCount());
+        }
+
+        @Test
+        public void testEmpty4(){
+            JSON_Object obj = JSON_Parser.parse(empty4);
+
+            assertEquals(3,obj.getKeyCount());
+            assertEquals(3,obj.getKeyArray().length);
+            String key1 = "L1";
+            String key2 = "L2";
+            String key3 = "L3";
+
+            JSON_Item childItem1 = obj.getJSON_Attribute(key1);
+            JSON_Item childItem2 = obj.getJSON_Attribute(key2);
+            JSON_Item childItem3 = obj.getJSON_Attribute(key3);
+
+            assertEquals(childItem1.getType(),JSON_Object.ARRAY);
+            assertEquals(childItem2.getType(),JSON_Object.ARRAY);
+            assertEquals(childItem3.getType(),JSON_Object.ARRAY);
+
+            JSON_Array childArr1 = (JSON_Array)childItem1;
+            JSON_Array childArr2 = (JSON_Array)childItem2;
+            JSON_Array childArr3 = (JSON_Array)childItem3;
+
+            assertEquals(0,childArr1.getItemCount());
+            assertEquals(0,childArr2.getItemCount());
+            assertEquals(0,childArr3.getItemCount());
+        }
+
+        @Test
+        public void testArray1(){
+            JSON_Object obj = JSON_Parser.parse(array1);
+
+            assertEquals(1,obj.getKeyCount());
+            assertEquals(1,obj.getKeyArray().length);
+            String key = "stuff";
+
+            JSON_Item childItem = obj.getJSON_Attribute(key);
+            assertEquals(childItem.getType(),JSON_Object.ARRAY);
+
+            JSON_Array childArr = (JSON_Array)childItem;
+
+            assertEquals(1,childArr.getItemCount());
         }
     }
 }
