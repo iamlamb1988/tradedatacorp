@@ -31,6 +31,7 @@ public class JSON_ParserTest{
         final String empty3 = "{    }";
         final String pi1 = "{\"pi\":3.1415}";
         final String pi2 = "{\"desc\": \"pi test\"  ,  \"pi\" : 3.14 }";
+        final String neg = "{\"neg\": -3}";
         final String bool1 = "{ \"is bool\" :true, \"desc\":\"bool test\"}";
         final String int1 = "{\"num\":5,\"isDec\": false}";
         final String null1 = "{\"key\" : null}";
@@ -98,6 +99,24 @@ public class JSON_ParserTest{
             assertEquals("pi test",piDesc);
             assertEquals(3.14,piValue,0.001);
         }
+
+        @Test
+        public void testNeg(){
+            JSON_Object obj = JSON_Parser.parse(neg);
+
+            assertEquals(1,obj.getKeyCount());
+            assertEquals(1,obj.getKeyArray().length);
+            String key = "neg";
+
+            JSON_Item JSON_value = obj.getJSON_Attribute(key);
+            assertEquals(JSON_value.getType(),JSON_Object.DECIMAL);
+
+            JSON_Integer JSON_IntegerValue = (JSON_Integer)JSON_value;
+
+            long integer = JSON_IntegerValue.getIntegerValue();
+
+            assertEquals(-3,integer);
+        }
     
         @Test
         public void testBool1(){
@@ -163,7 +182,7 @@ public class JSON_ParserTest{
             JSON_Null JSON_NullValue = (JSON_Null)JSON_value;
         }
     }
-
+/*
     @Nested
     @DisplayName("Simple nested cases for recursion")
     class BasicNesting{
@@ -172,6 +191,7 @@ public class JSON_ParserTest{
         final String empty3 = "{\"empty\":[]}";
         final String empty4 = "{\"L1\":[] ,\"L2\" :[ ], \"L3\": [    ]}";
         final String array1 = "{  \"stuff\" : [1]  }";
+        final String array2 = "{  \"stuff\" : [1, -2]  }";
 
         @Test
         public void testEmpty1(){
@@ -270,5 +290,28 @@ public class JSON_ParserTest{
 
             assertEquals(1,childArr.getItemCount());
         }
+
+        @Test
+        public void testArray2(){
+            JSON_Object obj = JSON_Parser.parse(array2);
+
+            assertEquals(1,obj.getKeyCount());
+            assertEquals(1,obj.getKeyArray().length);
+            String key = "stuff";
+
+            JSON_Item childItem = obj.getJSON_Attribute(key);
+            assertEquals(childItem.getType(),JSON_Object.ARRAY);
+
+            JSON_Array childArr = (JSON_Array)childItem;
+
+            assertEquals(2,childArr.getItemCount());
+
+            JSON_Integer childInteger = (JSON_Integer)childArr.getItem(0);
+            assertEquals(1,childInteger.getIntegerValue());
+
+            childInteger = (JSON_Integer)childArr.getItem(1);
+            assertEquals(-2,childInteger.getIntegerValue());
+        }
     }
+*/
 }

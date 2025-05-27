@@ -12,12 +12,12 @@ public class TestMiner{
 
         // System.out.println("STATUS: "+responseFromPolygonIO.statusCode());
         // System.out.println("BODY:\n"+responseFromPolygonIO.body());
-        String array1 = "{  \"stuff\" : [1]  }";
+        String array2 = "{\"desc\": \"pi test\"  ,  \"pi\" : \"3.14\" }";
 
-        System.out.println(array1);
+        System.out.println(array2);
     
         // JSON_Object x = JSON_Parser.parse(responseFromPolygonIO.body());
-        JSON_Object x = JSON_Parser.parse(array1);
+        JSON_Object x = JSON_Parser.parse(array2);
         
         System.out.println("Praparing to iterate through keys");
         printValues(x);
