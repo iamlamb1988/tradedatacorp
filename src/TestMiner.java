@@ -12,7 +12,7 @@ public class TestMiner{
 
         // System.out.println("STATUS: "+responseFromPolygonIO.statusCode());
         // System.out.println("BODY:\n"+responseFromPolygonIO.body());
-        String array2 = "{\"desc\": \"pi test\"  ,  \"pi\" : \"3.14\" }";
+        String array2 = "{\"L1\":[] ,\"L2\" :[ ], \"L3\": [    ]}";
 
         System.out.println(array2);
     

@@ -101,7 +101,7 @@ public class JSON_ParserTest{
         }
 
         @Test
-        public void testNeg(){
+        public void testNeg1(){
             JSON_Object obj = JSON_Parser.parse(neg);
 
             assertEquals(1,obj.getKeyCount());
@@ -109,7 +109,7 @@ public class JSON_ParserTest{
             String key = "neg";
 
             JSON_Item JSON_value = obj.getJSON_Attribute(key);
-            assertEquals(JSON_value.getType(),JSON_Object.DECIMAL);
+            assertEquals(JSON_value.getType(),JSON_Object.INTEGER);
 
             JSON_Integer JSON_IntegerValue = (JSON_Integer)JSON_value;
 
@@ -182,7 +182,7 @@ public class JSON_ParserTest{
             JSON_Null JSON_NullValue = (JSON_Null)JSON_value;
         }
     }
-/*
+
     @Nested
     @DisplayName("Simple nested cases for recursion")
     class BasicNesting{
@@ -275,43 +275,42 @@ public class JSON_ParserTest{
             assertEquals(0,childArr3.getItemCount());
         }
 
-        @Test
-        public void testArray1(){
-            JSON_Object obj = JSON_Parser.parse(array1);
+        // @Test
+        // public void testArray1(){
+        //     JSON_Object obj = JSON_Parser.parse(array1);
 
-            assertEquals(1,obj.getKeyCount());
-            assertEquals(1,obj.getKeyArray().length);
-            String key = "stuff";
+        //     assertEquals(1,obj.getKeyCount());
+        //     assertEquals(1,obj.getKeyArray().length);
+        //     String key = "stuff";
 
-            JSON_Item childItem = obj.getJSON_Attribute(key);
-            assertEquals(childItem.getType(),JSON_Object.ARRAY);
+        //     JSON_Item childItem = obj.getJSON_Attribute(key);
+        //     assertEquals(childItem.getType(),JSON_Object.ARRAY);
 
-            JSON_Array childArr = (JSON_Array)childItem;
+        //     JSON_Array childArr = (JSON_Array)childItem;
 
-            assertEquals(1,childArr.getItemCount());
-        }
+        //     assertEquals(1,childArr.getItemCount());
+        // }
 
-        @Test
-        public void testArray2(){
-            JSON_Object obj = JSON_Parser.parse(array2);
+        // @Test
+        // public void testArray2(){
+        //     JSON_Object obj = JSON_Parser.parse(array2);
 
-            assertEquals(1,obj.getKeyCount());
-            assertEquals(1,obj.getKeyArray().length);
-            String key = "stuff";
+        //     assertEquals(1,obj.getKeyCount());
+        //     assertEquals(1,obj.getKeyArray().length);
+        //     String key = "stuff";
 
-            JSON_Item childItem = obj.getJSON_Attribute(key);
-            assertEquals(childItem.getType(),JSON_Object.ARRAY);
+        //     JSON_Item childItem = obj.getJSON_Attribute(key);
+        //     assertEquals(childItem.getType(),JSON_Object.ARRAY);
 
-            JSON_Array childArr = (JSON_Array)childItem;
+        //     JSON_Array childArr = (JSON_Array)childItem;
 
-            assertEquals(2,childArr.getItemCount());
+        //     assertEquals(2,childArr.getItemCount());
 
-            JSON_Integer childInteger = (JSON_Integer)childArr.getItem(0);
-            assertEquals(1,childInteger.getIntegerValue());
+        //     JSON_Integer childInteger = (JSON_Integer)childArr.getItem(0);
+        //     assertEquals(1,childInteger.getIntegerValue());
 
-            childInteger = (JSON_Integer)childArr.getItem(1);
-            assertEquals(-2,childInteger.getIntegerValue());
-        }
+        //     childInteger = (JSON_Integer)childArr.getItem(1);
+        //     assertEquals(-2,childInteger.getIntegerValue());
+        // }
     }
-*/
 }

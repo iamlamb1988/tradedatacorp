@@ -109,11 +109,9 @@ public final class JSON_Parser{
         //0. Initialize token
         JSON_Object r = new JSON_Object(); //return value
         JSON_Token tmpToken1 = tokenArray.get(arrayIDindex);
-        JSON_Token tmpToken2;
+        JSON_Token tmpToken2 = null;
         JSON_Token openToken;
         JSON_Token closeToken;
-        int nextTokenIndex; //if any
-        boolean hasNextAttribute;
 
         if(tmpToken1.isOpen()){
             openToken=tmpToken1;
@@ -123,10 +121,9 @@ public final class JSON_Parser{
             openToken=tokenArray.get(closeToken.partnerArrayIndex);
         }
 
-        nextTokenIndex=openToken.arrayIndex+1;
-
         int startBodyIndex = openToken.strIndex+1;
         int endBodyIndex = closeToken.strIndex-1;
+        int nextPotentialChildIndex = openToken.arrayIndex+1;
         boolean isColonSeparated;
 
         char nextChar = 0;
@@ -137,16 +134,14 @@ public final class JSON_Parser{
         Integer[] resultArray = new Integer[3];
         int controlIndex=startBodyIndex;
 
-        if(controlIndex >= endBodyIndex){return r;}// case 1: {} case 2 { }
+        if(controlIndex > endBodyIndex){return r;}// case 1: {}
 
-        System.out.println("DEBUG: Entering main iteration loop.");
         while(controlIndex < endBodyIndex){
             //1. obtain key value
             controlIndex = obtainJSON_StringParse(tmpStringArr,jsonString,controlIndex)+1;
             if(controlIndex == -1) return r; // -1 => empty string => OK
             else if(controlIndex < -1) throw new JSON_Exception("Error obtaining attribute"); //some invalid error
             keyString = tmpStringArr[0];
-            System.out.println("DEBUG: Key Found: "+keyString);
 
             // 2 find separating ':' to begin parsing corresponding value
             isColonSeparated=false; //marker to indicate colon is not yet found to corresponding the value for key.
@@ -159,59 +154,59 @@ public final class JSON_Parser{
                 }else if(!Character.isWhitespace(nextChar)) return null;
             }
             if(!isColonSeparated) throw new JSON_Exception("Error no colon found after attribute: "+keyString); //Missing colon, invalid JSON body format.
-            System.out.println("DEBUG: Colon seperator found at line: "+(controlIndex-1));
 
             //3 Find value (returns a base case OR resultArray will have next recursive index values)
             nextItem = parseJSON_BaseItemFromToken(resultArray, tokenArray, jsonString, controlIndex);
 
             if(nextItem != null){
                 r.addJSON_Attribute(keyString,nextItem);
-                System.out.println("DEBUG: Adding an element of type: "+r.getType() + " at line: "+(controlIndex-1));
                 controlIndex = resultArray[1].intValue()+1;
-            }else if(resultArray[0].intValue() == -1){ // last element is ALL white space => no element => OK
-                throw new JSON_Exception("Missing value for key: " + keyString +" at line: "+controlIndex);
-            }else if(resultArray[2].intValue() == JSON_Object.OBJECT){
-                System.out.println("DEBUG: Adding recursive Object: "+r.getType() + " at line: "+(controlIndex-1));
+            }else if(resultArray[2].intValue() == -JSON_Object.OBJECT){
                 tmpToken1 = null;
-                for(int i = openToken.arrayIndex + 1; i<closeToken.arrayIndex; ++i) {
-                    tmpToken1 = tokenArray.get(i);
-                    if(tmpToken1.isOpen()) break;
+                while(nextPotentialChildIndex < closeToken.arrayIndex){
+                    tmpToken1 = tokenArray.get(nextPotentialChildIndex);
+                    if(tmpToken1.isOpen()){
+                        ++nextPotentialChildIndex;
+                        break;
+                    }
+                    ++nextPotentialChildIndex;
                 }
                 tmpToken2 = tokenArray.get(tmpToken1.partnerArrayIndex);
                 nextItem = parseJSON_ObjectTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
                 r.addJSON_Attribute(keyString,nextItem);
                 controlIndex = tmpToken2.strIndex+1;
-                // return r;
-            }else if(resultArray[2].intValue() == JSON_Object.ARRAY){
-                System.out.println("DEBUG: Adding recursive Array: "+r.getType() + " at line: "+(controlIndex-1));
+            }else if(resultArray[2].intValue() == -JSON_Object.ARRAY){
                 tmpToken1 = null;
-                for(int i = openToken.arrayIndex + 1; i<closeToken.arrayIndex; ++i) {
-                    tmpToken1 = tokenArray.get(i);
-                    if(tmpToken1.isOpen()) break;
+                while(nextPotentialChildIndex < closeToken.arrayIndex){
+                    tmpToken1 = tokenArray.get(nextPotentialChildIndex);
+                    if(tmpToken1.isOpen()){
+                        ++nextPotentialChildIndex;
+                        break;
+                    }
+                    ++nextPotentialChildIndex;
                 }
                 tmpToken2 = tokenArray.get(tmpToken1.partnerArrayIndex);
                 nextItem = parseJSON_ArrayTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
                 r.addJSON_Attribute(keyString,nextItem);
                 controlIndex = tmpToken2.strIndex+1;
-                // return r;
             }else{
                 throw new JSON_Exception(
-                    "ERROR: index0: "+resultArray[0].intValue()+
+                    "ERROR:\nindex0: "+resultArray[0].intValue()+
                     "\nindex1: "+resultArray[1].intValue()+
                     "\nindex2: "+resultArray[2].intValue()
                 );
             }
 
-            System.out.println("DEBUG: Entering next element loop");
-            //Find a ',' or terminating character '}'
-            while(controlIndex <= endBodyIndex){
-                if(jsonString.charAt(controlIndex) != ',') ++controlIndex;
-                else{
+            //Find a ',' or terminating character ']'
+            while(controlIndex < endBodyIndex){
+                nextChar = jsonString.charAt(controlIndex);
+                if(Character.isWhitespace(nextChar)) ++controlIndex;
+                else if(nextChar == ','){
                     ++controlIndex;
                     break;
-                }
+                }else if(nextChar == '{' || nextChar == '[' || nextChar == '}' || nextChar == ']') return r;
+                else throw new JSON_Exception("Invalid character within Object body: "+((char)nextChar));
             }
-            System.out.println("DEBUG: NEXT ELEMENT INDEX: "+controlIndex);
         }
 
         return r;
@@ -224,7 +219,6 @@ public final class JSON_Parser{
         JSON_Token tmpToken2;
         JSON_Token openToken;
         JSON_Token closeToken;
-        boolean hasNextAttribute;
 
         if(tmpToken1.isOpen()){
             openToken=tmpToken1;
@@ -235,49 +229,64 @@ public final class JSON_Parser{
         }
 
         //1. get attribute : value pairs (all attribute keys are in " ")
-        //1.0 set temp variables for isolating key value pair in attributes
+        //1.0 set temp variables for isolating key value pair in attributes.
         int startBodyIndex = openToken.strIndex+1;
         int endBodyIndex = closeToken.strIndex-1;
+        int nextPotentialChildIndex = openToken.arrayIndex+1;
 
+        char nextChar;
         JSON_Item nextElement;
         Integer[] resultArray = new Integer[3];
         int controlIndex=startBodyIndex;
 
-        if(controlIndex > endBodyIndex){return r;}// case 1: []
+        if(controlIndex >= endBodyIndex){return r;}// case 1: []
 
-        while(controlIndex <= endBodyIndex){
+        while(controlIndex < endBodyIndex){
             nextElement = parseJSON_BaseItemFromToken(resultArray, tokenArray, jsonString, controlIndex);
             if(nextElement != null){
                 r.addJSON_Item(nextElement);
-                System.out.println("DEBUG: Adding an element of type: "+r.getType() + " at line: "+(controlIndex-1));
                 controlIndex = resultArray[1].intValue()+1;
-            }else if(resultArray[0].intValue() == -1){ // last element is ALL white space => no element => OK
-                return r;
-            }else if(resultArray[2].intValue() == JSON_Object.OBJECT){
-                tmpToken1 = null;
-                for(int i = openToken.arrayIndex + 1; i<closeToken.arrayIndex; ++i) {
-                    tmpToken1 = tokenArray.get(i);
-                    if(tmpToken1.isOpen()) break;
-                }
-                tmpToken2 = tokenArray.get(tmpToken1.partnerArrayIndex);
-                nextElement = parseJSON_ObjectTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
-                r.addJSON_Item(nextElement);
-                controlIndex = tmpToken2.strIndex+1;
-                return r;
-            }else if(resultArray[2].intValue() == JSON_Object.ARRAY){
-                tmpToken1 = null;
-                for(int i = openToken.arrayIndex + 1; i<closeToken.arrayIndex; ++i) {
-                    tmpToken1 = tokenArray.get(i);
-                    if(tmpToken1.isOpen()) break;
-                }
-                tmpToken2 = tokenArray.get(tmpToken1.partnerArrayIndex);
-                nextElement = parseJSON_ObjectTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
-                r.addJSON_Item(nextElement);
-                controlIndex = tmpToken2.strIndex+1;
-                return r;
+            }else if(resultArray[2].intValue() == -JSON_Object.OBJECT){
+                if(resultArray[0].intValue() > -1){ //open token found
+                    tmpToken1 = null;
+                    while(nextPotentialChildIndex < closeToken.arrayIndex){
+                        tmpToken1 = tokenArray.get(nextPotentialChildIndex);
+                        if(tmpToken1.isOpen()){
+                            ++nextPotentialChildIndex;
+                            break;
+                        }
+                        ++nextPotentialChildIndex;
+                    }
+                    tmpToken2 = tokenArray.get(tmpToken1.partnerArrayIndex);
+                    nextElement = parseJSON_ObjectTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
+                    r.addJSON_Item(nextElement);
+                    controlIndex = tmpToken2.strIndex+1;
+                }else if(resultArray[1].intValue() > -1){
+                    return r; //terminating array
+                }else throw new JSON_Exception("Something is terribly wrong.");
+            }else if(resultArray[2].intValue() == -JSON_Object.ARRAY){
+                if(resultArray[0].intValue() > -1){
+                    tmpToken1 = null;
+                    while(nextPotentialChildIndex < closeToken.arrayIndex){
+                        tmpToken1 = tokenArray.get(nextPotentialChildIndex);
+                        if(tmpToken1.isOpen()){
+                            ++nextPotentialChildIndex;
+                            break;
+                        }
+                        ++nextPotentialChildIndex;
+                    }
+                    tmpToken2 = tokenArray.get(tmpToken1.partnerArrayIndex);
+
+                    nextElement = parseJSON_ObjectTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
+                    r.addJSON_Item(nextElement);
+                    controlIndex = tmpToken2.strIndex+1;
+                }else if(resultArray[1].intValue() > -1){
+                    return r; //terminating Array
+                }else throw new JSON_Exception("");
+                
             }else{
                 throw new JSON_Exception(
-                    "ERROR: index0: "+resultArray[0].intValue()+
+                    "ERROR:\nindex0: "+resultArray[0].intValue()+
                     "\nindex1: "+resultArray[1].intValue()+
                     "\nindex2: "+resultArray[2].intValue()
                 );
@@ -285,16 +294,17 @@ public final class JSON_Parser{
 
             //Find a ',' or terminating character ']'
             while(controlIndex <= endBodyIndex){
-                if(jsonString.charAt(controlIndex) != ',') ++controlIndex;
-                else{
+                nextChar = jsonString.charAt(controlIndex);
+                if(Character.isWhitespace(nextChar)) ++controlIndex;
+                else if(nextChar == ','){
                     ++controlIndex;
                     break;
-                }
+                }else if(nextChar == '{' || nextChar == '[' || nextChar == '}' || nextChar == ']') return r;
+                else throw new JSON_Exception("Invalid character within Array body: "+((char)nextChar));
             }
         }
         return r;
     }
-
 
     /**
      * 
@@ -311,7 +321,7 @@ public final class JSON_Parser{
 
         char nextChar = 0; // marker to indicate that last character fetched
         //1 Find first quotation (if any) otherwise no attributes in this object
-        for(int i=startIndex; i<=jsonString.length(); ++i){
+        for(int i=startIndex; i<jsonString.length(); ++i){
             nextChar = jsonString.charAt(i);
             if(nextChar == '"'){
                 logArray[0] = Integer.valueOf(i);
@@ -320,42 +330,56 @@ public final class JSON_Parser{
                 isFirstCharacterFound=true;
                 break;
             }else if(!Character.isWhitespace(nextChar)){ //only whitespace is allowed prior to attribute
-                logArray[0] = Integer.valueOf(i);
-                attrStartIndex=logArray[0].intValue();
-                isFirstCharacterFound=true;
                 if(nextChar == '{'){
-                    logArray[2] = Integer.valueOf(JSON_Object.OBJECT);
+                    logArray[0] = Integer.valueOf(i);
+                    logArray[1] = Integer.valueOf(-1);
+                    logArray[2] = Integer.valueOf(-JSON_Object.OBJECT);
                     return null;
-                }else if(nextChar == '{'){
-                    logArray[2] = Integer.valueOf(JSON_Object.ARRAY);
+                }else if(nextChar == '['){
+                    logArray[0] = Integer.valueOf(i);
+                    logArray[1] = Integer.valueOf(-1);
+                    logArray[2] = Integer.valueOf(-JSON_Object.ARRAY);
+                    return null;
+                }else if(nextChar == '}'){
+                    logArray[0] = Integer.valueOf(-1);
+                    logArray[1] = Integer.valueOf(i);
+                    logArray[2] = Integer.valueOf(-JSON_Object.OBJECT);
+                    return null;
+                }else if(nextChar == ']'){
+                    logArray[0] = Integer.valueOf(-1);
+                    logArray[1] = Integer.valueOf(i);
+                    logArray[2] = Integer.valueOf(-JSON_Object.ARRAY);
                     return null;
                 }
+                logArray[0] = Integer.valueOf(i);
+                attrStartIndex=logArray[0].intValue();
+                controlIndex=attrStartIndex+1;
+                isFirstCharacterFound=true;
                 break;
             }
         }
-        if(!isFirstCharacterFound){
-            logArray[0] = Integer.valueOf(-1);
-            logArray[1] = Integer.valueOf(-1);
-            logArray[2] = Integer.valueOf(-1);
+        if(!isFirstCharacterFound){ //Should never cross here for any valid JSON string
+            logArray[0] = Integer.valueOf(startIndex);
+            logArray[1] = Integer.valueOf(jsonString.length()-1);
+            logArray[2] = Integer.valueOf(-11);
             return null; //No attribute, all white space characters
         };
 
-        if(jsonString.startsWith("true", controlIndex)){
-            logArray[1] = Integer.valueOf(attrStartIndex+4);
+        if(jsonString.startsWith("true", attrStartIndex)){
+            logArray[1] = Integer.valueOf(attrStartIndex+3);
             logArray[2] = Integer.valueOf(JSON_Object.BOOLEAN);
             return new JSON_Boolean(true);
-        }else if(jsonString.startsWith("false", controlIndex)){
-            logArray[1] = Integer.valueOf(attrStartIndex+5);
+        }else if(jsonString.startsWith("false", attrStartIndex)){
+            logArray[1] = Integer.valueOf(attrStartIndex+4);
             logArray[2] = Integer.valueOf(JSON_Object.BOOLEAN);
             return new JSON_Boolean(false);
-        }else if(jsonString.startsWith("null", controlIndex)){
-            logArray[1] = Integer.valueOf(attrStartIndex+4);
+        }else if(jsonString.startsWith("null", attrStartIndex)){
+            logArray[1] = Integer.valueOf(attrStartIndex+3);
             logArray[2] = Integer.valueOf(JSON_Object.NULL);
             return new JSON_Null();
         }else if(nextChar == '"'){
             StringBuilder rendered = new StringBuilder(); //return value, quotes removed and all escape characters resolved.
 
-            ++controlIndex;
             while(controlIndex < jsonString.length()){
                 nextChar = jsonString.charAt(controlIndex);
                 if(nextChar != '"'){
@@ -386,6 +410,7 @@ public final class JSON_Parser{
                     attrEndIndex=controlIndex;
                     return new JSON_String(rendered.toString());
                 }
+                ++controlIndex;
             }
             logArray[1] = Integer.valueOf(controlIndex);
             logArray[2] = Integer.valueOf(-93);
@@ -435,6 +460,10 @@ public final class JSON_Parser{
             }
 
         }
+        logArray[0] = Integer.valueOf(-1*logArray[0].intValue());
+        logArray[1] = Integer.valueOf(-1*controlIndex);
+        if(nextChar == ']' || nextChar == '}') logArray[2] = Integer.valueOf(-21);
+        else logArray[2] = Integer.valueOf(-99); //unknown type
         return null;
     }
 
