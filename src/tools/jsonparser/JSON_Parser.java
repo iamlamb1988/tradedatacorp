@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 18 MAY 2025
+ * @since 28 MAY 2025
  */
 package tradedatacorp.tools.jsonparser;
 
@@ -197,14 +197,14 @@ public final class JSON_Parser{
                 );
             }
 
-            //Find a ',' or terminating character ']'
+            //Find a ',' or terminating character '}'
             while(controlIndex < endBodyIndex){
                 nextChar = jsonString.charAt(controlIndex);
                 if(Character.isWhitespace(nextChar)) ++controlIndex;
                 else if(nextChar == ','){
                     ++controlIndex;
                     break;
-                }else if(nextChar == '{' || nextChar == '[' || nextChar == '}' || nextChar == ']') return r;
+                }else if(nextChar == '}') return r;
                 else throw new JSON_Exception("Invalid character within Object body: "+((char)nextChar));
             }
         }
@@ -239,9 +239,9 @@ public final class JSON_Parser{
         Integer[] resultArray = new Integer[3];
         int controlIndex=startBodyIndex;
 
-        if(controlIndex >= endBodyIndex){return r;}// case 1: []
+        if(controlIndex > endBodyIndex){return r;}// case 1: []
 
-        while(controlIndex < endBodyIndex){
+        while(controlIndex <= endBodyIndex){
             nextElement = parseJSON_BaseItemFromToken(resultArray, tokenArray, jsonString, controlIndex);
             if(nextElement != null){
                 r.addJSON_Item(nextElement);
@@ -277,7 +277,7 @@ public final class JSON_Parser{
                     }
                     tmpToken2 = tokenArray.get(tmpToken1.partnerArrayIndex);
 
-                    nextElement = parseJSON_ObjectTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
+                    nextElement = parseJSON_ArrayTokens(jsonString, tokenArray, tmpToken1.arrayIndex);
                     r.addJSON_Item(nextElement);
                     controlIndex = tmpToken2.strIndex+1;
                 }else if(resultArray[1].intValue() > -1){
@@ -299,7 +299,7 @@ public final class JSON_Parser{
                 else if(nextChar == ','){
                     ++controlIndex;
                     break;
-                }else if(nextChar == '{' || nextChar == '[' || nextChar == '}' || nextChar == ']') return r;
+                }else if(nextChar == ']') return r;
                 else throw new JSON_Exception("Invalid character within Array body: "+((char)nextChar));
             }
         }
