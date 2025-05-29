@@ -7,18 +7,16 @@ import java.net.http.HttpResponse;
 public class TestMiner{
     public static void main(String[] args){
         System.out.println("Hello Miner!");
-		// PolygonIO_CryptoMiner miner = new PolygonIO_CryptoMiner("NuslrjAqkue1coRYRnJVSMv1vgUh_GN8");
-		// HttpResponse<String> responseFromPolygonIO = miner.mineResponseByUTCRange("X:BTCUSD", "minute", 1735689600001L-2*(60*1000), 1735689600000L);
+		PolygonIO_CryptoMiner miner = new PolygonIO_CryptoMiner("NuslrjAqkue1coRYRnJVSMv1vgUh_GN8");
+		HttpResponse<String> responseFromPolygonIO = miner.mineResponseByUTCRange("X:BTCUSD", "minute", 1735689600001L-2*(60*1000), 1735689600000L);
 
-        // System.out.println("STATUS: "+responseFromPolygonIO.statusCode());
-        // System.out.println("BODY:\n"+responseFromPolygonIO.body());
-        String array2 = "{  \"stuff\" : [1]  }";
+        System.out.println("STATUS: "+responseFromPolygonIO.statusCode());
+        System.out.println("BODY:\n"+responseFromPolygonIO.body());
 
-        System.out.println(array2);
-    
-        // JSON_Object x = JSON_Parser.parse(responseFromPolygonIO.body());
-        JSON_Object x = JSON_Parser.parse(array2);
-        
+        JSON_Object x = JSON_Parser.parse(responseFromPolygonIO.body());
+
+        System.out.println(x);
+
         System.out.println("Praparing to iterate through keys");
         printValues(x);
     }

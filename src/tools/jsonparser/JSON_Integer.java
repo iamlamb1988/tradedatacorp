@@ -11,11 +11,18 @@ public class JSON_Integer implements JSON_Number{
         integer=Long.valueOf(value);
     }
 
+    //JSON_Item Overrides
     @Override
     public byte getType(){return JSON_Object.INTEGER;}
 
     @Override
     public JSON_Item getValue(){return this;}
 
+    //JSON_Number Overrides
+    @Override
+    public double getDecimalValue(){return integer.doubleValue();}
+
+    //Original
     public long getIntegerValue(){return integer.longValue();}
+
 }

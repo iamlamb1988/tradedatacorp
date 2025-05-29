@@ -4,4 +4,6 @@
  */
 package tradedatacorp.tools.jsonparser;
 
-public interface JSON_Number extends JSON_Item{}
+public interface JSON_Number extends JSON_Item{
+    public double getDecimalValue();
+}

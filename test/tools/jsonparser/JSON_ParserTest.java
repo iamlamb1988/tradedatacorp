@@ -197,6 +197,7 @@ public class JSON_ParserTest{
         final String array3 = "{ \"a1 \"    : [ 3, \"two\",null  ,-2.718, false]   }";
         final String object1 = "{ \"o1\"   : { }, \"o2\": { \"co1\":  -777, \"co2\":25.99, \"co3\"  :true}   }";
         final String object2 = "{ \"o1\":{\"co1\":null, \"co2\":\"temp\"}, \"a1\": [true,99]}";
+        final String polygonIOresponse = "{\"ticker\":\"X:BTCUSD\",\"queryCount\":3,\"resultsCount\":3,\"adjusted\":true,\"results\":[{\"v\":12.090991929999998,\"vw\":93418.9561,\"o\":93405.94,\"c\":93383.35,\"h\":93817,\"l\":93350.2,\"t\":1735689480000,\"n\":507},{\"v\":20.81521069999994,\"vw\":93382.3019,\"o\":93385.6,\"c\":93354.22,\"h\":93798,\"l\":93324.33,\"t\":1735689540000,\"n\":713},{\"v\":1.9909046399999997,\"vw\":93746.3183,\"o\":93758,\"c\":93781,\"h\":93781,\"l\":93721,\"t\":1735689600000,\"n\":49}],\"status\":\"OK\",\"request_id\":\"496cf875d10fc4df8d4e94150ae54608\",\"count\":3}";
 
         @Test
         public void testEmpty1(){
@@ -411,6 +412,120 @@ public class JSON_ParserTest{
             assertEquals("temp",child1_String.getStringValue());
             assertTrue(child2_Bool.getBooleanValue());
             assertEquals(99,child2_Int.getIntegerValue());
+        }
+
+        @Test
+        public void testPolygonIOresponse(){
+            JSON_Object obj = JSON_Parser.parse(polygonIOresponse);
+
+            // Root-level checks
+            assertEquals(8, obj.getKeyCount());
+            String keyTicker="ticker";
+            String keyQueryCount="queryCount";
+            String keyResultsCount="resultsCount";
+            String keyAdjusted="adjusted";
+            String keyResults="results";
+            String keyStatus="status";
+            String keyRequestID="request_id";
+            String keyCount="count";
+
+            // Check types and values of root keys
+            JSON_String ticker = (JSON_String)obj.getJSON_Attribute(keyTicker);
+            assertEquals("X:BTCUSD", ticker.getStringValue());
+
+            JSON_Integer queryCount = (JSON_Integer)obj.getJSON_Attribute(keyQueryCount);
+            assertEquals(3, queryCount.getIntegerValue());
+
+            JSON_Integer resultsCount = (JSON_Integer)obj.getJSON_Attribute(keyResultsCount);
+            assertEquals(3, resultsCount.getIntegerValue());
+
+            JSON_Boolean adjusted = (JSON_Boolean)obj.getJSON_Attribute(keyAdjusted);
+            assertTrue(adjusted.getBooleanValue());
+
+            JSON_String status = (JSON_String)obj.getJSON_Attribute(keyStatus);
+            assertEquals("OK", status.getStringValue());
+
+            JSON_String requestId = (JSON_String)obj.getJSON_Attribute(keyRequestID);
+            assertEquals("496cf875d10fc4df8d4e94150ae54608", requestId.getStringValue());
+
+            JSON_Integer count = (JSON_Integer)obj.getJSON_Attribute(keyCount);
+            assertEquals(3, count.getIntegerValue());
+
+            // Check results array
+            JSON_Array results = (JSON_Array)obj.getJSON_Attribute(keyResults);
+            assertEquals(3, results.getItemCount());
+
+            // Check 1st result object
+            JSON_Object firstResult = (JSON_Object)results.getItem(0);
+            assertEquals(8, firstResult.getKeyCount());
+
+            JSON_Integer t = (JSON_Integer)firstResult.getJSON_Attribute("t");
+            assertEquals(1735689480000L, t.getIntegerValue());
+
+            JSON_Number o = (JSON_Number)firstResult.getJSON_Attribute("o");
+            assertEquals(93405.94, o.getDecimalValue(), 0.001);
+            JSON_Number h = (JSON_Number)firstResult.getJSON_Attribute("h");
+            assertEquals(93817, h.getDecimalValue());
+            JSON_Number l = (JSON_Number)firstResult.getJSON_Attribute("l");
+            assertEquals(93350.2, l.getDecimalValue(), 0.001);
+            JSON_Number c = (JSON_Number)firstResult.getJSON_Attribute("c");
+            assertEquals(93383.35, c.getDecimalValue(), 0.001);
+
+            JSON_Number v = (JSON_Number)firstResult.getJSON_Attribute("v");
+            assertEquals(12.090991929999998, v.getDecimalValue(), 0.0000001);
+            JSON_Number vw = (JSON_Number)firstResult.getJSON_Attribute("vw");
+            assertEquals(93418.9561, vw.getDecimalValue(), 0.0001);
+
+            JSON_Integer n = (JSON_Integer)firstResult.getJSON_Attribute("n");
+            assertEquals(507, n.getIntegerValue());
+
+            // Check 2nd result object
+            JSON_Object secondResult = (JSON_Object) results.getItem(1);
+            assertEquals(8, secondResult.getKeyCount());
+
+            t = (JSON_Integer)secondResult.getJSON_Attribute("t");
+            assertEquals(1735689540000L, t.getIntegerValue());
+
+            o = (JSON_Number)secondResult.getJSON_Attribute("o");
+            assertEquals(93385.6, o.getDecimalValue(), 0.001);
+            h = (JSON_Number)secondResult.getJSON_Attribute("h");
+            assertEquals(93798, h.getDecimalValue());
+            l = (JSON_Number)secondResult.getJSON_Attribute("l");
+            assertEquals(93324.33, l.getDecimalValue(), 0.001);
+            c = (JSON_Number)secondResult.getJSON_Attribute("c");
+            assertEquals(93354.22, c.getDecimalValue(), 0.001);
+
+            v = (JSON_Number)secondResult.getJSON_Attribute("v");
+            assertEquals(20.81521069999994, v.getDecimalValue(), 0.0000001);
+            vw = (JSON_Number)secondResult.getJSON_Attribute("vw");
+            assertEquals(93382.3019, vw.getDecimalValue(), 0.0001);
+
+            n = (JSON_Integer)secondResult.getJSON_Attribute("n");
+            assertEquals(713, n.getIntegerValue());
+
+            // Check 3rd result object
+            JSON_Object thirdResult = (JSON_Object) results.getItem(2);
+            assertEquals(8, thirdResult.getKeyCount());
+
+            t = (JSON_Integer)thirdResult.getJSON_Attribute("t");
+            assertEquals(1735689600000L, t.getIntegerValue());
+
+            o = (JSON_Number)thirdResult.getJSON_Attribute("o");
+            assertEquals(93758.0, o.getDecimalValue(), 0.001);
+            h = (JSON_Number)thirdResult.getJSON_Attribute("h");
+            assertEquals(93781, h.getDecimalValue());
+            l = (JSON_Number)thirdResult.getJSON_Attribute("l");
+            assertEquals(93721, l.getDecimalValue());
+            c = (JSON_Number)thirdResult.getJSON_Attribute("c");
+            assertEquals(93781, c.getDecimalValue());
+
+            v = (JSON_Number)thirdResult.getJSON_Attribute("v");
+            assertEquals(1.9909046399999997, v.getDecimalValue(), 0.0000001);
+            vw = (JSON_Number)thirdResult.getJSON_Attribute("vw");
+            assertEquals(93746.3183, vw.getDecimalValue(), 0.0001);
+
+            n = (JSON_Integer)thirdResult.getJSON_Attribute("n");
+            assertEquals(49, n.getIntegerValue());
         }
     }
 }
