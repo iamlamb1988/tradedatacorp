@@ -196,6 +196,7 @@ public class JSON_ParserTest{
         final String array2 = "{  \"stuff\" : [1, -2]  }";
         final String array3 = "{ \"a1 \"    : [ 3, \"two\",null  ,-2.718, false]   }";
         final String object1 = "{ \"o1\"   : { }, \"o2\": { \"co1\":  -777, \"co2\":25.99, \"co3\"  :true}   }";
+        final String object2 = "{ \"o1\":{\"co1\":null, \"co2\":\"temp\"}, \"a1\": [true,99]}";
 
         @Test
         public void testEmpty1(){
@@ -376,6 +377,40 @@ public class JSON_ParserTest{
             assertEquals(-777,childInteger.getIntegerValue());
             assertEquals(25.99,childDec.getDecimalValue());
             assertTrue(childBool.getBooleanValue());
+        }
+
+        @Test
+        public void testObject2(){
+            JSON_Object obj = JSON_Parser.parse(object2);
+
+            assertEquals(2,obj.getKeyCount());
+            assertEquals(2,obj.getKeyArray().length);
+            String key1 = "o1";
+            String key2 = "a1";
+
+            JSON_Item childItem1 = obj.getJSON_Attribute(key1);
+            JSON_Item childItem2 = obj.getJSON_Attribute(key2);
+            assertEquals(childItem1.getType(),JSON_Object.OBJECT);
+            assertEquals(childItem2.getType(),JSON_Object.ARRAY);
+
+            JSON_Object childObj1 = (JSON_Object)childItem1;
+            JSON_Array childObj2 = (JSON_Array)childItem2;
+
+            assertEquals(2,childObj1.getKeyCount());
+            assertEquals(2,childObj2.getItemCount());
+
+            String childKey1 = "co1";
+            String childKey2 = "co2";
+
+            JSON_Null child1_Null = (JSON_Null)childObj1.getJSON_Attribute(childKey1);
+            JSON_String child1_String = (JSON_String)childObj1.getJSON_Attribute(childKey2);
+            JSON_Boolean child2_Bool = (JSON_Boolean)childObj2.getItem(0);
+            JSON_Integer child2_Int = (JSON_Integer)childObj2.getItem(1);
+
+            assertNull(child1_Null.getValue());
+            assertEquals("temp",child1_String.getStringValue());
+            assertTrue(child2_Bool.getBooleanValue());
+            assertEquals(99,child2_Int.getIntegerValue());
         }
     }
 }
