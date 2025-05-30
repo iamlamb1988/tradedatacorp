@@ -1,10 +1,8 @@
-# Trade Data Corp
+# Trade Data Corp Core Library
 
-This is the core of Trade Data application that contains the interfaces required for storing, analyzing, and generating trade patterns and summaries.
-Generally, there will be at least one implementation of each interface that can be used as an example. It is expected to use implementations in different component repositories.
-This will allow you to make your own implementation of certain components.
+This repository contains the core interfaces and foundational classes for the Trade Data application. These interfaces are designed for storing, analyzing, and generating trade patterns and summaries. Each interface is intended to have at least one example implementation, but you are encouraged to create your own implementations in separate component repositories to suit your specific needs.
 
-Tutorials will come soon
+Note: Tutorials and additional documentation will be provided soon.
 
 ## Release Notes
 
@@ -21,8 +19,7 @@ More information on components will be released in future.
 
 ## Introduction
 
-This abstract library behaves as a single "business corporation". A corporation has fundamental information such as a name and Headquarter address.
-A corporation has tangibles such as:
+This abstract library models a business corporation, encapsulating fundamental information such as the company name and headquarters address. The corporation consists of various tangible components, including:
 - Workers
   - Miners
   - Smelters
@@ -43,4 +40,17 @@ A corporation has tangibles such as:
 	- XML/HTML
   - GUI images
 
-A corporation may have more than branch (i.e Node (VM or Physical Server) or Container) that contain their own tangibles.
+## Component Status
+The structure and names may change to ensure a clean base design
+
+| Component         | Description                                              | Status         | Notes                                             |
+|-------------------|---------------------------------------------------------|----------------|---------------------------------------------------|
+| **Miner**         | Receives OHLC sticks from polygon.io                    | Working     | Handles real-time stick data ingestion            |
+| **FileSmelter**   | Reads/writes super-compressed binary files              | Working     | Supports both read and write operations           |
+| **Smelter**       | Data transformation/aggregation                         | In Progress | Basic file smelting implemented                   |
+| **Crafters**      | Data processing and pattern generation                  | Not Started | Planned                                          |
+| **Warehouses**    | Database/file storage                                   | Not Started | Planned (SQL, NoSQL, File System)                 |
+| **StoreFronts**   | Web/App interfaces                                      | Not Started | Planned (Website, App)                            |
+| **Products**      | Summaries, files (CSV, JSON, XML/HTML), GUI images      | Not Started | Planned                                          |
+
+A corporation may operate multiple branches (nodes or containers), each with its own set of tangibles.
