@@ -161,7 +161,7 @@ public final class JSON_Parser{
             if(nextItem != null){
                 r.addJSON_Attribute(keyString,nextItem);
                 controlIndex = resultArray[1].intValue()+1;
-            }else if(resultArray[2].intValue() == -JSON_Object.OBJECT){
+            }else if(resultArray[2].intValue() == -JSON_Item.OBJECT){
                 tmpToken1 = null;
                 while(nextPotentialChildIndex < closeToken.arrayIndex){
                     tmpToken1 = tokenArray.get(nextPotentialChildIndex);
@@ -246,7 +246,7 @@ public final class JSON_Parser{
             if(nextElement != null){
                 r.addJSON_Item(nextElement);
                 controlIndex = resultArray[1].intValue()+1;
-            }else if(resultArray[2].intValue() == -JSON_Object.OBJECT){
+            }else if(resultArray[2].intValue() == -JSON_Item.OBJECT){
                 if(resultArray[0].intValue() > -1){ //open token found
                     tmpToken1 = null;
                     while(nextPotentialChildIndex < closeToken.arrayIndex){
@@ -333,7 +333,7 @@ public final class JSON_Parser{
                 if(nextChar == '{'){
                     logArray[0] = Integer.valueOf(i);
                     logArray[1] = Integer.valueOf(-1);
-                    logArray[2] = Integer.valueOf(-JSON_Object.OBJECT);
+                    logArray[2] = Integer.valueOf(-JSON_Item.OBJECT);
                     return null;
                 }else if(nextChar == '['){
                     logArray[0] = Integer.valueOf(i);
@@ -343,7 +343,7 @@ public final class JSON_Parser{
                 }else if(nextChar == '}'){
                     logArray[0] = Integer.valueOf(-1);
                     logArray[1] = Integer.valueOf(i);
-                    logArray[2] = Integer.valueOf(-JSON_Object.OBJECT);
+                    logArray[2] = Integer.valueOf(-JSON_Item.OBJECT);
                     return null;
                 }else if(nextChar == ']'){
                     logArray[0] = Integer.valueOf(-1);

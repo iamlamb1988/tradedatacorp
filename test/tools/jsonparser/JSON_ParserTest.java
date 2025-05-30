@@ -208,7 +208,7 @@ public class JSON_ParserTest{
             String key = "empty";
 
             JSON_Item childItem = obj.getJSON_Attribute(key);
-            assertEquals(childItem.getType(),JSON_Object.OBJECT);
+            assertEquals(childItem.getType(),JSON_Item.OBJECT);
 
             JSON_Object childObj = (JSON_Object)childItem;
 
@@ -228,8 +228,8 @@ public class JSON_ParserTest{
             JSON_Item childItem1 = obj.getJSON_Attribute(key1);
             JSON_Item childItem2 = obj.getJSON_Attribute(key2);
 
-            assertEquals(childItem1.getType(),JSON_Object.OBJECT);
-            assertEquals(childItem2.getType(),JSON_Object.OBJECT);
+            assertEquals(childItem1.getType(),JSON_Item.OBJECT);
+            assertEquals(childItem2.getType(),JSON_Item.OBJECT);
 
             JSON_Object childObj1 = (JSON_Object)childItem1;
             JSON_Object childObj2 = (JSON_Object)childItem2;
@@ -358,8 +358,8 @@ public class JSON_ParserTest{
 
             JSON_Item childItem1 = obj.getJSON_Attribute(key1);
             JSON_Item childItem2 = obj.getJSON_Attribute(key2);
-            assertEquals(childItem1.getType(),JSON_Object.OBJECT);
-            assertEquals(childItem2.getType(),JSON_Object.OBJECT);
+            assertEquals(childItem1.getType(),JSON_Item.OBJECT);
+            assertEquals(childItem2.getType(),JSON_Item.OBJECT);
 
             JSON_Object childObj1 = (JSON_Object)childItem1;
             JSON_Object childObj2 = (JSON_Object)childItem2;
@@ -391,7 +391,7 @@ public class JSON_ParserTest{
 
             JSON_Item childItem1 = obj.getJSON_Attribute(key1);
             JSON_Item childItem2 = obj.getJSON_Attribute(key2);
-            assertEquals(childItem1.getType(),JSON_Object.OBJECT);
+            assertEquals(childItem1.getType(),JSON_Item.OBJECT);
             assertEquals(childItem2.getType(),JSON_Object.ARRAY);
 
             JSON_Object childObj1 = (JSON_Object)childItem1;
