@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 18 MAY 2025
+ * @since 30 MAY 2025
  */
 package tradedatacorp.tools.jsonparser;
 
@@ -17,14 +17,15 @@ import java.util.ArrayList;
  */
 public class JSON_Object implements JSON_CompositeMap{
     private Hashtable<String,JSON_Item> attributeMap;
+
+    /**
+     * Constructs an empty JSON object.
+     */
     JSON_Object(){attributeMap = new Hashtable<String,JSON_Item>();}
 
     //JSON_Item Overrides
     @Override
     public byte getType(){return JSON_Item.OBJECT;}
-
-    @Override
-    public JSON_Item getValue(){return this;}
 
     //JSON_CompositeMap Overrides
     @Override
@@ -36,7 +37,16 @@ public class JSON_Object implements JSON_CompositeMap{
     @Override
     public int getKeyCount(){return attributeMap.size();}
 
+    /**
+     * Returns the set of keys in the object.
+     * @return The set of attribute names.
+     */
     public Set<String> getKeySet(){return attributeMap.keySet();}
+
+    /**
+     * Returns the keys as an array of strings.
+     * @return An array containing all attribute names.
+     */
     public String[] getKeyArray(){
         String[] r=new String[attributeMap.size()];
         Set<String> keySet = attributeMap.keySet();

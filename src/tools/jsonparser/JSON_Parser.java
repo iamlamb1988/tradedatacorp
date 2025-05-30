@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 28 MAY 2025
+ * @since 30 MAY 2025
  */
 package tradedatacorp.tools.jsonparser;
 
@@ -18,12 +18,16 @@ import java.util.ArrayList;
  * The parser is intended to be compliant with the RFC 8259 JSON standard, with support for objects, arrays, strings, numbers, booleans, and null values.
  * 
  * Current Limitations:
- * scientific notation
- * unicode escapes {@code uXXXX}
+ * <ul>
+ *   <li>Does not support scientific notation for numbers.</li>
+ *   <li>Does not support Unicode escape sequences: uXXXX.</li>
+ * </ul>
  */
 public final class JSON_Parser{
-
+    /** String of valid escape characters in JSON strings. */
     public static final String ESCAPES;
+
+    /** String of corresponding raw values for JSON escape sequences. */
     public static final String RAW_ESCAPES;
 
     static{
@@ -34,7 +38,14 @@ public final class JSON_Parser{
     }
 
     /**
-     * Generates and returns {@link JSON_Object} representing given JSON String.
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private JSON_Parser() {
+        throw new AssertionError("JSON_Parser cannot be instantiated.");
+    }
+    /**
+     * Parses a JSON-formatted string and returns the root {@link JSON_Object}.
+     * If the input is not a valid JSON object or is malformed, this method may return {@code null} or throw a {@link JSON_Exception}.
      * @param JSON_Item.OBJECT Must be a valid JSON String format IAW RFC 8259.
      * @return {@link JSON_Object} representing the {@code jsonString}.
      */
@@ -110,6 +121,14 @@ public final class JSON_Parser{
         return (JSON_Object)parseJSON_ObjectTokens(jsonString, tokenList, 0);
     }
 
+    /**
+     * Parses a JSON object from tokenized input.
+     * @param jsonString the JSON source string.
+     * @param tokenArray the list of structural tokens (braces/brackets). The tokens MUST be paired properly and in order. This will NOT be checked.
+     * @param arrayIDindex the index in the token array to start parsing. This can be an open token or closing token.
+     * @return the parsed {@link JSON_Object}.
+     * @throws JSON_Exception if the JSON is malformed.
+     */
     private static JSON_Object parseJSON_ObjectTokens(String jsonString, ArrayList<JSON_Token> tokenArray, int arrayIDindex) throws JSON_Exception{
         //0. Initialize token
         JSON_Object r = new JSON_Object(); //return value
@@ -217,6 +236,14 @@ public final class JSON_Parser{
         return r;
     }
 
+    /**
+     * Parses a JSON array from tokenized input.
+     * @param jsonString the JSON source string.
+     * @param tokenArray the list of structural tokens (braces/brackets).
+     * @param arrayIDindex the index in the token array to start parsing.
+     * @return the parsed {@link JSON_Array}.
+     * @throws JSON_Exception if the JSON is malformed.
+     */
     private static JSON_Array parseJSON_ArrayTokens(String jsonString, ArrayList<JSON_Token> tokenArray, int arrayIDindex){
         //0. Initialize token
         JSON_Array r = new JSON_Array(); //return value
@@ -312,11 +339,15 @@ public final class JSON_Parser{
     }
 
     /**
-     * 
-     * @param logArray. returns values based on the result. Must have at least 3 elements.
-     * index 0: starting index of attribute or value.
-     * index 1: ending index of attribute or value.
-     * index 2: JSON_Object type
+     * Attempts to parse a single JSON value (string, number, boolean, null, object, or array) from the given position.
+     * @param logArray Integer[3] used as out-parameters:
+     *                 index 0: start index of the value,
+     *                 index 1: end index of the value,
+     *                 index 2: type code (positive for recognized types, negative for structures or errors).
+     * @param tokenArray the list of tokens for structural parsing.
+     * @param jsonString the JSON source string.
+     * @param startIndex the index in the string to begin parsing.
+     * @return the parsed {@link JSON_Item}, or {@code null} if the value is an object/array or on error.
      */
     private static JSON_Item parseJSON_BaseItemFromToken(Integer[] logArray, ArrayList<JSON_Token> tokenArray, String jsonString, int startIndex){
         int attrStartIndex = -1; //marker to indicate beginning of attribute not found yet.
@@ -546,6 +577,10 @@ public final class JSON_Parser{
         return -5; //Should never return at this location
     }
 
+    /**
+     * A temporary class that represents a token for a brace or bracket in the JSON string.
+     * Used to match opening and closing braces/brackets during parsing.
+     */
     private static abstract class JSON_Token implements Comparable<JSON_Token>{
         int pairID;
         int strIndex;

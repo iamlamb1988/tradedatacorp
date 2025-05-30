@@ -15,7 +15,7 @@ public interface JSON_CompositeArray extends JSON_Composite{
     public void addJSON_Item(JSON_Item value);
 
     /**
-     * Gets a JSON item to the array.
+     * Retrieves the JSON item at the specified index.
      * @param index The index of the array the item is located.
      */
     public JSON_Item getItem(int index);
