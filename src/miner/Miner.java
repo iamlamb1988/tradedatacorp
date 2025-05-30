@@ -1,3 +1,5 @@
 package tradedatacorp.miner;
 
-public interface Miner{}
+public interface Miner{
+    
+}
