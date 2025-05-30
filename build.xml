@@ -11,12 +11,17 @@
 
 	<target name="compile">
 		<mkdir dir="${bin}"/>
-		<javac srcdir="${source}" destdir="${bin}" />
+		<javac srcdir="${source}" destdir="${bin}" debug="false"/>
+	</target>
+
+	<target name="debugcompile">
+		<mkdir dir="${bin}"/>
+		<javac srcdir="${source}" destdir="${bin}" debug="true"/>
 	</target>
 
 	<target name="compileunittest">
 		<mkdir dir="${bin}"/>
-		<javac destdir="${bin}">
+		<javac destdir="${bin}" debug="true">
 			<src path="${source}" />
 			<src path="${unittest}" />
 			<classpath>
@@ -36,6 +41,10 @@
 	</target>
 
 	<target name="craft" depends="compile">
+		<jar destfile="tradedatacore-V0-M.jar" basedir="bin/" />
+	</target>
+
+	<target name="debugcraft" depends="debugcompile">
 		<jar destfile="tradedatacore-V0-M.jar" basedir="bin/" />
 	</target>
 

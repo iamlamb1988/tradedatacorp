@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 10 MAY 2025
+ * @since 14 MAY 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -682,7 +682,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
      * Returns an inflated binary array of all Stick elements in the {@code dataArray}.
      * @param dataArray An array of elements that will be converted into binary.
      * @return A 3 dimensional array where:
-     * The first element is 1 Stick
+     * The first element is a Stick
      * The second element is associated field (11 fields so this length is always 11)
      * The third element is bit associated with the field.
      */
@@ -772,29 +772,43 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return r;
     }
 
-    //Get Data instance from Binary
+    /**
+     * Returns a {@link StickDouble} instance from an inflated binary datapoint.
+     * This is the reverse of {@code getBinaryData}
+     * @param singleBinaryData A single inflated datapoint.
+     * There must be exactly 11 elements, one that represents each datapoint field. The individiual lenghts correspond to the header values.
+     * This is the same format as the return value in {@code getBinaryData} function.
+     * @return A StickDouble instance from an inflated binary datapoint.
+     */
     @Override
     public StickDouble getRefinedData(boolean[][] singleBinaryData){
         return new CandleStickFixedDouble(
             BinaryTools.toUnsignedLong(singleBinaryData[0]), //UTC
 
             BinaryTools.toUnsignedInt(singleBinaryData[1]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[2])/Math.pow(10,base10PriceMaxFractionDigit), //Open
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[2])/tenToPow[base10PriceMaxFractionDigit], //Open
 
             BinaryTools.toUnsignedInt(singleBinaryData[3]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[4])/Math.pow(10,base10PriceMaxFractionDigit), //High
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[4])/tenToPow[base10PriceMaxFractionDigit], //High
             
             BinaryTools.toUnsignedInt(singleBinaryData[5]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[6])/Math.pow(10,base10PriceMaxFractionDigit), //Low
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[6])/tenToPow[base10PriceMaxFractionDigit], //Low
             
             BinaryTools.toUnsignedInt(singleBinaryData[7]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[8])/Math.pow(10,base10PriceMaxFractionDigit), //Close
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[8])/tenToPow[base10PriceMaxFractionDigit], //Close
 
             BinaryTools.toUnsignedInt(singleBinaryData[9]) + 
-            BinaryTools.toUnsignedInt(singleBinaryData[10])/Math.pow(10,base10VolumeMaxFractionDigit) //Volume
+            (double)BinaryTools.toUnsignedInt(singleBinaryData[10])/tenToPow[base10VolumeMaxFractionDigit] //Volume
         );
     }
 
+    /**
+     * Returns a {@link StickDouble} instance from a flattened binary datapoint.
+     * This is the reverse of {@code getBinaryDataFlat}
+     * @param singleFlatBinaryData A single flattened datapoint.
+     * This is the same format as the return value in {@code getBinaryDataFlat} function
+     * @return A StickDouble instance from a flattened binary datapoint.
+     */
     @Override
     public StickDouble getRefinedDataFlat(boolean[] singleFlatBinaryData){
         int tmpWhole,
@@ -847,16 +861,27 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return new CandleStickFixedDouble(utc, open, high, low, close, volume);
     }
 
+    /**
+     * Returns an array of {@link StickDouble} elements from an array of inflated sticks.
+     * @param binaryDataArray A 3 dimensional array where:
+     * The first element is the Stick
+     * The second element is associated field (11 fields so this length is always 11)
+     * The third element is bit associated with the field.
+     */
     @Override
-    public StickDouble[] getRefinedDataArray(boolean[][][] BinaryDataArray){
-        StickDouble[] r = new StickDouble[BinaryDataArray.length];
+    public StickDouble[] getRefinedDataArray(boolean[][][] binaryDataArray){
+        StickDouble[] r = new StickDouble[binaryDataArray.length];
         int index=0;
-        for(boolean[][] singleBinData : BinaryDataArray){
+        for(boolean[][] singleBinData : binaryDataArray){
             r[index] = getRefinedData(singleBinData);
         }
         return r;
     }
 
+    /**
+     * Returns an array of {@link StickDouble} elements from a flattened array of sticks.
+     * @param binaryFlatDataArray A flattened array of all datapoints. length be a multiple of {@code t_h1_data_len}.
+     */
     @Override
     public StickDouble[] getRefinedDataArrayFlat(boolean[] binaryFlatDataArray){
         int dataCount = (binaryFlatDataArray.length / t_h1_data_len);
@@ -885,7 +910,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            open = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            open = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //High
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
@@ -893,7 +918,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            high = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            high = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //Low
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
@@ -901,7 +926,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            low = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            low = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //Close
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pw_len);
@@ -909,7 +934,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_pf_len);
             nextIndex += t_h1_pf_len;
-            close = tmpWhole + tmpFraction/Math.pow(10,base10PriceMaxFractionDigit);
+            close = tmpWhole + (double)tmpFraction/tenToPow[base10PriceMaxFractionDigit];
 
             //Volume
             tmpWhole = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_vw_len);
@@ -917,7 +942,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
 
             tmpFraction = BinaryTools.toUnsignedIntFromBoolSubset(binaryFlatDataArray, nextIndex, t_h1_vf_len);
             nextIndex += t_h1_vf_len;
-            volume = tmpWhole + tmpFraction/Math.pow(10,base10VolumeMaxFractionDigit);
+            volume = tmpWhole + (double)tmpFraction/tenToPow[base10VolumeMaxFractionDigit];
 
             r[i] = new CandleStickFixedDouble(utc, open, high, low, close, volume);
         }
@@ -926,6 +951,9 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     // Original methods
+    /**
+     * @return a deep copy of this lexical.
+     */
     @Override
     public Original clone(){
         synchronized (this){
@@ -949,6 +977,10 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     //Get methods
+    /**
+     * Returns a deep copy of header 1.
+     * @return a deep copy of header 1.
+     */
     public boolean[][] genBinaryHeader1(){
         boolean[][] h1=new boolean[11][];
 
@@ -967,6 +999,10 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return h1;
     }
 
+    /**
+     * Returns a deep copy of header 2.
+     * @return a deep copy of header 2.
+     */
     public boolean[][] genBinaryHeader2(){
         boolean[][] h2=new boolean[3][];
 
@@ -977,27 +1013,73 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return h2;
     }
 
-    //The number of digits that represent the number of digits needed to represent the highest possible value for the bit length
+    /**
+     * Returns the maximimum number of decimal places that will be returned for Open, High, Low and Close data fields.
+     * @return the maximimum number of decimal places that will be returned for Open, High, Low and Close data fields.
+     */
     public int getBase10PriceDigits(){return base10PriceMaxFractionDigit;}
+
+    /**
+     * Returns the maximimum number of decimal places that will be returned for Volume.
+     * @return the maximimum number of decimal places that will be returned for Volume.
+     */
     public int getBase10VolumeDigits(){return base10VolumeMaxFractionDigit;}
 
-    //This will need to be sped up
+    //TODO: This will need to be sped up, replace the fraction piece with base10 constant
+    /**
+     * Will alter the first 3 elements of array to be the whole number, whole fraction, and number of digits.
+     * Ex 1: splitWholeFraction(4.5,3,myIntArr);
+     * myIntArr[0] => 4
+     * myIntArr[1] => 500 //500 is the 3 digit fractional part.
+     * myIntArr[2] => 3
+     * 
+     * Ex 2: splitWholeFraction(2.75,5,myIntArr);
+     * myIntArr[0] => 2
+     * myIntArr[1] => 75000 //75000 is the 5 digit fractional part.
+     * myIntArr[2] => 5
+     * @param value This will be parsed and modified into {@code valueParts} array.
+     * @param maxDigits The number of digits that the max fraction will represent.
+     * @param valueParts This array must have at least 3 elements.
+     * The first element will contain the whole number part (no rounding up)
+     * The second element will contain the fraction part as a whole number with maxDigit base10 count.
+     * The third element will contain the maxDigits value. This represents the number of base10 digits the fraction piece has.
+     */
     public static void splitWholeFraction(double value, int maxDigits, int[] valueParts){
         int whole = (int)Math.abs(value);
         valueParts[0] = whole;
 
         //Initial fraction digit
-        int fraction = (int)Math.round(Math.pow(10,maxDigits)*(value - whole));
+        int fraction = (int)Math.round(tenToPow[maxDigits]*(value - whole));
         valueParts[1] = fraction;
         valueParts[2] = maxDigits;
     }
 
+    //TODO: This will need to be sped up, replace the fraction piece with base10 constant
+    /**
+     * Will alter the first 3 elements of array to be the whole number, whole fraction, and number of digits.
+     * This is similar to {@code splitWholeFraction} except will trim any trailing 0s off the fraction.
+     * Ex 1: splitWholeFraction(4.5,3,myIntArr);
+     * myIntArr[0] => 4
+     * myIntArr[1] => 5 //5 is the 1 digit fractional part.
+     * myIntArr[2] => 1
+     * 
+     * Ex 2: splitWholeFraction(2.75,5,myIntArr);
+     * myIntArr[0] => 2
+     * myIntArr[1] => 75 //75 is the 1 digit fractional part.
+     * myIntArr[2] => 2
+     * @param value This will be parsed and modified into {@code valueParts} array.
+     * @param maxDigits The number of digits that the max fraction will represent.
+     * @param valueParts This array must have at least 3 elements.
+     * The first element will contain the whole number part (no rounding up).
+     * The second element will contain the fraction part as a whole number with maxDigit base10 count.
+     * The third element will contain the number of base10 fraction digits after trimming off 0s.
+     */
     public static void splitWholeFractionTrim(double value, int maxDigits, int[] valueParts){
         int whole = (int)Math.abs(value);
         valueParts[0] = whole;
 
         //Initial fraction digit
-        int fraction = (int)Math.round(Math.pow(10,maxDigits)*(value - whole));
+        int fraction = (int)Math.round(tenToPow[maxDigits]*(value - whole));
         int trimmedFraction = fraction;
         while(maxDigits>0){
             if(trimmedFraction % 10 == 0){
@@ -1088,15 +1170,53 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
 
+    /**
+     * Returns the length of a specific header 1 field. All h1 fields are static and final.
+     * @param index the index value of the first array of header.
+     * @return number of bits for the header 1 field.
+     */
     public static byte getHeader1BitLength(int index){return H1_LEN[index];}
 
+    /**
+     * Returns total number of bits of entire header.
+     * @return total number of bits of entire header.
+     */
     public int getHeaderBitLength(){return h_total_len;}
+
+    /**
+     * Returns the length of a specific header 2 field.
+     * @return total header 2 bit length.
+     */
     public int getHeader2BitLength(){return h2_total_len;}
 
+    /**
+     * Returns the boolean of header index 0. This is a single bit boolean translation.
+     * @return translated header index 0 boolean value. 1=true, 0=false.
+     */
     public boolean getByID(){return t_h1_byid;} //H0
+
+    /**
+     * Returns the int of header index 1. This represents the number of milliseconds timeframe for intraday stick data.
+     * @return translated header index 1 integer value.
+     */
     public int getInterval(){return t_h1_int;} //H1
+
+    /**
+     * Returns the int of header index 3. This represents the number of bits for each data point.
+     * @return translated header index 3 integer value.
+     */
     public int getDataBitLength(){return t_h1_data_len;} //H3
+
+    /**
+     * Returns the string of header index 11. This returns a string of the ticker symbol.
+     * @return translated header index 11 integer value.
+     */
     public String getSymbol(){return t_h2_sym;} //H11
+
+    /**
+     * Returns the int of header index 12. This represents the number of bits for each data point.
+     * @return translated header index 12 integer value.
+     */
     public int getDataCount(){return t_h2_data_ct;} //H12
 
     /**
@@ -1110,6 +1230,10 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         BinaryTools.setUnsignedIntToBoolArray(numberOfDataPoints, h2_data_ct);
     }
 
+    /**
+     * Alters the gap bit length to the specified length.
+     * @param gapBitLength Must be between 0 and 7 inclusively.
+     */
     public void setHeaderGap(byte gapBitLength){
         if(gapBitLength < 0 || gapBitLength > 7)
             throw new IllegalArgumentException("gapBitLength must be between 0 and 7 inclusively. Received: "+gapBitLength);
