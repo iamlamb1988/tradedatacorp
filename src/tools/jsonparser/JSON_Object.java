@@ -12,6 +12,9 @@ import tradedatacorp.tools.jsonparser.JSON_Item;
 import java.util.Hashtable;
 import java.util.ArrayList;
 
+/**
+ * Represents a JSON object (key-value pairs).
+ */
 public class JSON_Object implements JSON_CompositeMap{
     private Hashtable<String,JSON_Item> attributeMap;
     JSON_Object(){attributeMap = new Hashtable<String,JSON_Item>();}

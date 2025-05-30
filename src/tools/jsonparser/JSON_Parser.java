@@ -12,26 +12,33 @@ import tradedatacorp.tools.jsonparser.JSON_Object;
 
 import java.util.ArrayList;
 
+/**
+ * JSON_Parser is a utility class designed to parse JSON-formatted strings into structured Java objects, using: 
+ * {@link JSON_Object}, {@link JSON_Array}, {@link JSON_String}, {@link JSON_Integer}, {@link JSON_Decimal}, {@link JSON_Boolean}, and {@link JSON_Null}.
+ * The parser is intended to be compliant with the RFC 8259 JSON standard, with support for objects, arrays, strings, numbers, booleans, and null values.
+ * 
+ * Current Limitations:
+ * scientific notation
+ * unicode escapes {@code uXXXX}
+ */
 public final class JSON_Parser{
 
     public static final String ESCAPES;
     public static final String RAW_ESCAPES;
-    private static final String[] VALID_UNQUOTED_VALUES;
 
     static{
         char[] escapes = {'"','\\','/','b','f','n','r','t'};
         char[] rawEscapes = {'"','\\','/',8,12,10,13,9};
         ESCAPES = String.copyValueOf(escapes);
         RAW_ESCAPES = String.copyValueOf(rawEscapes);
-
-        VALID_UNQUOTED_VALUES = new String[3];
-
-        VALID_UNQUOTED_VALUES[0]="true";
-        VALID_UNQUOTED_VALUES[1]="false";
-        VALID_UNQUOTED_VALUES[2]="null";
     }
 
-    public static JSON_Object parse(String jsonString, String attributeName){
+    /**
+     * Generates and returns {@link JSON_Object} representing given JSON String.
+     * @param JSON_Item.OBJECT Must be a valid JSON String format IAW RFC 8259.
+     * @return {@link JSON_Object} representing the {@code jsonString}.
+     */
+    public static JSON_Object parse(String jsonString){
         int controlIndex = 0;
         int nextID = 0;
         int rootOpenBraceIndex;
@@ -102,8 +109,6 @@ public final class JSON_Parser{
 
         return (JSON_Object)parseJSON_ObjectTokens(jsonString, tokenList, 0);
     }
-
-    public static JSON_Object parse(String jsonString){return parse(jsonString,"root");}
 
     private static JSON_Object parseJSON_ObjectTokens(String jsonString, ArrayList<JSON_Token> tokenArray, int arrayIDindex) throws JSON_Exception{
         //0. Initialize token
