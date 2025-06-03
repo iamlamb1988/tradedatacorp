@@ -1,12 +1,14 @@
 /**
  * @author Bruce Lamb
- * @since 3 MAR 2025
+ * @since 31 MAY 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.smelter.lexical.binary.Original;
 
+import java.io.FileOutputStream;
+import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.ArrayDeque;
@@ -16,7 +18,7 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
     private Original binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
-    // private ArrayList<char> preProcessedCrucible ? will change if allignment changes.
+    private int fileWriteByteChunkSize = 64;
 
     //Constructor
     //TODO
@@ -27,7 +29,15 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
     }
 
     //Smelter Overrides
-    public void smelt(StickDouble dataStick){}
+    public void smelt(StickDouble dataStick){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(dataStick){
+            rawDataQueue = new ArrayDeque<>(1);
+            rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        }
+        writeDataToNewFile(targetFile, rawDataQueue);
+    }
+
     public void smelt(StickDouble[] rawDataArray){}
     public void smelt(Collection<StickDouble> rawDataArray){}
 
@@ -74,4 +84,62 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
     //OriginalFileSmelter methods
     public void setTargetFile(String relativePathName){}
     public void setAbsoluteTargetFile(String absolutePathName){}
+
+    public void writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue){
+        //1. Initialize variables
+        //1.1 Open resultFile to begin writing (OutputFileStream)
+        FileOutputStream resultFile;
+        try{
+            resultFile = new FileOutputStream(file.toFile(),false);
+        }
+        catch(Exception err){
+            err.printStackTrace();
+            return;
+        }
+
+        //1.2 Initialize working variables
+        ArrayDeque<boolean[]> hotCrucible;
+        ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
+        ArrayDeque<Byte> moltenData; //bytes ready to be written
+        boolean[] header;
+        boolean[] currentDataStick; //tmp variable to sqeeze into a byte.
+        boolean[] currentByte = new boolean[8]; // tmp variable, current byte being "smelted".
+        byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
+        //2. Prepare assembly line threads
+
+    }
+
+    //Assembly line interfaces (5 resoruces, 4 threads)
+    private class CrucibleToHotCrucible implements Runnable{
+        private int MAX_TOTAL_COUNT;
+        private int MAX_DELAY_MS;
+
+        private boolean isFinished;
+        private int count;
+
+        private CrucibleToHotCrucible(){
+            isFinished = false;
+            count = 0;
+        }
+
+        @Override
+        public void run(){
+
+        }
+    }
+
+    private class HotCrucibleToBitAligner implements Runnable{
+        @Override
+        public void run(){}
+    }
+
+    private class BitAlignerToMoltenData implements Runnable{
+        @Override
+        public void run(){}
+    }
+
+    private class MoltenDataToFile implements Runnable{
+        @Override
+        public void run(){}
+    }
 }
