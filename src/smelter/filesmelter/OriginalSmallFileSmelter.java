@@ -202,7 +202,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
         ArrayDeque<Byte> moltenData; //bytes ready to be written
         boolean[] header;
-        boolean[] currentDataStick; //tmp variable to sqeeze into a byte.
+        boolean[] currentDataStick; //tmp variable to squeeze into a byte.
         boolean[] currentByte = new boolean[8]; // tmp variable, current byte being "smelted".
         byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
 
@@ -268,7 +268,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
             moltenByteChunk = new byte[moltenData.size()];
             for(int i=0; moltenData.size()>0; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
             try{resultFile.write(moltenByteChunk);}
-            catch(Exception err){ err.printStackTrace();}
+            catch(Exception err){err.printStackTrace();}
         }
 
         //7.3 Write last incomplete byte to file with appropriate left shift (extra bits will be)
