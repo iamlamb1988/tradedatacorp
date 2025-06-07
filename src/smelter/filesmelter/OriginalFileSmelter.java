@@ -60,33 +60,14 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
     }
 
     //TODO
-    public void smelt(){
-        //1. Empty crucible into local ArrayList (will keep this as the only Thread adding elements to it)
-        //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
-        //3. Clone the header locally (Thread safe operation)
-
-        //NOTE: At this point local header and local crucible is set.
-        //this.binaryLexical and this.crucible is now safe to change and update
-        //because these local instances are locked in for file writing.
-
-        //4. Open this.targetFile to begin writing (OutputFileStream)
-        //5. Write the binary header.
-        //6. begin streaming and writing a file.
-        //May need Threads to keep this smooth
-        //May need more planning
-    }
+    public void smelt(){writeDataToNewFile(targetFile,crucible);}
 
     //FileSmelterStateful Overrides
-    //TODO
-    public void smeltToFile(Path destinationPathName){
-        //1. Set destinationPathName to this.targetFile
-        //2. Smelt the file (smelt())
-   
-    }
+    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
 
     //OriginalFileSmelter methods
-    public void setTargetFile(String relativePathName){}
-    public void setAbsoluteTargetFile(String absolutePathName){}
+    public void setTargetFile(String relativePathName){targetFile = Path.of(relativePathName);}
+    public void setAbsoluteTargetFile(String absolutePathName){targetFile = Paths.get(absolutePathName);}
 
     //TODO
     //Will write all the data points so a specified file.
@@ -149,6 +130,11 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
         Thread t2 = new Thread(worker2, "worker2");
         Thread t3 = new Thread(worker3, "worker3");
         Thread t4 = new Thread(worker4, "worker4");
+
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
     }
 
     //Assembly line interfaces (5 resources, 4 threads) AKA Producer -> Consumer line
@@ -330,12 +316,9 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
             }
 
             //Handle last bytes. At this point, this is the last working thread alive, no synchronizing required anymore.
-            //If partially filled upon producer completion, fill up completely
-            while(moltenData.size() >= 0 && nextChunkIndex < BYTE_CHUNK_SIZE){
-                moltenByteChunk[nextChunkIndex] = moltenData.remove().byteValue();
-            }
-            if(nextChunkIndex == BYTE_CHUNK_SIZE){
-                try{resultFile.write(moltenByteChunk);}
+            //If partially filled then write partial bytes
+            if(nextChunkIndex > 0){
+                try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
                 catch(Exception err){err.printStackTrace();}
             }
 
@@ -348,7 +331,11 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
 
             //Write last partial byte chunk (if it exists)
             shortByteChunk = new byte[moltenData.size()];
-            for(int i=0; i<moltenData.size(); ++i){shortByteChunk[i] = moltenData.remove().byteValue();}
+            nextChunkIndex=0;
+            while(!moltenData.isEmpty()){
+                shortByteChunk[nextChunkIndex] = moltenData.remove().byteValue();
+                ++nextChunkIndex;
+            }
             try{
                 resultFile.write(shortByteChunk);
                 resultFile.close();

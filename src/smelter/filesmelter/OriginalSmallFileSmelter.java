@@ -299,18 +299,14 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
      * The relative path is based on the location of current working directory.
      * @param relativePathName The path of the file for default write operations.
      */
-    public void setTargetFile(String relativePathName){
-        targetFile = Path.of(relativePathName);
-    }
+    public void setTargetFile(String relativePathName){targetFile = Path.of(relativePathName);}
 
     /**
      * Sets the absolute path and name to target file.
      * The relative path is based on the location of current working directory.
      * @param absolutePathName The path of the file for default write operations.
      */
-    public void setAbsoluteTargetFile(String absolutePathName){
-        targetFile = Paths.get(absolutePathName);
-    }
+    public void setAbsoluteTargetFile(String absolutePathName){targetFile = Paths.get(absolutePathName);}
 
     /**
      * Sets the absolute path from a relative name respective to current working directory.
