@@ -135,12 +135,19 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
         t2.start();
         t3.start();
         t4.start();
+
+        try{
+            t1.join();
+            t2.join();
+            t3.join();
+            t4.join();
+        }catch(Exception err){}
     }
 
     //Assembly line interfaces (5 resources, 4 threads) AKA Producer -> Consumer line
     //This class is dedicated to functions writeDataToNewFile() for threaded work.
     private abstract class TempAssemblyWorker{
-        protected boolean isFinished;
+        protected volatile boolean isFinished;
         private TempAssemblyWorker(){isFinished=false;}
     }
 
