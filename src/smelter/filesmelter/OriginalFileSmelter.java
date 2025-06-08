@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 6 JUN 2025
+ * @since 8 JUN 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -138,7 +138,7 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
             t2.join();
             t3.join();
             t4.join();
-        }catch(Exception err){}
+        }catch(Exception err){err.printStackTrace();}
     }
 
     //Assembly line interfaces (5 resources, 4 threads) AKA Producer -> Consumer line
