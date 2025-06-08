@@ -47,9 +47,9 @@ The structure and names may change to ensure a clean base design
 |-------------------|---------------------------------------------------------|----------------|---------------------------------------------------|
 | **Miner**         | Receives OHLC sticks from polygon.io                    | Working     | Handles real-time stick data ingestion            |
 | **FileSmelter**   | Reads/writes super-compressed binary files              | Working     | Supports both read and write operations           |
-| **Smelter**       | Data transformation/aggregation                         | In Progress | Basic file smelting implemented                   |
+| **Smelter**       | Data transformation/aggregation                         | Working     | 2 File smelting implementations. Slow non-threaded, faster threaded.                  |
 | **Crafters**      | Data processing and pattern generation                  | Not Started | Planned                                          |
-| **Warehouses**    | Database/file storage                                   | Not Started | Planned (SQL, NoSQL, File System)                 |
+| **Warehouses**    | Database/file storage                                   | Not Started | Planned (SQL, NoSQL, File System) Will start after documentation of file smelters                |
 | **StoreFronts**   | Web/App interfaces                                      | Not Started | Planned (Website, App)                            |
 | **Products**      | Summaries, files (CSV, JSON, XML/HTML), GUI images      | Not Started | Planned                                          |
 
