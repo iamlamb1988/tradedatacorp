@@ -71,24 +71,102 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     private static final byte[] bitsNeededForTenPow;
     private static final byte[] bitsNeededForMaxFraction;
 
-    //Binary Header Index
-    public static final byte H1_COUNT = 11; //Number of H1 Fields
-    public static final byte H2_COUNT = 3;  //Number of H2 Fields
+    /**
+     * The number of fixed-length header fields (H1). The first 11 fields of the binary header are always present and have a known bit length.
+     */
+    public static final byte H1_COUNT = 11;
 
+    /**
+     * The number of variable-length header fields (H2). The last 3 fields of the binary header depend on values set by H1 fields.
+     * For details on each field and its dependencies, see the class-level Javadoc header tables.
+     */
+    public static final byte H2_COUNT = 3;
+
+    /**
+     * The index in the header array for the {@code h1_byid} field (H1[0] or H[0]).
+     * Used for referencing the 'By ID' field in the binary header structure.
+     */
     public static final byte H_INDEX_BYID = 0;
+
+    /**
+     * The index in the header array for the {@code h1_int} field (H1[1] or H[1]).
+     * Used for referencing the 'Interval' (timeframe in seconds) field in the binary header structure.
+     */
     public static final byte H_INDEX_INT = 1;
+
+    /**
+     * The index in the header array for the {@code h1_ct_len} field (H1[2] or H[2]).
+     * Used for referencing the 'Data Count Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_CT_LEN = 2;
+
+    /**
+     * The index in the header array for the {@code h1_data_len} field (H1[3] or H[3]).
+     * Used for referencing the 'Data Point Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_DATA_LEN = 3;
+
+    /**
+     * The index in the header array for the {@code h1_h_gap_len} field (H1[4] or H[4]).
+     * Used for referencing the 'Header Gap Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_H_GAP_LEN = 4;
+
+    /**
+     * The index in the header array for the {@code h1_utc_len} field (H1[5] or H[5]).
+     * Used for referencing the 'UTC Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_UTC_LEN = 5;
+
+    /**
+     * The index in the header array for the {@code h1_pw_len} field (H1[6] or H[6]).
+     * Used for referencing the 'Price Whole Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_PW_LEN = 6;
+
+    /**
+     * The index in the header array for the {@code h1_pf_len} field (H1[7] or H[7]).
+     * Used for referencing the 'Price Fraction Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_PF_LEN = 7;
+
+    /**
+     * The index in the header array for the {@code h1_vw_len} field (H1[8] or H[8]).
+     * Used for referencing the 'Volume Whole Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_VW_LEN = 8;
+
+    /**
+     * The index in the header array for the {@code h1_vf_len} field (H1[9] or H[9]).
+     * Used for referencing the 'Volume Fraction Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_VF_LEN = 9;
+
+    /**
+     * The index in the header array for the {@code h1_sym_len} field (H1[10] or H[10]).
+     * Used for referencing the 'Symbol Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_SYM_LEN = 10;
+
+    /**
+     * The index in the header array for the {@code h2_sym} field (H2[0] or H[11]).
+     * Used for referencing the 'Symbol Value' field in the binary header structure.
+     */
     public static final byte H_INDEX_SYM = 11;
+
+    /**
+     * The index in the header array for the {@code h2_data_ct} field (H2[1] or H[12]).
+     * Used for referencing the 'Data Count Value' field in the binary header structure.
+     */
     public static final byte H_INDEX_DATA_CT = 12;
+
+    /**
+     * The index in the header array for the {@code h2_h_gap} field (H2[2] or H[13]).
+     * Used for referencing the 'Header Gap Value' field in the binary header structure.
+     * Note: The values is not used, only the length is for bit alignment.
+     */
     public static final byte H_INDEX_H_GAP = 13;
+
 
     // Binary Fixed field bit lengths
     public static final byte H1_BYID_LEN = 1;
