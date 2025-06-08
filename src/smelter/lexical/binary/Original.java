@@ -167,18 +167,80 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
      */
     public static final byte H_INDEX_H_GAP = 13;
 
-
-    // Binary Fixed field bit lengths
+    /**
+     * Bit length of the {@code h1_byid} header field.
+     * This is a free-form bit and is not utilized in the data encoding or decoding process.
+     * Value: 1 bit.
+     */
     public static final byte H1_BYID_LEN = 1;
+    /**
+     * Bit length of the {@code h1_int} header field.
+     * Represents the number of seconds in the time frame interval for the data.
+     * Value: 25 bits.
+     */
     public static final byte H1_INT_LEN = 25;
-    public static final byte H1_CT_LEN_LEN = 5; //Clarity max number of bits 2^5 -1, 31 h2_ct max = 2^32 -1 
+
+    /**
+     * Bit length of the {@code h1_ct_len} header field.
+     * Specifies the number of bits used to encode the data count field ({@code h2_data_ct}).
+     * Value: 5 bits. The maximum number of bits is 2^5 - 1 = 31, so the maximum {@code h2_data_ct} value is 2^32 - 1.
+     */
+    public static final byte H1_CT_LEN_LEN = 5;
+
+    /**
+     * Bit length of the {@code h1_data_len} header field.
+     * Indicates the number of bits required to represent a single data point in the binary encoding.
+     * Value: 9 bits.
+     */
     public static final byte H1_DATA_LEN_LEN = 9;
+
+    /**
+     * Bit length of the {@code h1_h_gap_len} header field.
+     * Specifies the number of bits used for the header gap, which is for bit alignment between the header and data sections.
+     * Value: 3 bits.
+     */
     public static final byte H1_H_GAP_LEN_LEN = 3;
+
+    /**
+     * Bit length of the {@code h1_utc_len} header field.
+     * Specifies the number of bits used to represent the UTC timestamp for each data point.
+     * Value: 6 bits. The maximum number of bits is 2^3 - 1 = 7.
+     */
     public static final byte H1_UTC_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_pw_len} header field.
+     * Specifies the number of bits used for the whole (integer) part of the price attributes (Open, High, Low, Close).
+     * Value: 6 bits.
+     */
     public static final byte H1_PW_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_pf_len} header field.
+     * Specifies the number of bits used for the fractional part of the price attributes (Open, High, Low, Close).
+     * Value: 6 bits.
+     */
     public static final byte H1_PF_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_vw_len} header field.
+     * Specifies the number of bits used for the whole (integer) part of the volume attribute.
+     * Value: 6 bits.
+     */
     public static final byte H1_VW_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_vf_len} header field.
+     * Specifies the number of bits used for the fractional part of the volume attribute.
+     * Value: 6 bits.
+     */
     public static final byte H1_VF_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_sym_len} header field.
+     * Specifies the number of bits used to represent the symbol length, where each character is 8 bits.
+     * Value: 7 bits.
+     */
     public static final byte H1_SYM_LEN_LEN = 7;
 
     static {
