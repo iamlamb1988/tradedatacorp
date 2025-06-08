@@ -160,19 +160,11 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
 
         @Override
         public void run(){
-            System.out.println("DEBUG: T1: Start moving from crucible to hot crucible");
             //simply move ALL elements from global Crucible to HotCrucible. should be a VERY easy task (right?)
             synchronized (crucible){
-                while(!crucible.isEmpty()){
-                    synchronized(hotCrucible){hotCrucible.add(crucible.remove());}
-                    System.out.println(
-                        "DEBUG: T1: Moved elemnt to hot crucible from crucible. crubile size: "+
-                        crucible.size() + "\n hot crucible size: "+hotCrucible.size()
-                    );
-                }
+                while(!crucible.isEmpty()){synchronized(hotCrucible){hotCrucible.add(crucible.remove());}}
             }
             isFinished=true;
-            System.out.println("DEBUG: T1: Finished");
         }
     }
 
@@ -193,7 +185,6 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
 
         @Override
         public void run(){
-            System.out.println("DEBUG: T2: Start moving from hot crucible to bit aligner.");
             boolean[] currentDataStick;
             boolean isHotCrucibleEmpty;
 
@@ -203,12 +194,10 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
                 synchronized(hotCrucible){ currentDataStick = hotCrucible.remove();}
                 for(int i=0; i<currentDataStick.length; ++i){
                     synchronized (bitAligner){bitAligner.add(Boolean.valueOf(currentDataStick[i]));}
-                    System.out.println("DEBUG: T2: Index: "+i+" of "+currentDataStick.length+" Value: "+currentDataStick[i]);
                 }
                 synchronized(hotCrucible){isHotCrucibleEmpty = hotCrucible.isEmpty();}
             }
             isFinished=true;
-            System.out.println("DEBUG: T2: Finished");
         }
     }
 
@@ -230,78 +219,46 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
 
         @Override
         public void run(){
-            System.out.println("DEBUG: T3: Start moving from bit aligner to molten data.");
             boolean doesBitAlignerHave8Bits; //At least 8 bits. This var prevents blocking BitAligner use.
 
             synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
 
             //Full 8-bit character case
-            int DEBUG_Bit_Count = 0;
             while(!producer.isFinished){
                 if(doesBitAlignerHave8Bits){
                     for(int i=0; i<8; ++i){currentByte[i] = bitAligner.remove().booleanValue();}
                     synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
-
-                    //DEBUG SECTION
-                    int DEBUG_byte = Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte));
-                    System.out.println(
-                        "DEBUG: T3 Synchronized BYTE: Index: "+DEBUG_Bit_Count+
-                        " hex word: "+Integer.toHexString((DEBUG_byte >>> 4) & 0xF)+Integer.toHexString(DEBUG_byte & 0xF)
-                    );
-                    ++DEBUG_Bit_Count;
-                    //END DEBUG SECTION
                 }
                 synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
             }
 
-            System.out.println("DEBUG: T3: Signal received, T2 is done. What is left in bit Aligner is all that is left.");
             //No longer need to sync bitAligner, this is the only thread that will use it at this point.
             if(!bitAligner.isEmpty()){
                 //Fill in last full bytes.
                 while(bitAligner.size()>=8){
                     for(int i=0; i<8; ++i){currentByte[i]=bitAligner.remove().booleanValue();}
                     synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
-                    //DEBUG SECTION
-                    int DEBUG_byte = Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte));
-                    System.out.println(
-                        "DEBUG: T3 Unsynchronized BYTE: Index: "+DEBUG_Bit_Count+
-                        " hex word: "+Integer.toHexString((DEBUG_byte >>> 4) & 0xF)+Integer.toHexString(DEBUG_byte & 0xF)
-                    );
-                    ++DEBUG_Bit_Count;
-                    //END DEBUG SECTION
                 }
 
                 //Fill in last incomplete byte if any
                 if(!bitAligner.isEmpty()){
-                    System.out.println("DEBUG: T3: Filling in last and final incomplete molten byte.");
                     int i=0;
                     while(bitAligner.size()>0){
                         currentByte[i] = bitAligner.remove().booleanValue();
                         ++i;
                     }
-                    System.out.println("DEBUG: T3: Last "+i+" bit(s) filled");
 
                     //Pad remaining 0s to the right
-                    System.out.println("DEBUG: T3: Padding "+(8-i)+" bit(s) with 0's to complete the byte.");
                     while(i<8){
                         currentByte[i] = false;
                         ++i;
                     }
 
                     synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
-                    //DEBUG SECTION
-                    int DEBUG_byte = Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte));
-                    System.out.println(
-                        "DEBUG: T3 FINAL BYTE: Index: "+DEBUG_Bit_Count+
-                        " hex word: "+Integer.toHexString((DEBUG_byte >>> 4) & 0xF)+Integer.toHexString(DEBUG_byte & 0xF)
-                    );
-                    ++DEBUG_Bit_Count;
-                    //END DEBUG SECTION
                 }
             }
 
             isFinished = true;
-            System.out.println("DEBUG: T3: Finished");
         }
     }
 
@@ -329,7 +286,6 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
         // Potential timeout to write incomplete chunks? Nagels algorithm?
         @Override
         public void run(){
-            System.out.println("DEBUG: T4: Start moving from molten data to result file.");
             Instant timeStart = Instant.now();
             byte[] shortByteChunk;
             boolean isShort = true; //Is the current state of moltenByteChunk incomplete?
@@ -355,7 +311,6 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
                         }
                         try{resultFile.write(shortByteChunk);}
                         catch(Exception err){err.printStackTrace();}
-                        System.out.println("DEBUG: T4: Timeout, writing partial chunk to file.");
                         timeStart = Instant.now();
                         isShort = false;
                         nextChunkIndex = 0;
@@ -363,7 +318,6 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
                 }else{
                     try{resultFile.write(moltenByteChunk);}
                     catch(Exception err){err.printStackTrace();}
-                    System.out.println("DEBUG: T4: Writing Full chunk to file.");
                     timeStart = Instant.now();
                     isShort = false;
                     nextChunkIndex = 0;
@@ -372,11 +326,9 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
 
             //Handle last bytes. At this point, this is the last working thread alive, no synchronizing required anymore.
             //If partially filled then write partial bytes
-            System.out.println("DEBUG: T4: Signaled that T3 is complete.");
             if(nextChunkIndex > 0){
                 try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
                 catch(Exception err){err.printStackTrace();}
-                System.out.println("DEBUG: T4: Writing partial chunk due to signal completion of consuming.");
             }
 
             //Write as many full remaining byte chunks as possible
@@ -384,7 +336,6 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
                 for(int i=0; i<BYTE_CHUNK_SIZE; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
                 try{resultFile.write(moltenByteChunk);}
                 catch(Exception err){err.printStackTrace();}
-                System.out.println("DEBUG: T4: Writing ending Full chunk(s) to file.");
             }
 
             //Write last partial byte chunk (if it exists)
@@ -397,11 +348,9 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
             try{
                 resultFile.write(shortByteChunk);
                 resultFile.close();
-                System.out.println("DEBUG: T4: Writing last byte to file and closing file.");
             }
             catch(Exception err){err.printStackTrace();}
             isFinished = true;
-            System.out.println("DEBUG: T4: Finished");
         }
     }
 }
