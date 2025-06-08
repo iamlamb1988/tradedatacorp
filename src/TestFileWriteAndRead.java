@@ -35,22 +35,22 @@ public class TestFileWriteAndRead{
         smelterUnthreaded.smelt();
         smelter.smelt();
 
-        // OriginalFileUnsmelter unsmelter = new OriginalFileUnsmelter();
-        // System.out.println("Reading file now");
-        // Collection<StickDouble> stickList = unsmelter.unsmelt(binFileName1);
-        // unsmelter.unsmelt(binFileName1);
-        // System.out.println("Echoing results now.");
-        // int count=0;
-        // for(StickDouble stick : stickList){
-        //     System.out.println(
-        //         "Stick["+count+"] UTC="+stick.getUTC() +
-        //         " O="+stick.getO() +
-        //         " H="+stick.getH() +
-        //         " L="+stick.getL() +
-        //         " C="+stick.getC() +
-        //         " V="+stick.getV()
-        //     );
-        //     ++count;
-        // }
+        OriginalFileUnsmelter unsmelter = new OriginalFileUnsmelter();
+        System.out.println("Reading file now");
+        Collection<StickDouble> stickList = unsmelter.unsmelt(binFileName1);
+        unsmelter.unsmelt(binFileName1);
+        System.out.println("Echoing results now.");
+        int count=0;
+        for(StickDouble stick : stickList){
+            System.out.println(
+                "Stick["+count+"] UTC="+stick.getUTC() +
+                " O="+stick.getO() +
+                " H="+stick.getH() +
+                " L="+stick.getL() +
+                " C="+stick.getC() +
+                " V="+stick.getV()
+            );
+            ++count;
+        }
     }
 }

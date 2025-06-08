@@ -203,7 +203,7 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
                 synchronized(hotCrucible){ currentDataStick = hotCrucible.remove();}
                 for(int i=0; i<currentDataStick.length; ++i){
                     synchronized (bitAligner){bitAligner.add(Boolean.valueOf(currentDataStick[i]));}
-                    System.out.println("DEBUG: T2: Added bit "+i+" of "+currentDataStick.length+" to bit aligner queue.");
+                    System.out.println("DEBUG: T2: Index: "+i+" of "+currentDataStick.length+" Value: "+currentDataStick[i]);
                 }
                 synchronized(hotCrucible){isHotCrucibleEmpty = hotCrucible.isEmpty();}
             }
@@ -231,30 +231,27 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
         @Override
         public void run(){
             System.out.println("DEBUG: T3: Start moving from bit aligner to molten data.");
-            boolean doesBitAlignerHave8Bits; //At least 8 bits
+            boolean doesBitAlignerHave8Bits; //At least 8 bits. This var prevents blocking BitAligner use.
 
             synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
 
             //Full 8-bit character case
             int DEBUG_Bit_Count = 0;
             while(!producer.isFinished){
-                synchronized(bitAligner){
-                    if(doesBitAlignerHave8Bits) for(int i=0; i<8; ++i){currentByte[i] = bitAligner.remove().booleanValue();}
-
+                if(doesBitAlignerHave8Bits){
+                    for(int i=0; i<8; ++i){currentByte[i] = bitAligner.remove().booleanValue();}
                     synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
+
                     //DEBUG SECTION
                     int DEBUG_byte = Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte));
                     System.out.println(
-                        "DEBUG: T3: Index: "+DEBUG_Bit_Count+
-                        " byte: "+DEBUG_byte+
-                        " MSW: "+((DEBUG_byte >>> 4) & 0xF)+
-                        " LSW: "+(DEBUG_byte & 0xF)
+                        "DEBUG: T3 Synchronized BYTE: Index: "+DEBUG_Bit_Count+
+                        " hex word: "+Integer.toHexString((DEBUG_byte >>> 4) & 0xF)+Integer.toHexString(DEBUG_byte & 0xF)
                     );
                     ++DEBUG_Bit_Count;
                     //END DEBUG SECTION
-                    doesBitAlignerHave8Bits = bitAligner.size() >= 8;
-                    
                 }
+                synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
             }
 
             System.out.println("DEBUG: T3: Signal received, T2 is done. What is left in bit Aligner is all that is left.");
@@ -267,10 +264,8 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
                     //DEBUG SECTION
                     int DEBUG_byte = Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte));
                     System.out.println(
-                        "DEBUG: T3 No more Consumer: Index: "+DEBUG_Bit_Count+
-                        " byte: "+DEBUG_byte+
-                        " MSW: "+((DEBUG_byte >>> 4) & 0xF)+
-                        " LSW: "+(DEBUG_byte & 0xF)
+                        "DEBUG: T3 Unsynchronized BYTE: Index: "+DEBUG_Bit_Count+
+                        " hex word: "+Integer.toHexString((DEBUG_byte >>> 4) & 0xF)+Integer.toHexString(DEBUG_byte & 0xF)
                     );
                     ++DEBUG_Bit_Count;
                     //END DEBUG SECTION
@@ -298,9 +293,7 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
                     int DEBUG_byte = Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte));
                     System.out.println(
                         "DEBUG: T3 FINAL BYTE: Index: "+DEBUG_Bit_Count+
-                        " byte: "+DEBUG_byte+
-                        " MSW: "+((DEBUG_byte >>> 4) & 0xF)+
-                        " LSW: "+(DEBUG_byte & 0xF)
+                        " hex word: "+Integer.toHexString((DEBUG_byte >>> 4) & 0xF)+Integer.toHexString(DEBUG_byte & 0xF)
                     );
                     ++DEBUG_Bit_Count;
                     //END DEBUG SECTION
