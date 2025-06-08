@@ -71,36 +71,176 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     private static final byte[] bitsNeededForTenPow;
     private static final byte[] bitsNeededForMaxFraction;
 
-    //Binary Header Index
-    public static final byte H1_COUNT = 11; //Number of H1 Fields
-    public static final byte H2_COUNT = 3;  //Number of H2 Fields
+    /**
+     * The number of fixed-length header fields (H1). The first 11 fields of the binary header are always present and have a known bit length.
+     */
+    public static final byte H1_COUNT = 11;
 
+    /**
+     * The number of variable-length header fields (H2). The last 3 fields of the binary header depend on values set by H1 fields.
+     * For details on each field and its dependencies, see the class-level Javadoc header tables.
+     */
+    public static final byte H2_COUNT = 3;
+
+    /**
+     * The index in the header array for the {@code h1_byid} field (H1[0] or H[0]).
+     * Used for referencing the 'By ID' field in the binary header structure.
+     */
     public static final byte H_INDEX_BYID = 0;
+
+    /**
+     * The index in the header array for the {@code h1_int} field (H1[1] or H[1]).
+     * Used for referencing the 'Interval' (timeframe in seconds) field in the binary header structure.
+     */
     public static final byte H_INDEX_INT = 1;
+
+    /**
+     * The index in the header array for the {@code h1_ct_len} field (H1[2] or H[2]).
+     * Used for referencing the 'Data Count Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_CT_LEN = 2;
+
+    /**
+     * The index in the header array for the {@code h1_data_len} field (H1[3] or H[3]).
+     * Used for referencing the 'Data Point Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_DATA_LEN = 3;
+
+    /**
+     * The index in the header array for the {@code h1_h_gap_len} field (H1[4] or H[4]).
+     * Used for referencing the 'Header Gap Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_H_GAP_LEN = 4;
+
+    /**
+     * The index in the header array for the {@code h1_utc_len} field (H1[5] or H[5]).
+     * Used for referencing the 'UTC Bit Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_UTC_LEN = 5;
+
+    /**
+     * The index in the header array for the {@code h1_pw_len} field (H1[6] or H[6]).
+     * Used for referencing the 'Price Whole Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_PW_LEN = 6;
+
+    /**
+     * The index in the header array for the {@code h1_pf_len} field (H1[7] or H[7]).
+     * Used for referencing the 'Price Fraction Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_PF_LEN = 7;
+
+    /**
+     * The index in the header array for the {@code h1_vw_len} field (H1[8] or H[8]).
+     * Used for referencing the 'Volume Whole Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_VW_LEN = 8;
+
+    /**
+     * The index in the header array for the {@code h1_vf_len} field (H1[9] or H[9]).
+     * Used for referencing the 'Volume Fraction Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_VF_LEN = 9;
+
+    /**
+     * The index in the header array for the {@code h1_sym_len} field (H1[10] or H[10]).
+     * Used for referencing the 'Symbol Length' field in the binary header structure.
+     */
     public static final byte H_INDEX_SYM_LEN = 10;
+
+    /**
+     * The index in the header array for the {@code h2_sym} field (H2[0] or H[11]).
+     * Used for referencing the 'Symbol Value' field in the binary header structure.
+     */
     public static final byte H_INDEX_SYM = 11;
+
+    /**
+     * The index in the header array for the {@code h2_data_ct} field (H2[1] or H[12]).
+     * Used for referencing the 'Data Count Value' field in the binary header structure.
+     */
     public static final byte H_INDEX_DATA_CT = 12;
+
+    /**
+     * The index in the header array for the {@code h2_h_gap} field (H2[2] or H[13]).
+     * Used for referencing the 'Header Gap Value' field in the binary header structure.
+     * Note: The values is not used, only the length is for bit alignment.
+     */
     public static final byte H_INDEX_H_GAP = 13;
 
-    // Binary Fixed field bit lengths
+    /**
+     * Bit length of the {@code h1_byid} header field.
+     * This is a free-form bit and is not utilized in the data encoding or decoding process.
+     * Value: 1 bit.
+     */
     public static final byte H1_BYID_LEN = 1;
+    /**
+     * Bit length of the {@code h1_int} header field.
+     * Represents the number of seconds in the time frame interval for the data.
+     * Value: 25 bits.
+     */
     public static final byte H1_INT_LEN = 25;
-    public static final byte H1_CT_LEN_LEN = 5; //Clarity max number of bits 2^5 -1, 31 h2_ct max = 2^32 -1 
+
+    /**
+     * Bit length of the {@code h1_ct_len} header field.
+     * Specifies the number of bits used to encode the data count field ({@code h2_data_ct}).
+     * Value: 5 bits. The maximum number of bits is 2^5 - 1 = 31, so the maximum {@code h2_data_ct} value is 2^32 - 1.
+     */
+    public static final byte H1_CT_LEN_LEN = 5;
+
+    /**
+     * Bit length of the {@code h1_data_len} header field.
+     * Indicates the number of bits required to represent a single data point in the binary encoding.
+     * Value: 9 bits.
+     */
     public static final byte H1_DATA_LEN_LEN = 9;
+
+    /**
+     * Bit length of the {@code h1_h_gap_len} header field.
+     * Specifies the number of bits used for the header gap, which is for bit alignment between the header and data sections.
+     * Value: 3 bits.
+     */
     public static final byte H1_H_GAP_LEN_LEN = 3;
+
+    /**
+     * Bit length of the {@code h1_utc_len} header field.
+     * Specifies the number of bits used to represent the UTC timestamp for each data point.
+     * Value: 6 bits. The maximum number of bits is 2^3 - 1 = 7.
+     */
     public static final byte H1_UTC_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_pw_len} header field.
+     * Specifies the number of bits used for the whole (integer) part of the price attributes (Open, High, Low, Close).
+     * Value: 6 bits.
+     */
     public static final byte H1_PW_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_pf_len} header field.
+     * Specifies the number of bits used for the fractional part of the price attributes (Open, High, Low, Close).
+     * Value: 6 bits.
+     */
     public static final byte H1_PF_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_vw_len} header field.
+     * Specifies the number of bits used for the whole (integer) part of the volume attribute.
+     * Value: 6 bits.
+     */
     public static final byte H1_VW_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_vf_len} header field.
+     * Specifies the number of bits used for the fractional part of the volume attribute.
+     * Value: 6 bits.
+     */
     public static final byte H1_VF_LEN_LEN = 6;
+
+    /**
+     * Bit length of the {@code h1_sym_len} header field.
+     * Specifies the number of bits used to represent the symbol length, where each character is 8 bits.
+     * Value: 7 bits.
+     */
     public static final byte H1_SYM_LEN_LEN = 7;
 
     static {
@@ -244,6 +384,10 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         bitsNeededForMaxFraction[19] = 63;
     }
 
+    /**
+     * Bit length sum of all H1 fields.
+     * Value: 80 bits.
+     */
     public static final int H1_TOTAL_LEN = 
         H1_BYID_LEN +
         H1_INT_LEN +
@@ -494,6 +638,16 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
 
+    /**
+     * Creates an "Original" instance with maximum (fat) alignment for all bit fields, allowing for the largest possible ranges for value and volume fields.
+     * This will be bloated and not as compressed as possible.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @param numberOfFloatingValueDigits The number of decimal digits for price fields (Open/High/Low/Close).
+     * @param numberOfFloatingVolumeDigits The number of decimal digits for volume field.
+     * @return a new Original instance configured for maximum/fat alignment.
+     */
     public static Original genFatAlignedLexical(String symbol, int interval, byte numberOfFloatingValueDigits, byte numberOfFloatingVolumeDigits){
         byte valueWholeDigits=(byte)(52-numberOfFloatingValueDigits);
         byte volumeWholeDigits=(byte)(52-numberOfFloatingVolumeDigits);
@@ -512,10 +666,26 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Creates an "Original" instance with maximum (fat) alignment using the default maximum (16) decimal digits for both value and volume fields.
+     * This will be bloated and not as compressed as possible.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @return a new Original instance configured for maximum/fat alignment with default decimal precision.
+     */
     public static Original genFatAlignedLexical(String symbol, int interval){
         return genFatAlignedLexical(symbol,interval,(byte)16,(byte)16);
     }
 
+    /**
+     * Creates an "Original" instance with "standard" alignment, suitable for common use cases 
+     * (e.g., 16 bits for data count, 44 bits for UTC, 31/15 bits for OHLC, and 31/15 for volume).
+     *
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @return a new Original instance configured for standard alignment and typical financial data.
+     */
     public static Original genStandardAlignedLexical(String symbol, int interval){
         return new Original(
             false, // boolean T_byid,
@@ -531,6 +701,15 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Creates an "Original" instance with "standard" alignment but allows you to specify the header gap length.
+     * Useful for cases where you need to control byte alignment or padding between header and data.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @param gapLength The bit-length of the header gap (padding).
+     * @return a new Original instance configured for standard alignment with a custom gap.
+     */
     public static Original genStandardLexical(String symbol, int interval, byte gapLength){
         return new Original(
             false,// boolean T_byid,
@@ -546,6 +725,16 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Creates an "Original" instance with minimal bit usage, suitable for very compact data (e.g., only 3 bits for count, 
+     * 4 bits for each field). Good for testing, educational, or very small data sets.
+     * Useful for testing small datasets by hand.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @param gapLength The bit-length of the header gap (padding).
+     * @return a new Original instance configured for minimal/compact bit usage.
+     */
     public static Original genMiniLexical(String symbol, int interval, byte gapLength){
         return new Original(
             false,// boolean T_byid,
@@ -560,6 +749,28 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
             symbol // String T_sym
         );
     }
+
+    /**
+     * Constructs an Original instance by directly providing the binary header fields.
+     * This constructor is intended for cases where the binary header representation is already available,
+     * such as when deserializing or cloning an Original instance.
+     * Not recommended by hand, contradictions will NOT be checked.
+     *
+     * @param H_h1_byid         Binary representation of 'byid' header field.
+     * @param H_h1_int          Binary representation of 'interval' header field.
+     * @param H_h1_ct_len       Binary representation of 'count length' header field.
+     * @param H_h1_data_len     Binary representation of 'data length' header field.
+     * @param H_h1_h_gap_len    Binary representation of 'header gap length' field.
+     * @param H_h1_utc_len      Binary representation of 'UTC length' header field.
+     * @param H_h1_pw_len       Binary representation of 'price whole length' header field.
+     * @param H_h1_pf_len       Binary representation of 'price fraction length' header field.
+     * @param H_h1_vw_len       Binary representation of 'volume whole length' header field.
+     * @param H_h1_vf_len       Binary representation of 'volume fraction length' header field.
+     * @param H_h1_sym_len      Binary representation of 'symbol length' header field.
+     * @param H_h2_sym          Binary representation of 'symbol' (value) header field.
+     * @param H_h2_data_ct      Binary representation of 'data count' header field.
+     * @param H_h2_h_gap        Binary representation of 'header gap' value field.
+     */
     public Original(
         boolean[] H_h1_byid,
         boolean[] H_h1_int,
@@ -594,6 +805,22 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Constructs an Original instance from already-translated (typed) header values.
+     * This constructor is ideal for creating a new binary lexical structure from scratch,
+     * where all header parameters (such as symbol, interval, bit lengths) are known in advance.
+     *
+     * @param T_h1_byid      The boolean value for the 'byid' header field.
+     * @param T_h1_ct_len    The number of bits for the 'count length' header field.
+     * @param T_h1_interval  The interval (in seconds) for each data point.
+     * @param T_h1_HeaderGap The number of bits of header gap for byte alignment.
+     * @param T_h1_utc_len   The number of bits for the UTC timestamp field.
+     * @param T_h1_pw_len    The number of bits for the whole part of price fields.
+     * @param T_h1_pf_len    The number of bits for the fractional part of price fields.
+     * @param T_h1_vw_len    The number of bits for the whole part of the volume field.
+     * @param T_h1_vf_len    The number of bits for the fractional part of the volume field.
+     * @param T_h2_sym       The ticker symbol as a string.
+     */
     public Original(
         boolean T_h1_byid,
         byte T_h1_ct_len,
@@ -620,9 +847,6 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
-    public Original(byte[] compressedHeader){
-        
-    }
     // BinaryLexical Overrides
     /**
      * Returns a deep copy of the current state of binary header.

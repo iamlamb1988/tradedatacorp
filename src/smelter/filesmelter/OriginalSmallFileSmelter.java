@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 19 APR 2025
+ * @since 06 JUN 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -202,7 +202,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
         ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
         ArrayDeque<Byte> moltenData; //bytes ready to be written
         boolean[] header;
-        boolean[] currentDataStick; //tmp variable to sqeeze into a byte.
+        boolean[] currentDataStick; //tmp variable to squeeze into a byte.
         boolean[] currentByte = new boolean[8]; // tmp variable, current byte being "smelted".
         byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
 
@@ -268,7 +268,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
             moltenByteChunk = new byte[moltenData.size()];
             for(int i=0; moltenData.size()>0; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
             try{resultFile.write(moltenByteChunk);}
-            catch(Exception err){ err.printStackTrace();}
+            catch(Exception err){err.printStackTrace();}
         }
 
         //7.3 Write last incomplete byte to file with appropriate left shift (extra bits will be)
@@ -299,18 +299,14 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
      * The relative path is based on the location of current working directory.
      * @param relativePathName The path of the file for default write operations.
      */
-    public void setTargetFile(String relativePathName){
-        targetFile = Path.of(relativePathName);
-    }
+    public void setTargetFile(String relativePathName){targetFile = Path.of(relativePathName);}
 
     /**
      * Sets the absolute path and name to target file.
      * The relative path is based on the location of current working directory.
      * @param absolutePathName The path of the file for default write operations.
      */
-    public void setAbsoluteTargetFile(String absolutePathName){
-        targetFile = Paths.get(absolutePathName);
-    }
+    public void setAbsoluteTargetFile(String absolutePathName){targetFile = Paths.get(absolutePathName);}
 
     /**
      * Sets the absolute path from a relative name respective to current working directory.
