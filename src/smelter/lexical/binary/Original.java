@@ -384,6 +384,10 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         bitsNeededForMaxFraction[19] = 63;
     }
 
+    /**
+     * Bit length sum of all H1 fields.
+     * Value: 80 bits.
+     */
     public static final int H1_TOTAL_LEN = 
         H1_BYID_LEN +
         H1_INT_LEN +
@@ -634,6 +638,16 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         h_total_len = H1_TOTAL_LEN + h2_total_len;
     }
 
+    /**
+     * Creates an "Original" instance with maximum (fat) alignment for all bit fields, allowing for the largest possible ranges for value and volume fields.
+     * This will be bloated and not as compressed as possible.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @param numberOfFloatingValueDigits The number of decimal digits for price fields (Open/High/Low/Close).
+     * @param numberOfFloatingVolumeDigits The number of decimal digits for volume field.
+     * @return a new Original instance configured for maximum/fat alignment.
+     */
     public static Original genFatAlignedLexical(String symbol, int interval, byte numberOfFloatingValueDigits, byte numberOfFloatingVolumeDigits){
         byte valueWholeDigits=(byte)(52-numberOfFloatingValueDigits);
         byte volumeWholeDigits=(byte)(52-numberOfFloatingVolumeDigits);
@@ -652,10 +666,26 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Creates an "Original" instance with maximum (fat) alignment using the default maximum (16) decimal digits for both value and volume fields.
+     * This will be bloated and not as compressed as possible.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @return a new Original instance configured for maximum/fat alignment with default decimal precision.
+     */
     public static Original genFatAlignedLexical(String symbol, int interval){
         return genFatAlignedLexical(symbol,interval,(byte)16,(byte)16);
     }
 
+    /**
+     * Creates an "Original" instance with "standard" alignment, suitable for common use cases 
+     * (e.g., 16 bits for data count, 44 bits for UTC, 31/15 bits for OHLC, and 31/15 for volume).
+     *
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @return a new Original instance configured for standard alignment and typical financial data.
+     */
     public static Original genStandardAlignedLexical(String symbol, int interval){
         return new Original(
             false, // boolean T_byid,
@@ -671,6 +701,15 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Creates an "Original" instance with "standard" alignment but allows you to specify the header gap length.
+     * Useful for cases where you need to control byte alignment or padding between header and data.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @param gapLength The bit-length of the header gap (padding).
+     * @return a new Original instance configured for standard alignment with a custom gap.
+     */
     public static Original genStandardLexical(String symbol, int interval, byte gapLength){
         return new Original(
             false,// boolean T_byid,
@@ -686,6 +725,16 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Creates an "Original" instance with minimal bit usage, suitable for very compact data (e.g., only 3 bits for count, 
+     * 4 bits for each field). Good for testing, educational, or very small data sets.
+     * Useful for testing small datasets by hand.
+     * 
+     * @param symbol The ticker symbol this lexical will represent.
+     * @param interval The interval (in seconds) for each data point.
+     * @param gapLength The bit-length of the header gap (padding).
+     * @return a new Original instance configured for minimal/compact bit usage.
+     */
     public static Original genMiniLexical(String symbol, int interval, byte gapLength){
         return new Original(
             false,// boolean T_byid,
@@ -700,6 +749,28 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
             symbol // String T_sym
         );
     }
+
+    /**
+     * Constructs an Original instance by directly providing the binary header fields.
+     * This constructor is intended for cases where the binary header representation is already available,
+     * such as when deserializing or cloning an Original instance.
+     * Not recommended by hand, contradictions will NOT be checked.
+     *
+     * @param H_h1_byid         Binary representation of 'byid' header field.
+     * @param H_h1_int          Binary representation of 'interval' header field.
+     * @param H_h1_ct_len       Binary representation of 'count length' header field.
+     * @param H_h1_data_len     Binary representation of 'data length' header field.
+     * @param H_h1_h_gap_len    Binary representation of 'header gap length' field.
+     * @param H_h1_utc_len      Binary representation of 'UTC length' header field.
+     * @param H_h1_pw_len       Binary representation of 'price whole length' header field.
+     * @param H_h1_pf_len       Binary representation of 'price fraction length' header field.
+     * @param H_h1_vw_len       Binary representation of 'volume whole length' header field.
+     * @param H_h1_vf_len       Binary representation of 'volume fraction length' header field.
+     * @param H_h1_sym_len      Binary representation of 'symbol length' header field.
+     * @param H_h2_sym          Binary representation of 'symbol' (value) header field.
+     * @param H_h2_data_ct      Binary representation of 'data count' header field.
+     * @param H_h2_h_gap        Binary representation of 'header gap' value field.
+     */
     public Original(
         boolean[] H_h1_byid,
         boolean[] H_h1_int,
@@ -734,6 +805,22 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
+    /**
+     * Constructs an Original instance from already-translated (typed) header values.
+     * This constructor is ideal for creating a new binary lexical structure from scratch,
+     * where all header parameters (such as symbol, interval, bit lengths) are known in advance.
+     *
+     * @param T_h1_byid      The boolean value for the 'byid' header field.
+     * @param T_h1_ct_len    The number of bits for the 'count length' header field.
+     * @param T_h1_interval  The interval (in seconds) for each data point.
+     * @param T_h1_HeaderGap The number of bits of header gap for byte alignment.
+     * @param T_h1_utc_len   The number of bits for the UTC timestamp field.
+     * @param T_h1_pw_len    The number of bits for the whole part of price fields.
+     * @param T_h1_pf_len    The number of bits for the fractional part of price fields.
+     * @param T_h1_vw_len    The number of bits for the whole part of the volume field.
+     * @param T_h1_vf_len    The number of bits for the fractional part of the volume field.
+     * @param T_h2_sym       The ticker symbol as a string.
+     */
     public Original(
         boolean T_h1_byid,
         byte T_h1_ct_len,
@@ -760,9 +847,6 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         );
     }
 
-    public Original(byte[] compressedHeader){
-        
-    }
     // BinaryLexical Overrides
     /**
      * Returns a deep copy of the current state of binary header.
