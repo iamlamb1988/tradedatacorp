@@ -100,7 +100,7 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
             //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
             synchronized(dataQueue){
                 hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
-                binaryTranslator.setDataCount(hotCrucible.size());
+                binaryTranslator.setDataCount(dataQueue.size());
                 header = binaryTranslator.getBinaryHeaderFlat();
                 moltenData = new ArrayDeque<Byte>(((dataQueue.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
             }
