@@ -1,6 +1,7 @@
 <project name="tradedatacorp">
 	<property name="source" location="src" relative="true" />
 	<property name="unittest" location="test" relative="true" />
+	<property name="testresources" location="resources" relative="true" />
 	<property name="bin" location="bin" relative="true" />
 	<property name="jarsource" location="." relative="true" />
 	<property name="docsource" location="docs" relative="true" />
@@ -30,6 +31,13 @@
 		</javac>
 	</target>
 
+	<target name="copy-test-resources">
+		<mkdir dir="${bin}/${ant.project.name}/${unittest}/${testresources}"/>
+		<copy todir="${bin}/${ant.project.name}/${unittest}/${testresources}">
+			<fileset dir="${unittest}/${testresources}"/>
+		</copy>
+	</target>
+
 	<target name="gendocs">
 		<delete dir="${docsource}" />
 		<mkdir dir="${docsource}" />
@@ -48,11 +56,11 @@
 		<jar destfile="tradedatacore-V0-M.jar" basedir="bin/" />
 	</target>
 
-	<target name="craftunittest" depends="compileunittest">
+	<target name="craftunittest" depends="compileunittest, copy-test-resources">
 		<jar destfile="tradedatacore-unittest-V0-M.jar" basedir="bin/" />
 	</target>
 
-	<target name="exetest" depends="compileunittest">
+	<target name="exetest" depends="compileunittest, copy-test-resources">
 		<java jar="junit-platform-console-standalone-1.11.4.jar" fork="true">
 			<arg value="execute" />
 			<arg value="-cp"/>
