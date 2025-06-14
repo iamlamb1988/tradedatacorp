@@ -24,14 +24,12 @@ public class TestResourceFetcher{
             char firstChar = filePathName.charAt(0);
             if(firstChar != '/') filePathName = RELATIVE_FULL_PATH + filePathName;
         }
-        System.out.println("DEBUG: FileName: "+filePathName);
         StringBuilder sb = new StringBuilder();
         try{
             InputStream is = classLoader.getResourceAsStream(filePathName);
             if(is == null) throw new Exception("File path: "+filePathName+" is null.");
             InputStreamReader reader = new InputStreamReader(is);
             while(reader.ready()){
-                System.out.println("DEBUG: Read 1 char");
                 sb.append((char)reader.read());
             }
             reader.close();

@@ -41,7 +41,19 @@ public class JSON_Parser2Test{
         @Test
         public void basictest1Test(){
             String basictest1 = jsonFileFetcher.getTextFileContents("tools/jsonparser/basictest1.json");
-            System.out.println("DEBUG basictest1.json contents: "+basictest1+"\nEND DEBUG");
+            JSON_Object obj = JSON_Parser.parse(basictest1);
+
+            assertEquals(3,obj.getKeyCount());
+            String key1 = "name";
+            String key2 = "isCool";
+            String key3 = "stuff";
+
+            JSON_String val1 = (JSON_String)obj.getJSON_Attribute(key1);
+            JSON_Boolean val2 = (JSON_Boolean)obj.getJSON_Attribute(key2);
+            JSON_Array val3 = (JSON_Array)obj.getJSON_Attribute(key3);
+
+            assertEquals("test",val1.getStringValue());
+            assertEquals(true,val2.getBooleanValue());
         }
     }
 }
