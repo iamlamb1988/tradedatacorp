@@ -54,6 +54,16 @@ public class JSON_Parser2Test{
 
             assertEquals("test",val1.getStringValue());
             assertEquals(true,val2.getBooleanValue());
+
+            assertEquals(3,val3.getItemCount());
+
+            JSON_Integer child0 = (JSON_Integer)val3.getItem(0);
+            JSON_Decimal child1 = (JSON_Decimal)val3.getItem(1);
+            JSON_String child2 = (JSON_String)val3.getItem(2);
+
+            assertEquals(1,child0.getIntegerValue());
+            assertEquals(2.718,child1.getDecimalValue());
+            assertEquals("3.14",child2.getStringValue());
         }
     }
 }
