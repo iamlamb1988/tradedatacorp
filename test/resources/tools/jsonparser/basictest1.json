@@ -1,0 +1,5 @@
+{
+    "name" : "test",
+    "isCool" : true,
+    "stuff" : [1,2.718,"3.14"]
+}

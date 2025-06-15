@@ -413,6 +413,12 @@ public class JSON_ParserTest{
             assertTrue(child2_Bool.getBooleanValue());
             assertEquals(99,child2_Int.getIntegerValue());
         }
+    }
+
+    @Nested
+    @DisplayName("Simple tests, no tricks yet, deeper recursive levels")
+    class BasicDeeperRecursion{
+        final String polygonIOresponse = "{\"ticker\":\"X:BTCUSD\",\"queryCount\":3,\"resultsCount\":3,\"adjusted\":true,\"results\":[{\"v\":12.090991929999998,\"vw\":93418.9561,\"o\":93405.94,\"c\":93383.35,\"h\":93817,\"l\":93350.2,\"t\":1735689480000,\"n\":507},{\"v\":20.81521069999994,\"vw\":93382.3019,\"o\":93385.6,\"c\":93354.22,\"h\":93798,\"l\":93324.33,\"t\":1735689540000,\"n\":713},{\"v\":1.9909046399999997,\"vw\":93746.3183,\"o\":93758,\"c\":93781,\"h\":93781,\"l\":93721,\"t\":1735689600000,\"n\":49}],\"status\":\"OK\",\"request_id\":\"496cf875d10fc4df8d4e94150ae54608\",\"count\":3}";
 
         @Test
         public void testPolygonIOresponse(){
@@ -528,4 +534,5 @@ public class JSON_ParserTest{
             assertEquals(49, n.getIntegerValue());
         }
     }
+
 }

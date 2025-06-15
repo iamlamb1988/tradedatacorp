@@ -6,7 +6,7 @@ package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.smelter.lexical.binary.Original;
-import tradedatacorp.smelter.lexical.binary.BinaryTools;
+import tradedatacorp.tools.binarytools.BinaryTools;
 
 import java.io.FileOutputStream;
 import java.nio.file.Paths;

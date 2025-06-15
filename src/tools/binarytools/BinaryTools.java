@@ -2,7 +2,7 @@
  * @author Bruce Lamb
  * @since 14 FEB 2025
  */
-package tradedatacorp.smelter.lexical.binary;
+package tradedatacorp.tools.binarytools;
 
 /**
  * A utility class providing stateless static methods for converting between 
@@ -11,6 +11,9 @@ package tradedatacorp.smelter.lexical.binary;
  * User is fully responsible for ensuring valid arguments are passed into each function.
  */
 public class BinaryTools{
+    /**
+     * The value log10(2) =~ 0.3010. Used as a cached value to quickly calculate number of required digits or bits.
+     */
     public static final double LOG10_BASE2 = Math.log10(2);
 
     /**

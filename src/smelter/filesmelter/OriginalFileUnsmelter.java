@@ -5,7 +5,7 @@
 package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.smelter.lexical.binary.Original;
-import tradedatacorp.smelter.lexical.binary.BinaryTools;
+import tradedatacorp.tools.binarytools.BinaryTools;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
 
