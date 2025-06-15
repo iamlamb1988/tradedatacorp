@@ -127,7 +127,7 @@ int expected_h2_len =
             public void testDefault_ByID(){
             assertEquals("BTCUSD",first_lexical.getSymbol());
                 assertFalse(generatedHeader1[0][0]);
-                assertEquals(0,first_lexical.getByID());
+                assertEquals(0,first_lexical.getFreeFormValue());
             }
 
             @Test

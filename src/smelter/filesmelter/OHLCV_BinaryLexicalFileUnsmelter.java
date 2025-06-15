@@ -59,7 +59,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         //1.3 Create and set each H1 binary array from flattened H1 array
         int flatIndex=0;
-
         for(int i=0; i<binH1.length; ++i){
             binH1[i] = new boolean[OHLCV_BinaryLexical.getHeader1BitLength(i)];
             for(int k=0; k<binH1[i].length; ++flatIndex, ++k){
@@ -73,36 +72,29 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         binH2[2] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_H_GAP_LEN])];
         int h2_len = binH2[0].length + binH2[1].length + binH2[2].length;
 
-        //1.5 Set excess bits in (if any) to be read in
-        boolean[] excessBinArr = new boolean[binArray.length-flatIndex];
-
-        while(flatIndex < binArray.length){ //flatIndex starts at OHLCV_BinaryLexical.H1_COUNT, sets old excess to this point
-            excessBinArr[flatIndex-OHLCV_BinaryLexical.H1_COUNT] = binArray[flatIndex];
-            ++flatIndex;
+        //1.5 Read in next batch of next bytes to include to include all of H2
+        byte excessBits = (byte)(binArray.length - flatIndex);
+        byteCount = h2_len; //temporary bit count (not byte count yet)
+        if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0){
+            byteCount = (byteCount >>> 3);
+            byteArray = new byte[byteCount];
+            binArray = new boolean[byteCount << 3];
+            try{byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
+        }else{
+            byte firstH2Byte = byteArray[byteArray.length - 1];
+            byteCount = (byteCount >>> 3) + 1;
+            byteArray = new byte[byteCount];
+            binArray = new boolean[byteCount << 3];
+            byteArray[0] = firstH2Byte;
+            try {byteCount=binFile.read(byteArray,1,byteCount-1);}catch(Exception err){err.printStackTrace();}
         }
 
-        //1.6 Read in next batch of next bytes to include to include all of H2
-        byteCount = h2_len - excessBinArr.length; //temporary bit count (not byte count yet)
-        if(byteCount%8 == 0) byteCount = (byteCount >>> 3);
-        else byteCount = (byteCount >>> 3) + 1;
-
-        byteArray = new byte[byteCount];
-        binArray = new boolean[byteCount << 3];
-
-        try {byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
-
-        //1.7 Set flattened h2 bin values
-        //1.7.1 Set first Excess bits
-        for(int i=0; i<excessBinArr.length; ++i){binArray[i]=excessBinArr[i];}
-
-        //1.7.2 Set remaining flattened h2 bits
         for(int i=0; i<byteCount; ++i){
-            BinaryTools.setSubsetUnsignedInt((i << 3) + excessBinArr.length,8,byteArray[i],binArray);
+            BinaryTools.setSubsetUnsignedInt(i << 3,8,byteArray[i],binArray);
         }
 
-        //1.8 Set H2 from flattened h2 bits
-        flatIndex=0;
-        for(int i=0; i<binH2.length; ++i){
+        //1.6 Set H2 from flattened h2 bits
+        for(int i=flatIndex=0; i<binH2.length; ++i){
             for(int j=0;j<binH2[i].length; ++j, ++flatIndex){
                 binH2[i][j]=binArray[flatIndex];
             }
