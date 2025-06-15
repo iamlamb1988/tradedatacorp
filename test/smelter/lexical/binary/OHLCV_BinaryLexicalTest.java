@@ -16,13 +16,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import tradedatacorp.tools.binarytools.BinaryTools;
-import tradedatacorp.smelter.lexical.binary.Original;
+import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
-public class OriginalTest{
-    Original first_lexical = Original.genStandardAlignedLexical("BTCUSD",60);
-    Original tiny_lexical = new Original(
+public class OHLCV_BinaryLexicalTest{
+    OHLCV_BinaryLexical first_lexical = OHLCV_BinaryLexical.genStandardAlignedLexical("BTCUSD",60);
+    OHLCV_BinaryLexical tiny_lexical = new OHLCV_BinaryLexical(
         false,
         (byte)1,
         60,
@@ -67,45 +67,45 @@ int expected_h2_len =
             double e = 2.718;
             double num = 13.0061;
             
-            Original.splitWholeFraction(pi,5,val); //Set to check up to 5 decimal places
+            OHLCV_BinaryLexical.splitWholeFraction(pi,5,val); //Set to check up to 5 decimal places
 
             //pi
             assertEquals(3,val[0]);
             assertEquals(14000,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
 
-            Original.splitWholeFractionTrim(pi,5,val); //Set to check up to 5 decimal places
+            OHLCV_BinaryLexical.splitWholeFractionTrim(pi,5,val); //Set to check up to 5 decimal places
             assertEquals(3,val[0]);
             assertEquals(14,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
 
             //pi2
-            Original.splitWholeFraction(pi2,5,val);
+            OHLCV_BinaryLexical.splitWholeFraction(pi2,5,val);
 
             assertEquals(3,val[0]);
             assertEquals(14000,val[1]);
 
-            Original.splitWholeFractionTrim(pi2,5,val);
+            OHLCV_BinaryLexical.splitWholeFractionTrim(pi2,5,val);
 
             assertEquals(3,val[0]);
             assertEquals(14,val[1]);
 
             //e
-            Original.splitWholeFraction(e,5,val);
+            OHLCV_BinaryLexical.splitWholeFraction(e,5,val);
 
             assertEquals(2,val[0]);
             assertEquals(71800,val[1]);
 
-            Original.splitWholeFractionTrim(e,5,val);
+            OHLCV_BinaryLexical.splitWholeFractionTrim(e,5,val);
 
             assertEquals(2,val[0]);
             assertEquals(718,val[1]);
 
             //num
-            Original.splitWholeFraction(num,5,val);
+            OHLCV_BinaryLexical.splitWholeFraction(num,5,val);
 
             assertEquals(13,val[0]);
             assertEquals(610,val[1]);
 
-            Original.splitWholeFractionTrim(num,5,val);
+            OHLCV_BinaryLexical.splitWholeFractionTrim(num,5,val);
 
             assertEquals(13,val[0]);
             assertEquals(61,val[1]);
@@ -199,8 +199,8 @@ int expected_h2_len =
             public void testDefault_SymbolBitLength(){
                 boolean[] bin_h1_sym_len = generatedHeader1[10];
                 assertEquals(6*8,BinaryTools.toUnsignedInt(bin_h1_sym_len)); //BTCUSD has 6 characters
-                assertEquals(7,Original.H1_SYM_LEN_LEN);
-                assertEquals(Original.H1_SYM_LEN_LEN,bin_h1_sym_len.length); //fixed length of 7 bits
+                assertEquals(7,OHLCV_BinaryLexical.H1_SYM_LEN_LEN);
+                assertEquals(OHLCV_BinaryLexical.H1_SYM_LEN_LEN,bin_h1_sym_len.length); //fixed length of 7 bits
             }
 
             @Test

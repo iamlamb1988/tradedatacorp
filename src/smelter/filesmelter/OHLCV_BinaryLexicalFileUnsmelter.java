@@ -4,7 +4,7 @@
  */
 package tradedatacorp.smelter.filesmelter;
 
-import tradedatacorp.smelter.lexical.binary.Original;
+import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.tools.binarytools.BinaryTools;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
@@ -16,21 +16,21 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 /**
- * The purpose of this class is to return a {@link Collection} of {@link StickDouble} objects from a file encoded by an {@code Original} binary Lexical.
+ * The purpose of this class is to return a {@link Collection} of {@link StickDouble} objects from a file encoded by an {@link OHLCV_BinaryLexical} binary Lexical.
  * This is intended for small files and may have perfomance issues with large files.
  * This is the prototype class that will be the basis for handling large files.
  */
-public class OriginalFileUnsmelter{
+public class OHLCV_BinaryLexicalFileUnsmelter{
     private int fileReadByteChunkSize = 64;
 
     /**
-     * Returns a {@link Collection} of {@link StickDouble} objects read in by an encoded file by an {@link Original}.
-     * @param originalBinaryFile The file pathname that will be decoded to construct return value. This file must be in the format provided by {@link Original} instance.
-     * @return a {@link Collection} of {@link StickDouble} objects read in by {@code originalBinaryFile}.
+     * Returns a {@link Collection} of {@link StickDouble} objects read in by an encoded file by an {@link OHLCV_BinaryLexical}.
+     * @param originalBinaryFile The file pathname that will be decoded to construct return value. This file must be in the format provided by {@link OHLCV_BinaryLexical} instance.
+     * @return a {@link Collection} of {@link StickDouble} objects read in by {@code BinaryFile}.
      */
     public Collection<StickDouble> unsmelt(String originalBinaryFile){
-        //1. Open binary file in Original binary format.
-        //1.0 Open binary file in Original binary format.
+        //1. Open binary file.
+        //1.0 Open binary file in OHLCV_BinaryLexical format.
         FileInputStream binFile;
         try{
             binFile = new FileInputStream(originalBinaryFile);
@@ -42,13 +42,13 @@ public class OriginalFileUnsmelter{
 
         //1.1 Read H1 bytes (all static lengths) plus extra.
         int byteCount;
-        if(Original.H1_TOTAL_LEN%8 == 0) byteCount = (Original.H1_TOTAL_LEN >>> 3);
-        else byteCount = (Original.H1_TOTAL_LEN >>> 3) + 1;
+        if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0) byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3);
+        else byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3) + 1;
 
         byte[] byteArray = new byte[byteCount];
         boolean[] binArray = new boolean[byteCount << 3];
-        boolean[][] binH1 = new boolean[Original.H1_COUNT][];
-        boolean[][] binH2 = new boolean[Original.H2_COUNT][];
+        boolean[][] binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
+        boolean[][] binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
 
         try {byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
 
@@ -61,23 +61,23 @@ public class OriginalFileUnsmelter{
         int flatIndex=0;
 
         for(int i=0; i<binH1.length; ++i){
-            binH1[i] = new boolean[Original.getHeader1BitLength(i)];
+            binH1[i] = new boolean[OHLCV_BinaryLexical.getHeader1BitLength(i)];
             for(int k=0; k<binH1[i].length; ++flatIndex, ++k){
                 binH1[i][k] = binArray[flatIndex];
             }
         }
 
         //1.4 Set the lengths of the H2 fields from the translated H1 values.
-        binH2[0] = new boolean[BinaryTools.toUnsignedInt(binH1[Original.H_INDEX_SYM_LEN])];
-        binH2[1] = new boolean[BinaryTools.toUnsignedInt(binH1[Original.H_INDEX_CT_LEN])];
-        binH2[2] = new boolean[BinaryTools.toUnsignedInt(binH1[Original.H_INDEX_H_GAP_LEN])];
+        binH2[0] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_SYM_LEN])];
+        binH2[1] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_CT_LEN])];
+        binH2[2] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_H_GAP_LEN])];
         int h2_len = binH2[0].length + binH2[1].length + binH2[2].length;
 
         //1.5 Set excess bits in (if any) to be read in
         boolean[] excessBinArr = new boolean[binArray.length-flatIndex];
 
-        while(flatIndex < binArray.length){ //flatIndex starts at Original.H1_COUNT, sets old excess to this point
-            excessBinArr[flatIndex-Original.H1_COUNT] = binArray[flatIndex];
+        while(flatIndex < binArray.length){ //flatIndex starts at OHLCV_BinaryLexical.H1_COUNT, sets old excess to this point
+            excessBinArr[flatIndex-OHLCV_BinaryLexical.H1_COUNT] = binArray[flatIndex];
             ++flatIndex;
         }
 
@@ -109,7 +109,7 @@ public class OriginalFileUnsmelter{
         }
 
         //2. Generate working objects to parse all data points.
-        Original lexical = new Original(
+        OHLCV_BinaryLexical lexical = new OHLCV_BinaryLexical(
             binH1[0],
             binH1[1],
             binH1[2],

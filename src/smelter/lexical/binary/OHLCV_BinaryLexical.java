@@ -65,7 +65,7 @@ import java.util.ArrayList;
  * <tr><td>Volume Fractional Value</td><td>t_h1_vf_len</td><td>The unsigned integer that represents the fractional side of the Volume price.</td></tr>
  * </table>
  */
-public class Original implements BinaryLexical<StickDouble>, Cloneable{
+public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneable{
     private static final byte[] H1_LEN;
     private static final long[] tenToPow;
     private static final byte[] maxFractionFrombits;
@@ -640,20 +640,20 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     /**
-     * Creates an "Original" instance with maximum (fat) alignment for all bit fields, allowing for the largest possible ranges for value and volume fields.
+     * Creates an OHLCV_BinaryLexical instance with maximum (fat) alignment for all bit fields, allowing for the largest possible ranges for value and volume fields.
      * This will be bloated and not as compressed as possible.
      * 
      * @param symbol The ticker symbol this lexical will represent.
      * @param interval The interval (in seconds) for each data point.
      * @param numberOfFloatingValueDigits The number of decimal digits for price fields (Open/High/Low/Close).
      * @param numberOfFloatingVolumeDigits The number of decimal digits for volume field.
-     * @return a new Original instance configured for maximum/fat alignment.
+     * @return a new OHLCV_BinaryLexical instance configured for maximum/fat alignment.
      */
-    public static Original genFatAlignedLexical(String symbol, int interval, byte numberOfFloatingValueDigits, byte numberOfFloatingVolumeDigits){
+    public static OHLCV_BinaryLexical genFatAlignedLexical(String symbol, int interval, byte numberOfFloatingValueDigits, byte numberOfFloatingVolumeDigits){
         byte valueWholeDigits=(byte)(52-numberOfFloatingValueDigits);
         byte volumeWholeDigits=(byte)(52-numberOfFloatingVolumeDigits);
 
-        return new Original(
+        return new OHLCV_BinaryLexical(
             false,// boolean T_byid,
             (byte)32,// byte T_h1_ct_len
             interval,// int T_int,
@@ -668,27 +668,27 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     /**
-     * Creates an "Original" instance with maximum (fat) alignment using the default maximum (16) decimal digits for both value and volume fields.
+     * Creates an OHLCV_BinaryLexical instance with maximum (fat) alignment using the default maximum (16) decimal digits for both value and volume fields.
      * This will be bloated and not as compressed as possible.
      * 
      * @param symbol The ticker symbol this lexical will represent.
      * @param interval The interval (in seconds) for each data point.
-     * @return a new Original instance configured for maximum/fat alignment with default decimal precision.
+     * @return a new OHLCV_BinaryLexical instance configured for maximum/fat alignment with default decimal precision.
      */
-    public static Original genFatAlignedLexical(String symbol, int interval){
+    public static OHLCV_BinaryLexical genFatAlignedLexical(String symbol, int interval){
         return genFatAlignedLexical(symbol,interval,(byte)16,(byte)16);
     }
 
     /**
-     * Creates an "Original" instance with "standard" alignment, suitable for common use cases 
+     * Creates an OHLCV_BinaryLexical instance with "standard" alignment, suitable for common use cases 
      * (e.g., 16 bits for data count, 44 bits for UTC, 31/15 bits for OHLC, and 31/15 for volume).
      *
      * @param symbol The ticker symbol this lexical will represent.
      * @param interval The interval (in seconds) for each data point.
-     * @return a new Original instance configured for standard alignment and typical financial data.
+     * @return a new OHLCV_BinaryLexical instance configured for standard alignment and typical financial data.
      */
-    public static Original genStandardAlignedLexical(String symbol, int interval){
-        return new Original(
+    public static OHLCV_BinaryLexical genStandardAlignedLexical(String symbol, int interval){
+        return new OHLCV_BinaryLexical(
             false, // boolean T_byid,
             (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
             interval, // int T_int,
@@ -703,16 +703,16 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     /**
-     * Creates an "Original" instance with "standard" alignment but allows you to specify the header gap length.
+     * Creates an OHLCV_BinaryLexical instance with "standard" alignment but allows you to specify the header gap length.
      * Useful for cases where you need to control byte alignment or padding between header and data.
      * 
      * @param symbol The ticker symbol this lexical will represent.
      * @param interval The interval (in seconds) for each data point.
      * @param gapLength The bit-length of the header gap (padding).
-     * @return a new Original instance configured for standard alignment with a custom gap.
+     * @return a new OHLCV_BinaryLexical instance configured for standard alignment with a custom gap.
      */
-    public static Original genStandardLexical(String symbol, int interval, byte gapLength){
-        return new Original(
+    public static OHLCV_BinaryLexical genStandardLexical(String symbol, int interval, byte gapLength){
+        return new OHLCV_BinaryLexical(
             false,// boolean T_byid,
             (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
             interval,// int T_int,
@@ -727,17 +727,17 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     /**
-     * Creates an "Original" instance with minimal bit usage, suitable for very compact data (e.g., only 3 bits for count, 
+     * Creates an OHLCV_BinaryLexical instance with minimal bit usage, suitable for very compact data (e.g., only 3 bits for count, 
      * 4 bits for each field). Good for testing, educational, or very small data sets.
      * Useful for testing small datasets by hand.
      * 
      * @param symbol The ticker symbol this lexical will represent.
      * @param interval The interval (in seconds) for each data point.
      * @param gapLength The bit-length of the header gap (padding).
-     * @return a new Original instance configured for minimal/compact bit usage.
+     * @return a new OHLCV_BinaryLexical instance configured for minimal/compact bit usage.
      */
-    public static Original genMiniLexical(String symbol, int interval, byte gapLength){
-        return new Original(
+    public static OHLCV_BinaryLexical genMiniLexical(String symbol, int interval, byte gapLength){
+        return new OHLCV_BinaryLexical(
             false,// boolean T_byid,
             (byte)3, //int T_ct_len That is 8 maximum stick data points
             interval,// int T_int,
@@ -752,9 +752,9 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     /**
-     * Constructs an Original instance by directly providing the binary header fields.
+     * Constructs an OHLCV_BinaryLexical instance by directly providing the binary header fields.
      * This constructor is intended for cases where the binary header representation is already available,
-     * such as when deserializing or cloning an Original instance.
+     * such as when deserializing or cloning an OHLCV_BinaryLexical instance.
      * Not recommended by hand, contradictions will NOT be checked.
      *
      * @param H_h1_byid         Binary representation of 'byid' header field.
@@ -772,7 +772,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
      * @param H_h2_data_ct      Binary representation of 'data count' header field.
      * @param H_h2_h_gap        Binary representation of 'header gap' value field.
      */
-    public Original(
+    public OHLCV_BinaryLexical(
         boolean[] H_h1_byid,
         boolean[] H_h1_int,
         boolean[] H_h1_ct_len,
@@ -807,7 +807,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
     }
 
     /**
-     * Constructs an Original instance from already-translated (typed) header values.
+     * Constructs an OHLCV_BinaryLexical instance from already-translated (typed) header values.
      * This constructor is ideal for creating a new binary lexical structure from scratch,
      * where all header parameters (such as symbol, interval, bit lengths) are known in advance.
      *
@@ -822,7 +822,7 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
      * @param T_h1_vf_len    The number of bits for the fractional part of the volume field.
      * @param T_h2_sym       The ticker symbol as a string.
      */
-    public Original(
+    public OHLCV_BinaryLexical(
         boolean T_h1_byid,
         byte T_h1_ct_len,
         int T_h1_interval,
@@ -1175,14 +1175,14 @@ public class Original implements BinaryLexical<StickDouble>, Cloneable{
         return r;
     }
 
-    // Original methods
+    // OHLCV_BinaryLexical methods
     /**
      * @return a deep copy of this lexical.
      */
     @Override
-    public Original clone(){
+    public OHLCV_BinaryLexical clone(){
         synchronized (this){
-            return new Original(
+            return new OHLCV_BinaryLexical(
                 h1_byid,
                 h1_int,
                 h1_ct_len,

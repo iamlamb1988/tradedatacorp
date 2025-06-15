@@ -6,7 +6,7 @@ package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.tools.binarytools.BinaryTools;
-import tradedatacorp.smelter.lexical.binary.Original;
+import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 
 import java.io.FileOutputStream;
 import java.nio.file.Paths;
@@ -15,12 +15,12 @@ import java.util.Collection;
 import java.util.ArrayDeque;
 
 /**
- * This class writes StickDouble types to a compressed binary file that is formated to an Original binaryTranslator.
+ * This class writes StickDouble types to a compressed binary file that is formated to an OHLCV_BinaryLexical binaryTranslator.
  * This class is a functional prototype that will be used as a blueprint to write a fully streamlined thread safe filewriter.
  * NOTE: If binary Lexical changes while data is in the crucible, the crucible data may be corrupt. Will change on full class implementation.
  */
-public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble>{
-    private Original binaryTranslator; //Translates from ? to flattened bin (type boolean[])
+public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<StickDouble>{
+    private OHLCV_BinaryLexical binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
     private int fileWriteByteChunkSize = 64;
@@ -77,7 +77,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
      * Creates an instance of this class from a clone of {@code originalTranslator}
      * @param originalTranslator
      */
-    public OriginalSmallFileSmelter(Original originalTranslator){
+    public OHLCV_BinaryLexicalSmallFileSmelter(OHLCV_BinaryLexical originalTranslator){
         binaryTranslator = originalTranslator.clone();
         targetFile = null;
         crucible = new ArrayDeque<boolean[]>();
@@ -178,7 +178,7 @@ public class OriginalSmallFileSmelter implements FileSmelterStateful<StickDouble
     @Override
     public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
 
-    //OriginalFileSmelter methods
+    //OHLCV_BinaryLexicalFileSmelter methods
     /**
      * The core function that is used to write binary data in {@code dataQueue} to  to {@code file}.
      * @param file The file where the binary data will be written to.
