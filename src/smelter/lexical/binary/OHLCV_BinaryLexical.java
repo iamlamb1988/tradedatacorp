@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * <table>
  * <caption>Header Fields</caption>
  * <tr><th>Field</th><th>Bit Length</th><th>Full Name</th><th>Description</th></tr>
- * <tr><td>h1_byid</td><td>10</td><td>By ID</td><td>Free form bits to be set by the user.</td></tr>
+ * <tr><td>h1_freeform</td><td>10</td><td>Free Form bits</td><td>Free form bits to be set by the user.</td></tr>
  * <tr><td>h1_int</td><td>25</td><td>Time Frame Interval</td><td>The unsigned integer value represents the number of seconds for the time frame.</td></tr>
  * <tr><td>h1_ct_len</td><td>26</td><td>Data Count Bit Length</td><td>The unsigned integer value represents number of bits for field h2_data_ct.</td></tr>
  * <tr><td>h1_data_len</td><td>9</td><td>Data point bit length</td><td>The total number of bits to represent a single stick instance.</td></tr>
@@ -84,10 +84,10 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     public static final byte H2_COUNT = 3;
 
     /**
-     * The index in the header array for the {@code h1_byid} field (H1[0] or H[0]).
-     * Used for referencing the 'By ID' field in the binary header structure.
+     * The index in the header array for the {@code h1_freeform} field (H1[0] or H[0]).
+     * Used for referencing the 'Free Form' field in the binary header structure.
      */
-    public static final byte H_INDEX_BYID = 0;
+    public static final byte H_INDEX_FREE_FORM = 0;
 
     /**
      * The index in the header array for the {@code h1_int} field (H1[1] or H[1]).
@@ -169,11 +169,11 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     public static final byte H_INDEX_H_GAP = 13;
 
     /**
-     * Bit length of the {@code h1_byid} header field.
+     * Bit length of the {@code h1_freeform} header field.
      * This is a free-form bit and is not utilized in the data encoding or decoding process.
      * Value: 10 bits.
      */
-    public static final byte H1_BYID_LEN = 10;
+    public static final byte H1_FREE_FORM_LEN = 10;
 
     /**
      * Bit length of the {@code h1_int} header field.
@@ -252,7 +252,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         bitsNeededForTenPow = new byte[16];
         bitsNeededForMaxFraction = new byte[20];
 
-        H1_LEN[H_INDEX_BYID] = H1_BYID_LEN;           // Index 0
+        H1_LEN[H_INDEX_FREE_FORM] = H1_FREE_FORM_LEN;           // Index 0
         H1_LEN[H_INDEX_INT] = H1_INT_LEN;             // Index 1
         H1_LEN[H_INDEX_CT_LEN] = H1_CT_LEN_LEN;       // Index 2
         H1_LEN[H_INDEX_DATA_LEN] = H1_DATA_LEN_LEN;   // Index 3
@@ -391,7 +391,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      * Value: 89 bits.
      */
     public static final int H1_TOTAL_LEN = 
-        H1_BYID_LEN +
+        H1_FREE_FORM_LEN +
         H1_INT_LEN +
         H1_CT_LEN_LEN +
         H1_DATA_LEN_LEN +
@@ -407,7 +407,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     private boolean[][] header;
 
     //Binary Lexical H1
-    private boolean[] h1_byid;
+    private boolean[] h1_freeform;
     private boolean[] h1_int;
     private boolean[] h1_ct_len;
     private boolean[] h1_data_len;
@@ -426,7 +426,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     private boolean[] h2_h_gap;
 
     //Translated Lexical H1
-    private byte t_h1_byid;
+    private byte t_h1_freeform;
     private int t_h1_int;
     private int t_h1_data_len;
     private int t_h1_ct_len;
@@ -464,7 +464,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     }
 
     private void constructHeaderFromBinaryHeaderFields(
-        boolean[] H_h1_byid,
+        boolean[] H_h1_freeform,
         boolean[] H_h1_int,
         boolean[] H_h1_ct_len,
         boolean[] H_h1_data_len,
@@ -483,8 +483,8 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         header = new boolean[H1_COUNT+H2_COUNT][];
 
         //Header 0
-        h1_byid = header[H_INDEX_BYID] = BinaryTools.genClone(H_h1_byid);
-        t_h1_byid = (byte)BinaryTools.toUnsignedInt(h1_byid);
+        h1_freeform = header[H_INDEX_FREE_FORM] = BinaryTools.genClone(H_h1_freeform);
+        t_h1_freeform = (byte)BinaryTools.toUnsignedInt(h1_freeform);
 
         //Header 1
         h1_int = header[H_INDEX_INT] = BinaryTools.genClone(H_h1_int);
@@ -547,7 +547,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     }
 
     private void constructHeaderFromTranslatedValues(
-        byte T_byid,
+        byte T_freeform,
         int T_int,
         byte T_ct_len,
         byte T_h_gap_len,
@@ -560,10 +560,10 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     ){
         header = new boolean[H1_COUNT+H2_COUNT][];
 
-        //Header 0: by_id
-        t_h1_byid = T_byid;
-        h1_byid = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_byid,H1_BYID_LEN);
-        header[H_INDEX_BYID] = h1_byid;
+        //Header 0: freeform
+        t_h1_freeform = T_freeform;
+        h1_freeform = BinaryTools.genBoolArrayFromUnsignedInt(t_h1_freeform,H1_FREE_FORM_LEN);
+        header[H_INDEX_FREE_FORM] = h1_freeform;
 
         //Header 1: int
         t_h1_int = T_int; //interval will be evaluated to correct integer in the future
@@ -656,7 +656,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         byte volumeWholeDigits=(byte)(52-numberOfFloatingVolumeDigits);
 
         return new OHLCV_BinaryLexical(
-            freeFormValue,// boolean T_byid,
+            freeFormValue,// boolean T_freeform,
             (byte)32,// byte T_h1_ct_len
             interval,// int T_int,
             constructorGapCalculator(symbol,32),// byte T_h_gap_len, T_h1_ct_len
@@ -706,7 +706,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      */
     public static OHLCV_BinaryLexical genStandardAlignedLexical(String symbol, int interval, byte freeFormValue){
         return new OHLCV_BinaryLexical(
-            freeFormValue, // byte T_byid,
+            freeFormValue, // byte T_freeform,
             (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
             interval, // int T_int,
             constructorGapCalculator(symbol,16), // byte T_h_gap_len, T_ct_len
@@ -744,7 +744,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      */
     public static OHLCV_BinaryLexical genStandardLexical(String symbol, int interval, byte freeFormValue, byte gapLength){
         return new OHLCV_BinaryLexical(
-            freeFormValue,// byte T_byid,
+            freeFormValue,// byte T_freeform,
             (byte)16, //int T_ct_len That is 65535 maximum stick data (this is 45 days worth of 1 minute sticks (1440 sticks per day))
             interval,// int T_int,
             gapLength,// byte T_h_gap_len,
@@ -783,7 +783,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      */
     public static OHLCV_BinaryLexical genMiniLexical(String symbol, int interval, byte freeFormValue, byte gapLength){
         return new OHLCV_BinaryLexical(
-            freeFormValue,// boolean T_byid,
+            freeFormValue,// boolean T_freeform,
             (byte)3, //int T_ct_len That is 8 maximum stick data points
             interval,// int T_int,
             gapLength,// byte T_h_gap_len,
@@ -817,7 +817,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      * such as when deserializing or cloning an OHLCV_BinaryLexical instance.
      * Not recommended by hand, contradictions will NOT be checked.
      *
-     * @param H_h1_byid         Binary representation of 'byid' header field.
+     * @param H_h1_freeform         Binary representation of 'free form' header field.
      * @param H_h1_int          Binary representation of 'interval' header field.
      * @param H_h1_ct_len       Binary representation of 'count length' header field.
      * @param H_h1_data_len     Binary representation of 'data length' header field.
@@ -833,7 +833,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      * @param H_h2_h_gap        Binary representation of 'header gap' value field.
      */
     public OHLCV_BinaryLexical(
-        boolean[] H_h1_byid,
+        boolean[] H_h1_freeform,
         boolean[] H_h1_int,
         boolean[] H_h1_ct_len,
         boolean[] H_h1_data_len,
@@ -849,7 +849,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         boolean[] H_h2_h_gap
     ){
         constructHeaderFromBinaryHeaderFields(
-            H_h1_byid,
+            H_h1_freeform,
             H_h1_int,
             H_h1_ct_len,
             H_h1_data_len,
@@ -871,7 +871,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      * This constructor is ideal for creating a new binary lexical structure from scratch,
      * where all header parameters (such as symbol, interval, bit lengths) are known in advance.
      *
-     * @param T_h1_byid      The boolean value for the 'byid' header field.
+     * @param T_h1_freeform      The boolean value for the 'free form' header field.
      * @param T_h1_ct_len    The number of bits for the 'count length' header field.
      * @param T_h1_interval  The interval (in seconds) for each data point.
      * @param T_h1_HeaderGap The number of bits of header gap for byte alignment.
@@ -883,7 +883,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      * @param T_h2_sym       The ticker symbol as a string.
      */
     public OHLCV_BinaryLexical(
-        byte T_h1_byid,
+        byte T_h1_freeform,
         byte T_h1_ct_len,
         int T_h1_interval,
         byte T_h1_HeaderGap,
@@ -895,7 +895,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         String T_h2_sym
     ){
         constructHeaderFromTranslatedValues(
-            T_h1_byid,// boolean T_byid,
+            T_h1_freeform,// boolean T_freeform,
             T_h1_interval,// int T_int,
             T_h1_ct_len, //int T_ct_len
             T_h1_HeaderGap,// byte T_h_gap_len,
@@ -1243,7 +1243,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     public OHLCV_BinaryLexical clone(){
         synchronized (this){
             return new OHLCV_BinaryLexical(
-                h1_byid,
+                h1_freeform,
                 h1_int,
                 h1_ct_len,
                 h1_data_len,
@@ -1269,7 +1269,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
     public boolean[][] genBinaryHeader1(){
         boolean[][] h1=new boolean[11][];
 
-        h1[0] = BinaryTools.genClone(h1_byid); //h1_biid
+        h1[0] = BinaryTools.genClone(h1_freeform); //h1_freeform
         h1[1] = BinaryTools.genClone(h1_int); // h1_int
         h1[2] = BinaryTools.genClone(h1_ct_len); // h1_ct_len
         h1[3] = BinaryTools.genClone(h1_data_len); // h1_data_len
@@ -1478,7 +1478,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
      * Returns the boolean of header index 0. This is a single bit boolean translation.
      * @return translated header index 0 boolean value. 1=true, 0=false.
      */
-    public byte getByID(){return t_h1_byid;} //H0
+    public byte getFreeFormValue(){return t_h1_freeform;} //H0
 
     /**
      * Returns the int of header index 1. This represents the number of milliseconds timeframe for intraday stick data.
