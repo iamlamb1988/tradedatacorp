@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 14 JUN 2025
+ */
 package tradedatacorp.test.java;
 
 import java.io.InputStream;
