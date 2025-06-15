@@ -65,5 +65,27 @@ public class JSON_Parser2Test{
             assertEquals(2.718,child1.getDecimalValue());
             assertEquals("3.14",child2.getStringValue());
         }
+
+        @Test
+        public void deeptest1Test(){
+            String deeptest1 = jsonFileFetcher.getTextFileContents("tools/jsonparser/deeptest1.json");
+            JSON_Object rootObj = JSON_Parser.parse(deeptest1);
+            assertEquals(2,rootObj.getKeyCount());
+
+            JSON_String note = (JSON_String)rootObj.getJSON_Attribute("note");
+            assertEquals("This is the root node",note.getStringValue());
+
+            JSON_Object childObj = (JSON_Object)rootObj.getJSON_Attribute("child");
+            assertEquals(1,childObj.getKeyCount());
+
+            JSON_Object grandChilObj = (JSON_Object)childObj.getJSON_Attribute("grandchild");
+            assertEquals(1,grandChilObj.getKeyCount());
+
+            JSON_Object greatGrandChildObj = (JSON_Object)grandChilObj.getJSON_Attribute("greatgranddhild");
+            assertEquals(1,greatGrandChildObj.getKeyCount());
+
+            note = (JSON_String)greatGrandChildObj.getJSON_Attribute("note");
+            assertEquals("This is the final leaf node.",note.getStringValue());
+        }
     }
 }
