@@ -5,7 +5,7 @@
 package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
-import tradedatacorp.smelter.lexical.binary.Original;
+import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.tools.binarytools.BinaryTools;
 
 import java.io.FileOutputStream;
@@ -16,16 +16,16 @@ import java.util.ArrayDeque;
 import java.time.Instant;
 import java.time.Duration;
 
-//TODO: Planning in progress. This class is responsible for writing a binary file specifically adhering to an Original Lexical.
-public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
-    private Original binaryTranslator; //Translates from ? to flattened bin (type boolean[])
+//TODO: Planning in progress. This class is responsible for writing a binary file specifically adhering to an {@link OHLCV_BinaryLexical}.
+public class OHLCV_BinaryLexicalFileSmelter implements FileSmelterStateful<StickDouble>{
+    private OHLCV_BinaryLexical binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
     private int fileWriteByteChunkSize = 64;
 
     //Constructor
     //TODO
-    public OriginalFileSmelter(Original originalTranslator){
+    public OHLCV_BinaryLexicalFileSmelter(OHLCV_BinaryLexical originalTranslator){
         binaryTranslator = originalTranslator.clone();
         targetFile = null;
         crucible = new ArrayDeque<boolean[]>();
@@ -67,7 +67,7 @@ public class OriginalFileSmelter implements FileSmelterStateful<StickDouble>{
     //FileSmelterStateful Overrides
     public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
 
-    //OriginalFileSmelter methods
+    //OHLCV_BinaryLexicalFileSmelter methods
     public void setTargetFile(String relativePathName){targetFile = Path.of(relativePathName);}
     public void setAbsoluteTargetFile(String absolutePathName){targetFile = Paths.get(absolutePathName);}
 
