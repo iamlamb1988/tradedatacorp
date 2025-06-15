@@ -2,7 +2,7 @@
  * @author Bruce Lamb
  * @since 14 FEB 2025
  */
-package tradedatacorp.smelter.lexical.binary;
+package tradedatacorp.tools.binarytools;
 
 /**
  * A utility class providing stateless static methods for converting between 

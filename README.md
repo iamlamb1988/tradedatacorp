@@ -7,15 +7,8 @@ Note: Tutorials and additional documentation will be provided soon.
 ## Release Notes
 
 Current Version: 0-M
-This version is incomplete and unstable. Will Upgrade to 0-RC upon reaching minimum viable product status.
-Component repositories may or may not work due to not in sync and not in stable state.
-
-Completed class BinaryTools and documentation. No exception checking for this class (This is intentional).
-Completed StickDouble Interface, CandleStickDouble class, and CandleStickFixedDouble class documentation.
-
-Will focus Original Lexical documentation and remaining test cases.
-
-More information on components will be released in future.
+This version is incomplete. Many parts are stable and tested. Most of this code is modular and easy to test.
+Upon completion of first Warehouse implementation, will move forward with a component release.
 
 ## Introduction
 
@@ -54,4 +47,6 @@ The structure and names may change to ensure a clean base design
 | **Products** | Summaries, files (CSV, JSON, XML/HTML), GUI images | Not Started | No | Planned |
 | **Binary Conversion Tool** | Converts binary formats to/from various numeric and string formats. | Working | Yes | Completed |
 | **JSON Parser** | Custom lightweight JSON parser for fast parsing JSON strings. Does not handle exponents nor unicode escapes | Working | Yes | Completed. Will add remaining features if needed. |
+
+
 A corporation may operate multiple branches (nodes or containers), each with its own set of tangibles.

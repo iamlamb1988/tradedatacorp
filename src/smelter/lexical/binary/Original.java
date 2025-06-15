@@ -4,6 +4,7 @@
  */
 package tradedatacorp.smelter.lexical.binary;
 
+import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;

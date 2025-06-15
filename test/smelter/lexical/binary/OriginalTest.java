@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.smelter.lexical.binary.Original;
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;

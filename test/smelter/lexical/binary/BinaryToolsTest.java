@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import tradedatacorp.smelter.lexical.binary.BinaryTools;
+import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
 public class BinaryToolsTest{
