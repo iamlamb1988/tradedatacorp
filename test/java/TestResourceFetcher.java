@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * This class only used for fetching test resources.
+ * This class only used for fetching unit tests. Root of all files will be located in {@code tradedatacorp/test/resources}
  */
 public class TestResourceFetcher{
     public static final String RELATIVE_FULL_PATH = "tradedatacorp/test/resources/";

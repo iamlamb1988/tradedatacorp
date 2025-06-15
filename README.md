@@ -43,14 +43,15 @@ This abstract library models a business corporation, encapsulating fundamental i
 ## Component Status
 The structure and names may change to ensure a clean base design
 
-| Component         | Description                                              | Status         | Notes                                             |
-|-------------------|---------------------------------------------------------|----------------|---------------------------------------------------|
-| **Miner**         | Receives OHLC sticks from polygon.io                    | Working     | Handles real-time stick data ingestion            |
-| **FileSmelter**   | Reads/writes super-compressed binary files              | Working     | Supports both read and write operations           |
-| **Smelter**       | Data transformation/aggregation                         | Working     | 2 File smelting implementations. Slow non-threaded, faster threaded.                  |
-| **Crafters**      | Data processing and pattern generation                  | Not Started | Planned                                          |
-| **Warehouses**    | Database/file storage                                   | Not Started | Planned (SQL, NoSQL, File System) Will start after documentation of file smelters                |
-| **StoreFronts**   | Web/App interfaces                                      | Not Started | Planned (Website, App)                            |
-| **Products**      | Summaries, files (CSV, JSON, XML/HTML), GUI images      | Not Started | Planned                                          |
-
+| Component | Description | Status | JUnit Tests | Notes |
+|-|-|-|-|-|
+| **Miner** | Receives OHLC sticks from polygon.io | Working | No | Handles real-time stick data ingestion |
+| **FileSmelter** | Reads/writes super-compressed binary files | Working | No | Supports both read and write operations |
+| **Smelter** | Data transformation/aggregation | Working | No | 2 File smelting implementations. Slow non-threaded, faster threaded. |
+| **Crafters** | Data processing and pattern generation | Not Started | No | Planned |
+| **Warehouses** | Database/file storage | Not Started | No | Planned (SQL, NoSQL, File System) Will start after documentation of file smelters |
+| **StoreFronts** | Web/App interfaces | Not Started | No | Planned (Website, App) |
+| **Products** | Summaries, files (CSV, JSON, XML/HTML), GUI images | Not Started | No | Planned |
+| **Binary Conversion Tool** | Converts binary formats to/from various numeric and string formats. | Working | Yes | Completed |
+| **JSON Parser** | Custom lightweight JSON parser for fast parsing JSON strings. Does not handle exponents nor unicode escapes | Working | Yes | Completed. Will add remaining features if needed. |
 A corporation may operate multiple branches (nodes or containers), each with its own set of tangibles.
