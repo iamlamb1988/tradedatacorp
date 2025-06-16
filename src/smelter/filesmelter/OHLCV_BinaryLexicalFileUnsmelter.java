@@ -102,7 +102,8 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         System.out.println("DEBUG H2 Bin array size: "+binArray.length);
 
         //1.6 Process new byte Array elements into new respective bin array.
-        for(int i=0; i<byteCount; ++i){
+        for(int i=0; i<byteArray.length; ++i){
+            System.out.printf("DEBUG Byte Index: %d Val: %x\n",i,byteArray[i]);
             BinaryTools.setSubsetUnsignedInt(i << 3,8,byteArray[i] & 0xFF,binArray);
         }
 
