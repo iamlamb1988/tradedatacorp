@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 10 MAY 2025
+ * @since 16 JUN 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -16,12 +16,27 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 /**
- * The purpose of this class is to return a {@link Collection} of {@link StickDouble} objects from a file encoded by an {@link OHLCV_BinaryLexical} binary Lexical.
- * This is intended for small files and may have perfomance issues with large files.
- * This is the prototype class that will be the basis for handling large files.
+ * Reads binary files encoded with {@link OHLCV_BinaryLexical} and reconstructs a collection of {@link StickDouble} objects.
  */
 public class OHLCV_BinaryLexicalFileUnsmelter{
-    private int fileReadByteChunkSize = 64;
+    int fileReadByteChunkSize;
+
+    /**
+     * Constructs an unsmelter with a specified byte chunk size for file reading.
+     *
+     * @param defaultFileReadByteChunkSize the byte chunk size to use for reading the file; if negative, defaults to 64 bytes.
+     */
+    public OHLCV_BinaryLexicalFileUnsmelter(int defaultFileReadByteChunkSize){
+        if(defaultFileReadByteChunkSize < 0) fileReadByteChunkSize = 64;
+        else fileReadByteChunkSize = defaultFileReadByteChunkSize;
+    }
+
+    /**
+     * Constructs an unsmelter with a default file read chunk size of 64 bytes.
+     */
+    public OHLCV_BinaryLexicalFileUnsmelter(){
+        this(64);
+    }
 
     /**
      * Returns a {@link Collection} of {@link StickDouble} objects read in by an encoded file by an {@link OHLCV_BinaryLexical}.
