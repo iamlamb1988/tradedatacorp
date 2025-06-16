@@ -49,7 +49,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         boolean[] binArray = new boolean[byteCount << 3];
         boolean[][] binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
         boolean[][] binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
-        int DEBUG_BitIndex = 0;
 
         try {byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
 
@@ -62,12 +61,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         int flatIndex=0;
         for(int i=0; i<binH1.length; ++i){
             binH1[i] = new boolean[OHLCV_BinaryLexical.getHeader1BitLength(i)];
-            for(int k=0; k<binH1[i].length; ++flatIndex, ++k){
-                binH1[i][k] = binArray[flatIndex];
-                //DEBUG LOOP
-                System.out.println("DEBUG H1["+i+"]["+k+"]["+flatIndex+"] value: "+binArray[flatIndex]);
-                //END DEBUG LOOP
-            }
+            for(int k=0; k<binH1[i].length; ++flatIndex, ++k){binH1[i][k] = binArray[flatIndex];}
         }
 
         //1.4 Set the lengths of the H2 fields from the translated H1 values.
@@ -94,38 +88,18 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             byteArray = new byte[byteCount];
             binArray = new boolean[byteCount << 3];
             byteArray[0] = firstH2Byte;
-            System.out.printf("DEBUG SHARED BYTE VALUE: %x\n",byteArray[0]);
             try{byteCount=binFile.read(byteArray,1,byteCount - 1);}catch(Exception err){err.printStackTrace();}
         }
 
-        System.out.println("DEBUG H2 Byte array size: "+byteArray.length);
-        System.out.println("DEBUG H2 Bin array size: "+binArray.length);
-
         //1.6 Process new byte Array elements into new respective bin array.
         for(int i=0; i<byteArray.length; ++i){
-            System.out.printf("DEBUG Byte Index: %d Val: %x\n",i,byteArray[i]);
             BinaryTools.setSubsetUnsignedInt(i << 3,8,byteArray[i] & 0xFF,binArray);
         }
-
-        //DEBUG LOOP
-        for(int i=0; i<byteArray.length; ++i){
-            System.out.printf("DEBUG DOUBLE CHECK HEX: Index: %d Val: %x\n",i,byteArray[i]);
-        }
-        //END DEBUG LOOP
-
-        //DEBUG LOOP
-        for(int i=0; i<binArray.length; ++i){
-            System.out.println("DEBUG DOUBLE CHECK BIT: Index: "+i+" Val: "+binArray[i]);
-        }
-        //END DEBUG LOOP
 
         //1.7 Set H2 from flattened h2 bits
         for(int i=0; i<binH2.length; ++i){
             for(int j=0; j<binH2[i].length; ++j, ++flatIndex){
                 binH2[i][j]=binArray[flatIndex];
-                //DEBUG LOOP
-                System.out.println("DEBUG H2["+i+"]["+j+"]["+flatIndex+"] value: "+binArray[flatIndex]);
-                //END DEBUG LOOP
             }
         }
 
@@ -150,13 +124,8 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         ArrayDeque<Boolean> bitQueue = new ArrayDeque<Boolean>(fileReadByteChunkSize << 3);
         ArrayList<StickDouble> stickList = new ArrayList<StickDouble>(lexical.getDataCount());
 
-        System.out.println("DEBUG SYMBOL: "+lexical.getSymbol());
-        System.out.println("DEBUG INTERVAL: "+lexical.getInterval());
-        System.out.println("DEBUG DATA COUNT: "+lexical.getDataCount());
-
         //3. Fill in excess bits into the bitQueue
         for(int i=flatIndex; i<binArray.length; ++i){
-            System.out.println("DEBUG: bit Index: "+i+" value: "+binArray[i]);
             bitQueue.add(Boolean.valueOf(binArray[i]));
         }
 
