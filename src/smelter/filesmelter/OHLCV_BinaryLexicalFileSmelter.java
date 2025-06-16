@@ -278,16 +278,26 @@ import java.time.Duration;
         }catch(Exception err){err.printStackTrace();}
     }
 
-    //Assembly line interfaces (5 resources, 4 threads) AKA Producer -> Consumer line
-    //This class is dedicated to functions writeDataToNewFile() for threaded work.
+    /**
+     * Abstract base class for worker threads used in the {@link #writeDataToNewFile} file writing pipeline.
+     * This class is part of a producer-consumer assembly line, coordinating 4 threads across 5 resources
+     * to process and write data in parallel.
+     * The {@code isFinished} flag is used to signal when a worker has completed its task.
+     *
+     * @see #writeDataToNewFile(Path, ArrayDeque)
+     */
     private abstract class TempAssemblyWorker{
         protected volatile boolean isFinished;
         private TempAssemblyWorker(){isFinished=false;}
     }
 
-    //TODO
-    //These are tightly coupled classes but that's ok, they will ONLY be used for file writeDataToNewFile() method.
-    //Resource locks: this.crucible, local hotCrucible
+    /**
+     * Responsible for moving data from the core {@code crucible} object to a local {@code hotCrucible} queue.
+     * This operation is performed with synchronization to ensure thread safety, allowing subsequent pipeline stages
+     * to operate on a thread-local copy of the data.
+     * Resource locks: {@code this.crucible}, local {@code hotCrucible}
+     * Used internally as the first stage of the file writing pipeline.
+     */
     private class CrucibleToHotCrucible extends TempAssemblyWorker implements Runnable{
         private ArrayDeque<boolean[]> hotCrucible;
         private CrucibleToHotCrucible(ArrayDeque<boolean[]> product){
@@ -305,8 +315,12 @@ import java.time.Duration;
         }
     }
 
-    //TODO
-    //Resource locks: local hotCrucible, local bitAligner
+    /**
+     * Responsible for removing elements from the {@code hotCrucible} queue and converting them to their bit representation
+     * before placing them into the {@code bitAligner} queue. Synchronization ensures thread safety during the transfer and conversion process.
+     * Resource locks: local {@code hotCrucible}, local {@code bitAligner}.
+     * Used internally as the second stage of the file writing pipeline.
+     */
     private class HotCrucibleToBitAligner extends TempAssemblyWorker implements Runnable{
         private CrucibleToHotCrucible producer;
         private ArrayDeque<boolean[]> hotCrucible;
@@ -338,7 +352,14 @@ import java.time.Duration;
         }
     }
 
-    //Resource locks: local bitAligner, local moltenData
+    /**
+     * Responsible for extracting 8 bits at a time from {@code bitAligner} and converting them into a single byte,
+     * which is then placed into {@code moltenData} queue.
+     * For the last byte, if fewer than 8 bits remain, the remaining bits are filled with 0s on the right to complete the byte,
+     * ensuring proper byte alignment for file writing.
+     * Resource locks: local {@code bitAligner}, local {@code moltenData}.
+     * Used internally as the third stage of the file writing pipeline.
+     */
     private class BitAlignerToMoltenData extends TempAssemblyWorker implements Runnable{
         private HotCrucibleToBitAligner producer;
         private ArrayDeque<Boolean> bitAligner;
@@ -399,7 +420,12 @@ import java.time.Duration;
         }
     }
 
-    //Resource locks: local moltenData, local resultFile
+    /**
+     * Responsible for writing bytes stored in {@code moltenData} to the {@code resultFile},
+     * serving as the final stage of the file writing pipeline where data is written to disk.
+     * Resource locks: local {@code moltenData}, local {@code resultFile}.
+     * Used internally as the fourth stage of the file writing pipeline.
+     */
     private class MoltenDataToFile extends TempAssemblyWorker implements Runnable{
         private BitAlignerToMoltenData producer;
         private ArrayDeque<Byte> moltenData;
