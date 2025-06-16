@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 8 JUN 2025
+ * @since 16 JUN 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -12,19 +12,29 @@ import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.ArrayDeque;
 import java.time.Instant;
 import java.time.Duration;
 
-//TODO: Planning in progress. This class is responsible for writing a binary file specifically adhering to an {@link OHLCV_BinaryLexical}.
-public class OHLCV_BinaryLexicalFileSmelter implements FileSmelterStateful<StickDouble>{
+/**
+ * The OHLCV_BinaryLexicalFileSmelter class writes {@link StickDouble} objects to a compressed binary file formatted for use with an {@link OHLCV_BinaryLexical} translator.
+ * This class has a preset Path that represents the file location and name of where the file will be written.
+ * This class has a {@link OHLCV_BinaryLexical} that specifies the bit compression formats of OHLCV Stick data.
+ */
+ public class OHLCV_BinaryLexicalFileSmelter implements FileSmelterStateful<StickDouble>{
     private OHLCV_BinaryLexical binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
     private int fileWriteByteChunkSize = 64;
 
     //Constructor
-    //TODO
+    /**
+     * Constructs an {@code OHLCV_BinaryLexicalFileSmelter} using the provided {@link OHLCV_BinaryLexical} translator.
+     * This will not use this classes {@link OHLCV_BinaryLexical}.
+     * 
+     * @param originalTranslator The binary lexical translator used to define the bit compression format for output files.
+     */
     public OHLCV_BinaryLexicalFileSmelter(OHLCV_BinaryLexical originalTranslator){
         binaryTranslator = originalTranslator.clone();
         targetFile = null;
@@ -32,6 +42,13 @@ public class OHLCV_BinaryLexicalFileSmelter implements FileSmelterStateful<Stick
     }
 
     //Smelter Overrides
+    /**
+     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, containing exactly one data point represented by the given {@code dataStick}.
+     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data.
+     * 
+     * @param dataStick The {@link StickDouble} instance to serialize and write to the file.
+     */
+    @Override
     public void smelt(StickDouble dataStick){
         ArrayDeque<boolean[]> rawDataQueue;
         synchronized(dataStick){
@@ -41,38 +58,158 @@ public class OHLCV_BinaryLexicalFileSmelter implements FileSmelterStateful<Stick
         writeDataToNewFile(targetFile, rawDataQueue);
     }
 
-    public void smelt(StickDouble[] rawDataArray){}
-    public void smelt(Collection<StickDouble> rawDataArray){}
+    /**
+     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, 
+     * containing data points represented by the provided array of {@link StickDouble} instances.
+     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data points.
+     *
+     * @param rawDataArray the array of {@link StickDouble} instances to serialize and write to the file.
+     */
+    @Override
+    public void smelt(StickDouble[] rawDataArray){
+        synchronized(rawDataArray){
+            ArrayDeque<boolean[]> hotCrucible = new ArrayDeque<boolean[]>(rawDataArray.length);
+            for(int i=0; i<rawDataArray.length; ++i){
+                hotCrucible.add(binaryTranslator.getBinaryDataFlat(rawDataArray[i]));
+            }
+            writeDataToNewFile(targetFile, hotCrucible);
+        }
+    }
+
+    /**
+     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, 
+     * containing data points represented by the provided collection of {@link StickDouble} instances.
+     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data points.
+     *
+     * @param rawDataCollection the collection of {@link StickDouble} instances to serialize and write to the file.
+     */
+    @Override
+    public void smelt(Collection<StickDouble> rawDataCollection){
+        boolean isQueue;
+        synchronized(rawDataCollection){isQueue = (rawDataCollection instanceof ArrayDeque<StickDouble>);}
+        if(isQueue) smeltQueueToFile(targetFile,(ArrayDeque<StickDouble>)rawDataCollection);
+
+        ArrayDeque<boolean[]> hotCrucible;
+        synchronized(rawDataCollection){
+            hotCrucible = new ArrayDeque<boolean[]>(rawDataCollection.size());
+            Iterator<StickDouble> it = rawDataCollection.iterator();
+            StickDouble next;
+            while(it.hasNext()){
+                next = it.next();
+                hotCrucible.add(binaryTranslator.getBinaryDataFlat(next));
+            }
+        }
+        writeDataToNewFile(targetFile,hotCrucible);
+    }
 
     //SmelterStateful Overrides
+    /**
+     * Adds a single {@link StickDouble} instance to this class's crucible for later processing.
+     *
+     * @param dataStick the {@link StickDouble} element to add to the crucible.
+     */
+    @Override
     public void addData(StickDouble dataStick){
         synchronized(crucible){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
     }
 
+    /**
+     * Adds an array of {@link StickDouble} instances to this class's crucible for later processing.
+     *
+     * @param dataStickArray the {@link StickDouble} array of elements to add to the crucible.
+     */
+    @Override
     public void addData(StickDouble[] dataStickArray){
         for(StickDouble dataStick : dataStickArray){
             crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
         }
     }
 
+    /**
+     * Adds a collection of {@link StickDouble} instances to this class's crucible for later processing.
+     *
+     * @param dataStickCollection the {@link StickDouble} collection of elements to add to the crucible.
+     */
+    @Override
     public void addData(Collection<StickDouble> dataStickCollection){
         for(StickDouble dataStick : dataStickCollection){
             crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
         }
     }
 
-    //TODO
+    /**
+     * Writes all data currently stored in this class's crucible to the preset target file.
+     * All data will be removed from the crucible upon completion.
+     */
+    @Override
     public void smelt(){writeDataToNewFile(targetFile,crucible);}
 
     //FileSmelterStateful Overrides
+    /**
+     * Writes all data currently stored in this class's crucible to the specified target file.
+     * All data will be removed from the crucible upon completion.
+     */
+    @Override
     public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
 
     //OHLCV_BinaryLexicalFileSmelter methods
+    /**
+     * Sets the preset target file path for future file write operations.
+     *
+     * @param relativePathName the relative path name to use as the target file location.
+     */
     public void setTargetFile(String relativePathName){targetFile = Path.of(relativePathName);}
+
+     /**
+     * Sets the preset target file path for future file write operations to the absolute path.
+     *
+     * @param absolutePathName the absolute path name to use as the target file location.
+     */
     public void setAbsoluteTargetFile(String absolutePathName){targetFile = Paths.get(absolutePathName);}
 
-    //TODO
-    //Will write all the data points so a specified file.
+    /**
+     * Processes all {@link StickDouble} data sticks contained in the provided queue and writes them to a file at the specified destination path.
+     * Each data stick is converted to a binary representation using the preset {@link OHLCV_BinaryLexical}, then written sequentially to the output file.
+     *
+     * @param destinationPathName the path and filename for the output file.
+     * @param stickQueue the queue of {@link StickDouble} instances to process and write.
+     */
+    public void smeltQueueToFile(Path destinationPathName, ArrayDeque<StickDouble> stickQueue){
+        ArrayDeque<boolean[]> hotCrucible;
+        synchronized(stickQueue){
+            hotCrucible = new ArrayDeque<boolean[]>(stickQueue.size());
+            while(!stickQueue.isEmpty()){
+                synchronized(binaryTranslator){
+                    hotCrucible.add(binaryTranslator.getBinaryDataFlat(stickQueue.remove()));
+                }
+            }   
+        }
+        writeDataToNewFile(destinationPathName, hotCrucible);
+    }
+
+    /**
+     * Writes the contents of a queue of binary data to a file at the specified path.
+     * <p>
+     * This method performs a multi-stage, threaded transformation and serialization pipeline:
+     * <ul>
+     *   <li>Prepares a binary header according to the {@link binaryTranslator}'s settings.</li>
+     *   <li>Converts and aligns data bits from the input queue for file output.</li>
+     *   <li>Spawns four worker threads to process and write the data in parallel, maximizing throughput.</li>
+     *   <li>The output file is always overwritten, never appended.</li>
+     * </ul>
+     * <p>
+     * The method is **thread-safe** with respect to the provided {@code dataQueue} and uses synchronization to protect shared resources.
+     * </p>
+     * <p>
+     * <b>Side Effects:</b> The provided {@code dataQueue} is not modified by this method. However, the output file at {@code file} will be overwritten.
+     * </p>
+     * <p>
+     * <b>Exceptions:</b> Any I/O or thread interruption exceptions are caught and printed to standard error; the method will return early on file open failure.
+     * </p>
+     *
+     * @param file the target file {@link Path} where binary data will be written; the file will be created or overwritten.
+     * @param dataQueue a queue of boolean arrays, each representing a single data record to serialize and write.
+     */
     public void writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue){
         //1. Initialize variables
         FileOutputStream resultFile;

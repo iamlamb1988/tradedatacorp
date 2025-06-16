@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 06 JUN 2025
+ * @since 16 JUN 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -16,61 +16,13 @@ import java.util.ArrayDeque;
 
 /**
  * This class writes StickDouble types to a compressed binary file that is formated to an OHLCV_BinaryLexical binaryTranslator.
- * This class is a functional prototype that will be used as a blueprint to write a fully streamlined thread safe filewriter.
- * NOTE: If binary Lexical changes while data is in the crucible, the crucible data may be corrupt. Will change on full class implementation.
+ * This class is a functional prototype that will be used as a blueprint for {@link OHLCV_BinaryLexicalSmallFileSmelter}.
  */
 public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<StickDouble>{
     private OHLCV_BinaryLexical binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
     private int fileWriteByteChunkSize = 64;
-
-    //Thread safe handling variables for binaryLexical instance
-    private int lexicalReaderCount;
-    private int lexicalWriterRequestCount;
-    private boolean isLexicalWriting;
-
-    private void threadSafeLexicalRead(Runnable readMethod){
-        synchronized(binaryTranslator){
-            while(isLexicalWriting || lexicalWriterRequestCount > 0){
-                try{
-                    wait();
-                }
-                catch(Exception err){
-                    err.printStackTrace();
-                }
-            }
-            ++lexicalReaderCount;
-        }
-        readMethod.run();
-        synchronized(binaryTranslator){
-            --lexicalReaderCount;
-            notifyAll();
-        }
-    }
-
-    private void threadSafeLexicalWrite(Runnable writeMethod){
-        boolean requested = false;
-        synchronized(binaryTranslator){
-            if(lexicalReaderCount > 0 || isLexicalWriting){
-                requested = true;
-                ++lexicalWriterRequestCount;
-                while(lexicalReaderCount > 0 || isLexicalWriting){
-                    try{
-                        wait();
-                    }
-                    catch(Exception err){
-                        err.printStackTrace();
-                    }
-                }
-            }
-            isLexicalWriting = true;
-            if(requested) --lexicalWriterRequestCount;
-            writeMethod.run();
-            isLexicalWriting = false;
-            notifyAll();
-        }
-    }
 
     //Constructor
     /**
@@ -81,9 +33,6 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
         binaryTranslator = originalTranslator.clone();
         targetFile = null;
         crucible = new ArrayDeque<boolean[]>();
-
-        lexicalReaderCount = lexicalWriterRequestCount = 0;
-        isLexicalWriting = false;
     }
 
     //Smelter Overrides
