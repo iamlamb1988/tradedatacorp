@@ -16,14 +16,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import tradedatacorp.tools.binarytools.BinaryTools;
-import tradedatacorp.smelter.lexical.binary.Original;
+import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 
-public class OriginalTest{
-    Original first_lexical = Original.genStandardAlignedLexical("BTCUSD",60);
-    Original tiny_lexical = new Original(
-        false,
+public class OHLCV_BinaryLexicalTest{
+    OHLCV_BinaryLexical first_lexical = OHLCV_BinaryLexical.genStandardAlignedLexical("BTCUSD",60);
+    OHLCV_BinaryLexical tiny_lexical = new OHLCV_BinaryLexical(
+        (byte)0,
         (byte)1,
         60,
         (byte)0,
@@ -35,8 +35,8 @@ public class OriginalTest{
         "TINY"
     );
 
-    int expected_h1_len =
-    1 +  //h1_byid
+    final int EXPECTED_H1_LEN =
+    10 +  //h1_byid
     25 + //h1_int 
     5 +  //h1_ct_len
     9 +  //h1_data_len
@@ -51,9 +51,9 @@ public class OriginalTest{
 int expected_h2_len = 
     48 + //h2_sym characters "BTCUSD" x 8 bits
     16 + //h2_data_ct bit length are defined by value h1_data_ct_len
-    0;   //h2_h_gap (only need to add 7 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
+    7;   //h2_h_gap (only need to add 7 to make the total header divisible by 8) EX: 8 - (h1_len + h2_sym_len + h2_sym + h2_dada_ct_l3n)%8
 
-    int expected_h_len = expected_h1_len + expected_h2_len;
+    int expected_h_len = EXPECTED_H1_LEN + expected_h2_len;
     int expected_data_len = 44 + 4*31 + 4*15 + 31 + 15; // UTC + 4*OHLC + V
 
     @Nested
@@ -67,45 +67,45 @@ int expected_h2_len =
             double e = 2.718;
             double num = 13.0061;
             
-            Original.splitWholeFraction(pi,5,val); //Set to check up to 5 decimal places
+            OHLCV_BinaryLexical.splitWholeFraction(pi,5,val); //Set to check up to 5 decimal places
 
             //pi
             assertEquals(3,val[0]);
             assertEquals(14000,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
 
-            Original.splitWholeFractionTrim(pi,5,val); //Set to check up to 5 decimal places
+            OHLCV_BinaryLexical.splitWholeFractionTrim(pi,5,val); //Set to check up to 5 decimal places
             assertEquals(3,val[0]);
             assertEquals(14,val[1]); //key check NOT 14000 even though 5 decimals are placed. Ignores trailing 0's
 
             //pi2
-            Original.splitWholeFraction(pi2,5,val);
+            OHLCV_BinaryLexical.splitWholeFraction(pi2,5,val);
 
             assertEquals(3,val[0]);
             assertEquals(14000,val[1]);
 
-            Original.splitWholeFractionTrim(pi2,5,val);
+            OHLCV_BinaryLexical.splitWholeFractionTrim(pi2,5,val);
 
             assertEquals(3,val[0]);
             assertEquals(14,val[1]);
 
             //e
-            Original.splitWholeFraction(e,5,val);
+            OHLCV_BinaryLexical.splitWholeFraction(e,5,val);
 
             assertEquals(2,val[0]);
             assertEquals(71800,val[1]);
 
-            Original.splitWholeFractionTrim(e,5,val);
+            OHLCV_BinaryLexical.splitWholeFractionTrim(e,5,val);
 
             assertEquals(2,val[0]);
             assertEquals(718,val[1]);
 
             //num
-            Original.splitWholeFraction(num,5,val);
+            OHLCV_BinaryLexical.splitWholeFraction(num,5,val);
 
             assertEquals(13,val[0]);
             assertEquals(610,val[1]);
 
-            Original.splitWholeFractionTrim(num,5,val);
+            OHLCV_BinaryLexical.splitWholeFractionTrim(num,5,val);
 
             assertEquals(13,val[0]);
             assertEquals(61,val[1]);
@@ -127,7 +127,7 @@ int expected_h2_len =
             public void testDefault_ByID(){
             assertEquals("BTCUSD",first_lexical.getSymbol());
                 assertFalse(generatedHeader1[0][0]);
-                assertEquals(false,first_lexical.getByID());
+                assertEquals(0,first_lexical.getFreeFormValue());
             }
 
             @Test
@@ -199,8 +199,8 @@ int expected_h2_len =
             public void testDefault_SymbolBitLength(){
                 boolean[] bin_h1_sym_len = generatedHeader1[10];
                 assertEquals(6*8,BinaryTools.toUnsignedInt(bin_h1_sym_len)); //BTCUSD has 6 characters
-                assertEquals(7,Original.H1_SYM_LEN_LEN);
-                assertEquals(Original.H1_SYM_LEN_LEN,bin_h1_sym_len.length); //fixed length of 7 bits
+                assertEquals(7,OHLCV_BinaryLexical.H1_SYM_LEN_LEN);
+                assertEquals(OHLCV_BinaryLexical.H1_SYM_LEN_LEN,bin_h1_sym_len.length); //fixed length of 7 bits
             }
 
             @Test
@@ -252,8 +252,8 @@ int expected_h2_len =
                     first_lexical.H1_TOTAL_LEN +
                     48 +
                     1 +
-                    0; //This is the gap, With
-                int expected_gap_bit_length = 0; 
+                    7; //This is the gap, With
+                int expected_gap_bit_length = 7; 
 
                 assertEquals(expected_gap_bit_length,bin_h2_h_gap.length);
             }
@@ -270,22 +270,22 @@ int expected_h2_len =
 
         @Test
         public void testDefaultHeader1(){
-            assertEquals(80,expected_h1_len);
-            assertEquals(expected_h1_len,first_lexical.H1_TOTAL_LEN);
+            assertEquals(89,EXPECTED_H1_LEN);
+            assertEquals(EXPECTED_H1_LEN,first_lexical.H1_TOTAL_LEN);
             assertEquals(first_lexical.H1_TOTAL_LEN,flatHeader1.length);
             assertEquals(flatHeader1.length,first_lexical.H1_TOTAL_LEN);
         }
 
         @Test
         public void testDefaultHeader2(){
-            assertEquals(64,expected_h2_len);
+            assertEquals(71,expected_h2_len); //64 + 7 gap len = 71
             assertEquals(expected_h2_len,first_lexical.getHeader2BitLength());
         }
 
         @Test
         public void testDefaultHeader(){
-            assertEquals(144,expected_h1_len + expected_h2_len); // 80 + 71 = 151
-            assertEquals(144,expected_h_len);
+            assertEquals(160,EXPECTED_H1_LEN + expected_h2_len); // 89 + 71 = 160
+            assertEquals(160,expected_h_len);
             assertEquals(expected_h_len,first_lexical.getHeaderBitLength());
             assertEquals(0,expected_h_len%8); //Used aligned constructor
         }
