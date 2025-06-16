@@ -21,25 +21,28 @@ import java.util.Collection;
  */
 public interface SmelterStateful<T> extends Smelter<T>{
     /**
-     * Add a singular data element to the crucible that will processed upon smelt.
-     * @param rawData A data element to be added to crucible.
+     * Adds a single data element to the crucible to be processed upon smelting.
+     *
+     * @param rawData the data element to add to the crucible
      */
     public void addData(T rawData);
 
     /**
-     * Add a many data elements from an array to the crucible that will processed upon smelt.
-     * @param rawData The set of data elements to be added to crucible.
+     * Adds multiple data elements from an array to the crucible to be processed upon smelting.
+     *
+     * @param rawDataArray the array of data elements to add to the crucible
      */
-    public void addData(T[] rawData);
+    public void addData(T[] rawDataArray);
 
     /**
-     * Add a many data elements from a generic collection to the crucible that will processed upon smelt.
-     * @param rawData
+     * Adds multiple data elements from a generic collection to the crucible to be processed upon smelting.
+     *
+     * @param rawDataCollection the collection of data elements to add to the crucible
      */
-    public void addData(Collection<T> rawData);
+    public void addData(Collection<T> rawDataCollection);
 
     /**
-     * Process all data elements within the crucible.
+     * Processes all data elements currently stored in the crucible.
      */
     public void smelt();
 }

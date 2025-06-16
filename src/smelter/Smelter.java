@@ -21,19 +21,22 @@ import java.util.Collection;
 public interface Smelter<T>{
     /**
      * Processes a single data element.
-     * @param rawDataElement
+     *
+     * @param rawDataElement the data element to process
      */
     public void smelt(T rawDataElement);
 
-    /**
+     /**
      * Processes an array of data elements.
-     * @param rawDataArray
+     *
+     * @param rawDataArray the array of data elements to process
      */
     public void smelt(T[] rawDataArray);
 
     /**
      * Processes a collection of data elements.
-     * @param rawDataArray
+     *
+     * @param rawDataCollection the collection of data elements to process
      */
-    public void smelt(Collection<T> rawDataArray);
+    public void smelt(Collection<T> rawDataCollection);
 }
