@@ -53,6 +53,10 @@ Encoded Data point format:
         <td colspan="6" style="color:green">H[7]=H1[7]</td>
         <td colspan="6" style="color:orange">H[8]=H1[8]</td>
         <td colspan="6" style="color:cyan">H[9]=H1[9]</td>
+        <td colspan="7" style="color:yellow">H[10]=H1[10]</td>
+        <td colspan="32" style="color:green">H[11]=H2[0]</td>
+        <td colspan="3" style="color:orange">H[12]=H2[1]</td>
+        <td colspan="1" style="color:cyan">H[13]=H2[2]</td>
     </tr>
     <tr><td>Bit Index</td>
         <td style="color:orange">0:0</td>
@@ -125,18 +129,61 @@ Encoded Data point format:
         <td style="color:green">3:67</td>
         <td style="color:green">4:68</td>
         <td style="color:green">5:69</td>
-        <td style="color:orange">6:70</td>
-        <td style="color:orange">6:71</td>
-        <td style="color:orange">6:72</td>
-        <td style="color:orange">6:73</td>
-        <td style="color:orange">6:74</td>
-        <td style="color:orange">6:75</td>
+        <td style="color:orange">0:70</td>
+        <td style="color:orange">1:71</td>
+        <td style="color:orange">2:72</td>
+        <td style="color:orange">3:73</td>
+        <td style="color:orange">4:74</td>
+        <td style="color:orange">5:75</td>
         <td style="color:cyan">0:76</td>
-        <td style="color:cyan">0:77</td>
-        <td style="color:cyan">0:78</td>
-        <td style="color:cyan">0:79</td>
-        <td style="color:cyan">0:80</td>
-        <td style="color:cyan">0:81</td>
+        <td style="color:cyan">1:77</td>
+        <td style="color:cyan">2:78</td>
+        <td style="color:cyan">3:79</td>
+        <td style="color:cyan">4:80</td>
+        <td style="color:cyan">5:81</td>
+        <td style="color:yellow">0:82</td>
+        <td style="color:yellow">1:83</td>
+        <td style="color:yellow">2:84</td>
+        <td style="color:yellow">3:85</td>
+        <td style="color:yellow">4:86</td>
+        <td style="color:yellow">5:87</td>
+        <td style="color:yellow">6:88</td>
+        <td style="color:green">0:89</td>
+        <td style="color:green">1:90</td>
+        <td style="color:green">2:91</td>
+        <td style="color:green">3:92</td>
+        <td style="color:green">4:93</td>
+        <td style="color:green">5:94</td>
+        <td style="color:green">6:95</td>
+        <td style="color:green">7:96</td>
+        <td style="color:green">8:97</td>
+        <td style="color:green">9:98</td>
+        <td style="color:green">10:99</td>
+        <td style="color:green">11:100</td>
+        <td style="color:green">12:101</td>
+        <td style="color:green">13:102</td>
+        <td style="color:green">14:103</td>
+        <td style="color:green">15:104</td>
+        <td style="color:green">16:105</td>
+        <td style="color:green">17:106</td>
+        <td style="color:green">18:107</td>
+        <td style="color:green">19:108</td>
+        <td style="color:green">20:109</td>
+        <td style="color:green">21:110</td>
+        <td style="color:green">22:111</td>
+        <td style="color:green">23:112</td>
+        <td style="color:green">24:113</td>
+        <td style="color:green">25:114</td>
+        <td style="color:green">26:115</td>
+        <td style="color:green">27:116</td>
+        <td style="color:green">28:117</td>
+        <td style="color:green">29:118</td>
+        <td style="color:green">30:119</td>
+        <td style="color:green">31:120</td>
+        <td style="color:orange">0:121</td>
+        <td style="color:orange">1:122</td>
+        <td style="color:orange">2:123</td>
+        <td style="color:cyan">NA</td>
     </tr>
     <tr><td>Bit</td>
         <td id="h_0_0_0" style="color:orange">0</td>
@@ -221,6 +268,49 @@ Encoded Data point format:
         <td id="h_9_3_79" style="color:cyan">1</td>
         <td id="h_9_4_80" style="color:cyan">0</td>
         <td id="h_9_5_81" style="color:cyan">0</td>
+        <td id="h_10_0_82" style="color:yellow">0</td>
+        <td id="h_10_1_83" style="color:yellow">1</td>
+        <td id="h_10_2_84" style="color:yellow">0</td>
+        <td id="h_10_3_85" style="color:yellow">0</td>
+        <td id="h_10_4_86" style="color:yellow">0</td>
+        <td id="h_10_5_87" style="color:yellow">0</td>
+        <td id="h_10_6_88" style="color:yellow">0</td>
+        <td id="h_11_0_89" style="color:green">0</td>
+        <td id="h_11_1_91" style="color:green">1</td>
+        <td id="h_11_2_91" style="color:green">0</td>
+        <td id="h_11_3_92" style="color:green">1</td>
+        <td id="h_11_4_93" style="color:green">0</td>
+        <td id="h_11_5_94" style="color:green">1</td>
+        <td id="h_11_6_95" style="color:green">0</td>
+        <td id="h_11_7_96" style="color:green">0</td>
+        <td id="h_11_8_97" style="color:green">0</td>
+        <td id="h_11_9_98" style="color:green">1</td>
+        <td id="h_11_10_99" style="color:green">0</td>
+        <td id="h_11_11_100" style="color:green">0</td>
+        <td id="h_11_12_101" style="color:green">0</td>
+        <td id="h_11_13_102" style="color:green">1</td>
+        <td id="h_11_14_103" style="color:green">0</td>
+        <td id="h_11_15_104" style="color:green">1</td>
+        <td id="h_11_16_105" style="color:green">0</td>
+        <td id="h_11_17_106" style="color:green">1</td>
+        <td id="h_11_18_107" style="color:green">0</td>
+        <td id="h_11_19_108" style="color:green">1</td>
+        <td id="h_11_20_109" style="color:green">0</td>
+        <td id="h_11_21_110" style="color:green">0</td>
+        <td id="h_11_22_111" style="color:green">1</td>
+        <td id="h_11_23_112" style="color:green">1</td>
+        <td id="h_11_24_113" style="color:green">0</td>
+        <td id="h_11_25_114" style="color:green">1</td>
+        <td id="h_11_26_115" style="color:green">0</td>
+        <td id="h_11_27_116" style="color:green">1</td>
+        <td id="h_11_28_117" style="color:green">0</td>
+        <td id="h_11_29_118" style="color:green">1</td>
+        <td id="h_11_30_119" style="color:green">0</td>
+        <td id="h_11_31_120" style="color:green">0</td>
+        <td id="h_12_0_121" style="color:orange">0</td>
+        <td id="h_12_1_122" style="color:orange">0</td>
+        <td id="h_12_2_123" style="color:orange">1</td>
+        <td style="color:cyan">NA</td>
     </tr>
     <tr><td>Hex</td>
         <td colspan="4" id="hex_0">0</td>
@@ -245,6 +335,16 @@ Encoded Data point format:
         <td colspan="4" id="hex_19">1</td>
         <td colspan="4" id="hex_20">1</td>
         <td colspan="4" id="hex_21">0</td>
+        <td colspan="4" id="hex_22">2</td>
+        <td colspan="4" id="hex_23">A</td>
+        <td colspan="4" id="hex_24">2</td>
+        <td colspan="4" id="hex_25">2</td>
+        <td colspan="4" id="hex_26">A</td>
+        <td colspan="4" id="hex_27">9</td>
+        <td colspan="4" id="hex_28">A</td>
+        <td colspan="4" id="hex_29">A</td>
+        <td colspan="4" id="hex_30">1</td>
+        <td colspan="4" id="hex_31">C</td>
     </tr>
     <tr><td>Word</td>
         <td colspan="8" id="word_0">00</td>
@@ -258,6 +358,11 @@ Encoded Data point format:
         <td colspan="8" id="word_8">10</td>
         <td colspan="8" id="word_9">41</td>
         <td colspan="8" id="word_10">10</td>
+        <td colspan="8" id="word_11">2A</td>
+        <td colspan="8" id="word_12">22</td>
+        <td colspan="8" id="word_13">A9</td>
+        <td colspan="8" id="word_14">AA</td>
+        <td colspan="8" id="word_15">1C</td>
     </tr>
 </table>
 ### TwoDatapoints.brclmb contents
