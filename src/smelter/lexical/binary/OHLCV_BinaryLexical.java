@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * <tr><th>Field</th><th>Bit Length</th><th>Full Name</th><th>Description</th></tr>
  * <tr><td>h1_freeform</td><td>10</td><td>Free Form bits</td><td>Free form bits to be set by the user.</td></tr>
  * <tr><td>h1_int</td><td>25</td><td>Time Frame Interval</td><td>The unsigned integer value represents the number of seconds for the time frame.</td></tr>
- * <tr><td>h1_ct_len</td><td>26</td><td>Data Count Bit Length</td><td>The unsigned integer value represents number of bits for field h2_data_ct.</td></tr>
+ * <tr><td>h1_ct_len</td><td>5</td><td>Data Count Bit Length</td><td>The unsigned integer value represents number of bits for field h2_data_ct.</td></tr>
  * <tr><td>h1_data_len</td><td>9</td><td>Data point bit length</td><td>The total number of bits to represent a single stick instance.</td></tr>
  * <tr><td>h1_h_gap_len</td><td>3</td><td>Header Gap bit length</td><td>The unsigned integer value represents the number of ignored bits between the Header and the datapoint within the content. This is the bit length of field h2_h_gap</td></tr>
  * <tr><td>h1_utc_len</td><td>6</td><td>Data stick UTC bit length</td><td>The unsigned integer value represents the number of bits used to represent the UTC timestamp of each stick.</td></tr>
