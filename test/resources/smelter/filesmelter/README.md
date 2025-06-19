@@ -57,6 +57,17 @@ Encoded Data point format:
         <td colspan="32" style="color:green">H[11]=H2[0]</td>
         <td colspan="3" style="color:orange">H[12]=H2[1]</td>
         <td colspan="1" style="color:cyan">H[13]=H2[2]</td>
+        <td colspan="4" style="color:magenta">D[0].UTC</td>
+        <td colspan="4" style="color:teal">D[0].OW</td>
+        <td colspan="4" style="color:pink">D[0].OF</td>
+        <td colspan="4" style="color:teal">D[0].HW</td>
+        <td colspan="4" style="color:pink">D[0].HF</td>
+        <td colspan="4" style="color:teal">D[0].LW</td>
+        <td colspan="4" style="color:pink">D[0].LF</td>
+        <td colspan="4" style="color:teal">D[0].CW</td>
+        <td colspan="4" style="color:pink">D[0].CF</td>
+        <td colspan="4" style="color:teal">D[0].VW</td>
+        <td colspan="4" style="color:pink">D[0].VF</td>
     </tr>
     <tr><td>Bit Index</td>
         <td style="color:orange">0:0</td>
@@ -184,6 +195,50 @@ Encoded Data point format:
         <td style="color:orange">1:122</td>
         <td style="color:orange">2:123</td>
         <td style="color:cyan">NA</td>
+        <td style="color:magenta">0:124</td>
+        <td style="color:magenta">1:125</td>
+        <td style="color:magenta">2:126</td>
+        <td style="color:magenta">3:127</td>
+        <td style="color:teal">0:128</td>
+        <td style="color:teal">1:129</td>
+        <td style="color:teal">2:130</td>
+        <td style="color:teal">3:131</td>
+        <td style="color:pink">0:132</td>
+        <td style="color:pink">1:133</td>
+        <td style="color:pink">2:134</td>
+        <td style="color:pink">3:135</td>
+        <td style="color:teal">0:136</td>
+        <td style="color:teal">1:137</td>
+        <td style="color:teal">2:138</td>
+        <td style="color:teal">3:139</td>
+        <td style="color:pink">0:140</td>
+        <td style="color:pink">1:141</td>
+        <td style="color:pink">2:142</td>
+        <td style="color:pink">3:143</td>
+        <td style="color:teal">0:144</td>
+        <td style="color:teal">1:145</td>
+        <td style="color:teal">2:146</td>
+        <td style="color:teal">3:147</td>
+        <td style="color:pink">0:148</td>
+        <td style="color:pink">1:149</td>
+        <td style="color:pink">2:150</td>
+        <td style="color:pink">3:151</td>
+        <td style="color:teal">0:152</td>
+        <td style="color:teal">1:153</td>
+        <td style="color:teal">2:154</td>
+        <td style="color:teal">3:155</td>
+        <td style="color:pink">0:156</td>
+        <td style="color:pink">1:157</td>
+        <td style="color:pink">2:158</td>
+        <td style="color:pink">3:159</td>
+        <td style="color:teal">0:160</td>
+        <td style="color:teal">1:161</td>
+        <td style="color:teal">2:162</td>
+        <td style="color:teal">3:163</td>
+        <td style="color:pink">0:164</td>
+        <td style="color:pink">1:165</td>
+        <td style="color:pink">2:166</td>
+        <td style="color:pink">3:167</td>
     </tr>
     <tr><td>Bit</td>
         <td id="h_0_0_0" style="color:orange">0</td>
@@ -311,6 +366,50 @@ Encoded Data point format:
         <td id="h_12_1_122" style="color:orange">0</td>
         <td id="h_12_2_123" style="color:orange">1</td>
         <td style="color:cyan">NA</td>
+        <td id="d_0_UTC_0_124" style="color:magenta">1</td>
+        <td id="d_0_UTC_1_125" style="color:magenta">1</td>
+        <td id="d_0_UTC_2_126" style="color:magenta">0</td>
+        <td id="d_0_UTC_3_127" style="color:magenta">0</td>
+        <td id="d_0_OW_0_128" style="color:teal">0</td>
+        <td id="d_0_OW_1_129" style="color:teal">1</td>
+        <td id="d_0_OW_2_130" style="color:teal">0</td>
+        <td id="d_0_OW_3_131" style="color:teal">0</td>
+        <td id="d_0_OF_0_132" style="color:pink">0</td>
+        <td id="d_0_OF_1_133" style="color:pink">0</td>
+        <td id="d_0_OF_2_134" style="color:pink">0</td>
+        <td id="d_0_OF_3_135" style="color:pink">0</td>
+        <td id="d_0_HW_0_136" style="color:teal">1</td>
+        <td id="d_0_HW_1_137" style="color:teal">0</td>
+        <td id="d_0_HW_2_138" style="color:teal">0</td>
+        <td id="d_0_HW_3_139" style="color:teal">1</td>
+        <td id="d_0_HF_0_140" style="color:pink">0</td>
+        <td id="d_0_HF_1_141" style="color:pink">0</td>
+        <td id="d_0_HF_2_142" style="color:pink">0</td>
+        <td id="d_0_HF_3_143" style="color:pink">0</td>
+        <td id="d_0_LW_0_144" style="color:teal">0</td>
+        <td id="d_0_LW_1_145" style="color:teal">0</td>
+        <td id="d_0_LW_2_146" style="color:teal">1</td>
+        <td id="d_0_LW_3_147" style="color:teal">0</td>
+        <td id="d_0_LF_0_148" style="color:pink">0</td>
+        <td id="d_0_LF_1_149" style="color:pink">0</td>
+        <td id="d_0_LF_2_150" style="color:pink">0</td>
+        <td id="d_0_LF_3_151" style="color:pink">0</td>
+        <td id="d_0_CW_0_152" style="color:teal">0</td>
+        <td id="d_0_CW_1_153" style="color:teal">1</td>
+        <td id="d_0_CW_2_154" style="color:teal">0</td>
+        <td id="d_0_CW_3_155" style="color:teal">1</td>
+        <td id="d_0_CF_0_156" style="color:pink">0</td>
+        <td id="d_0_CF_1_157" style="color:pink">0</td>
+        <td id="d_0_CF_2_158" style="color:pink">0</td>
+        <td id="d_0_CF_3_159" style="color:pink">0</td>
+        <td id="d_0_VW_0_160" style="color:teal">1</td>
+        <td id="d_0_VW_1_161" style="color:teal">0</td>
+        <td id="d_0_VW_2_162" style="color:teal">1</td>
+        <td id="d_0_VW_3_163" style="color:teal">0</td>
+        <td id="d_0_VF_0_164" style="color:pink">0</td>
+        <td id="d_0_VF_1_165" style="color:pink">1</td>
+        <td id="d_0_VF_2_166" style="color:pink">0</td>
+        <td id="d_0_VF_3_167" style="color:pink">1</td>
     </tr>
     <tr><td>Hex</td>
         <td colspan="4" id="hex_0">0</td>
@@ -345,6 +444,16 @@ Encoded Data point format:
         <td colspan="4" id="hex_29">A</td>
         <td colspan="4" id="hex_30">1</td>
         <td colspan="4" id="hex_31">C</td>
+        <td colspan="4" id="hex_32">4</td>
+        <td colspan="4" id="hex_33">0</td>
+        <td colspan="4" id="hex_34">9</td>
+        <td colspan="4" id="hex_35">0</td>
+        <td colspan="4" id="hex_36">2</td>
+        <td colspan="4" id="hex_37">0</td>
+        <td colspan="4" id="hex_38">5</td>
+        <td colspan="4" id="hex_39">0</td>
+        <td colspan="4" id="hex_40">A</td>
+        <td colspan="4" id="hex_41">5</td>
     </tr>
     <tr><td>Word</td>
         <td colspan="8" id="word_0">00</td>
@@ -363,9 +472,18 @@ Encoded Data point format:
         <td colspan="8" id="word_13">A9</td>
         <td colspan="8" id="word_14">AA</td>
         <td colspan="8" id="word_15">1C</td>
+        <td colspan="8" id="word_16">40</td>
+        <td colspan="8" id="word_17">90</td>
+        <td colspan="8" id="word_18">20</td>
+        <td colspan="8" id="word_19">50</td>
+        <td colspan="8" id="word_20">A5</td>
     </tr>
 </table>
+
 ### TwoDatapoints.brclmb contents
 
 OLHCV_BINARYLexical Translation Details:
-- TBA
+
+00 00 00 07 83 16 01 04 10 41 10 2C 22 A9 AA 2C 40 90 20 50 A5 D4 19 72 25 0F 60
+
+Tables In progress.
