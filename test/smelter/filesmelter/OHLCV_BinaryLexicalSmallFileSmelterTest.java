@@ -20,7 +20,7 @@ import java.nio.file.Path;
 public class OHLCV_BinaryLexicalSmallFileSmelterTest{
     @Nested
     @DisplayName("Super Simple Tests")
-    public class SuperSimpleTests(){
+    public class SuperSimpleTests{
         @Test
         public void OneDataPointTest(@TempDir Path tempPath) throws Exception{
             //TODO
