@@ -4,8 +4,8 @@ The purpose of this directory is to contain known correct custom binary files ex
 
 ## OLHCV_BINARYLexical files
 These specific files were written with an OLHCV_BINARYLexical instance
-- [OneDatapoint.brclmb](https://github.com/iamlamb1988/tradedatacorp/blob/feature/junit-tests-for-smelters/test/resources/smelter/filesmelter/OneDatapoint.brclmb): [Content Details](#OneDatapoint.brclmb-contents)
-- [TwoDatapoints.brclmb](https://github.com/iamlamb1988/tradedatacorp/blob/feature/junit-tests-for-smelters/test/resources/smelter/filesmelter/TwoDatapoints.brclmb): [Content Details](#TwoDatapoints.brclmb-contents)
+- [OneDatapoint.brclmb](test/resources/smelter/filesmelter/OneDatapoint.brclmb): [Content Details](#OneDatapoint.brclmb-contents)
+- [TwoDatapoints.brclmb](test/resources/smelter/filesmelter/TwoDatapoints.brclmb): [Content Details](#TwoDatapoints.brclmb-contents)
 
 ### OneDatapoint.brclmb contents
 
