@@ -1,6 +1,7 @@
 # Description
 
 The purpose of this directory is to contain known correct custom binary files explaining the type of files and contents that will be revealed upon decoding.
+Custom binary file types (.brclmb) are encoded by [OHLCV_BinaryLexicalFileSmelter.java](src/smelter/filesmelter/OHLCV_BinaryLexicalFileSmelter.java) and decoded by [OHLCV_BinaryLexicalFileUnsmelter.java](/src/smelter/filesmelter/OHLCV_BinaryLexicalFileUnsmelter.java). Both encoding and decoding files make use of an [OHLCV_BinaryLexical.java](src/smelter/lexical/binary/OHLCV_BinaryLexical.java) instance.
 
 ## OLHCV_BINARYLexical files
 These specific files were written with an OLHCV_BINARYLexical instance
