@@ -5,8 +5,8 @@ Custom binary file types (.brclmb) are encoded by [OHLCV_BinaryLexicalFileSmelte
 
 ## OLHCV_BINARYLexical files
 These specific files were written with an OLHCV_BINARYLexical instance
-- [OneDatapoint.brclmb](test/resources/smelter/filesmelter/OneDatapoint.brclmb): [Content Details](#OneDatapoint.brclmb-contents)
-- [TwoDatapoints.brclmb](test/resources/smelter/filesmelter/TwoDatapoints.brclmb): [Content Details](#TwoDatapoints.brclmb-contents)
+- [OneDatapoint.brclmb](test/resources/smelter/filesmelter/OneDatapoint.brclmb): [Content Details](#onedatapointbrclmb-contents)
+- [TwoDatapoints.brclmb](test/resources/smelter/filesmelter/TwoDatapoints.brclmb): [Content Details](#twodatapointsbrclmb-contents)
 
 ### OneDatapoint.brclmb contents
 
