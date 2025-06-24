@@ -1,11 +1,14 @@
 /**
  * @author Bruce Lamb
- * @since 14 JUN 2025
+ * @since 22 JUN 2025
  */
 package tradedatacorp.test.java;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 
 /**
  * This class only used for fetching unit tests. Root of all files will be located in {@code tradedatacorp/test/resources}
@@ -15,6 +18,21 @@ public class TestResourceFetcher{
     private ClassLoader classLoader;
     public TestResourceFetcher(){
         classLoader = this.getClass().getClassLoader();
+    }
+
+    public Path getFilePath(String filePathName){
+        if(filePathName != null  && !filePathName.isEmpty()){
+            char firstChar = filePathName.charAt(0);
+            if(firstChar != '/') filePathName = RELATIVE_FULL_PATH + filePathName;
+        }
+        try{
+            URL resourceURL = classLoader.getResource(filePathName);
+            if(resourceURL == null) throw new Exception("Resource not found: " + filePathName);
+            return Paths.get(resourceURL.toURI());
+        }catch (Exception err){
+            err.printStackTrace();
+            return null;
+        }
     }
 
     /**

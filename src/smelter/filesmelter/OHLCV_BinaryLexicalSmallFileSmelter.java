@@ -244,6 +244,13 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
     }
 
     /**
+     * Sets the preset target file path for future file write operations.
+     *
+     * @param path the Path file location.
+     */
+    public void setTargetFile(Path path){targetFile = path;}
+
+    /**
      * Sets the relative path and name to target file.
      * The relative path is based on the location of current working directory.
      * @param relativePathName The path of the file for default write operations.
