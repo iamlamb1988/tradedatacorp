@@ -6,9 +6,6 @@ package tradedatacorp.smelter.filesmelter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.nio.file.Path;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -20,12 +17,14 @@ import tradedatacorp.smelter.filesmelter.OHLCV_BinaryLexicalFileUnsmelter;
 import tradedatacorp.test.java.TestResourceFetcher;
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
+
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 
 public class OHLCV_BinaryLexicalFileUnsmelterTest{
     TestResourceFetcher testFileFetcher;
-    public OHLCV_BinaryLexicalFileUnsmelterTest(){
+    OHLCV_BinaryLexicalFileUnsmelterTest(){
         testFileFetcher = new TestResourceFetcher();
     }
 

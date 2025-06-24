@@ -156,6 +156,13 @@ import java.time.Duration;
     /**
      * Sets the preset target file path for future file write operations.
      *
+     * @param path the Path file location.
+     */
+    public void setTargetFile(Path path){targetFile = path;}
+
+    /**
+     * Sets the preset target file path for future file write operations.
+     *
      * @param relativePathName the relative path name to use as the target file location.
      */
     public void setTargetFile(String relativePathName){targetFile = Path.of(relativePathName);}
