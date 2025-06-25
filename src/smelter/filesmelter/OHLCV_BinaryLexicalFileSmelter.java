@@ -317,8 +317,10 @@ import java.time.Duration;
             //simply move ALL elements from global Crucible to HotCrucible. should be a VERY easy task (right?)
             synchronized (crucible){
                 while(!crucible.isEmpty()){synchronized(hotCrucible){hotCrucible.add(crucible.remove());}}
+                synchronized(this){this.notifyAll();}
             }
             isFinished=true;
+            synchronized(this){this.notifyAll();}
         }
     }
 
@@ -346,16 +348,31 @@ import java.time.Duration;
             boolean[] currentDataStick;
             boolean isHotCrucibleEmpty;
 
-            synchronized(hotCrucible){isHotCrucibleEmpty = hotCrucible.isEmpty();}
-
-            while(!producer.isFinished || !isHotCrucibleEmpty){
-                synchronized(hotCrucible){ currentDataStick = hotCrucible.remove();}
-                for(int i=0; i<currentDataStick.length; ++i){
-                    synchronized (bitAligner){bitAligner.add(Boolean.valueOf(currentDataStick[i]));}
-                }
+            while(!producer.isFinished){
                 synchronized(hotCrucible){isHotCrucibleEmpty = hotCrucible.isEmpty();}
+                if(isHotCrucibleEmpty) synchronized(this){
+                    try{this.wait();}
+                    catch(Exception err){err.printStackTrace();}
+                }
+                else{
+                    synchronized(hotCrucible){currentDataStick = hotCrucible.remove();}
+                    for(int i=0; i<currentDataStick.length; ++i){
+                        synchronized(bitAligner){bitAligner.add(Boolean.valueOf(currentDataStick[i]));}
+                        synchronized(this){this.notifyAll();}
+                    }
+                }
+            }
+
+            //No longer need to sync hotCrucible, this is the only thread that will use it at this point.
+            while(!hotCrucible.isEmpty()){
+                currentDataStick = hotCrucible.remove();
+                for(int i=0; i<currentDataStick.length; ++i){
+                    synchronized(bitAligner){bitAligner.add(Boolean.valueOf(currentDataStick[i]));}
+                    synchronized(this){this.notifyAll();}
+                }
             }
             isFinished=true;
+            synchronized(this){this.notifyAll();}
         }
     }
 
@@ -386,15 +403,18 @@ import java.time.Duration;
         public void run(){
             boolean doesBitAlignerHave8Bits; //At least 8 bits. This var prevents blocking BitAligner use.
 
-            synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
-
             //Full 8-bit character case
             while(!producer.isFinished){
-                if(doesBitAlignerHave8Bits){
+                synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
+                if(!doesBitAlignerHave8Bits) synchronized(this){
+                    try{this.wait();}
+                    catch(Exception err){err.printStackTrace();}
+                }
+                else{
                     for(int i=0; i<8; ++i){currentByte[i] = bitAligner.remove().booleanValue();}
                     synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
+                    synchronized(this){this.notifyAll();}
                 }
-                synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
             }
 
             //No longer need to sync bitAligner, this is the only thread that will use it at this point.
@@ -403,6 +423,7 @@ import java.time.Duration;
                 while(bitAligner.size()>=8){
                     for(int i=0; i<8; ++i){currentByte[i]=bitAligner.remove().booleanValue();}
                     synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
+                    synchronized(this){this.notifyAll();}
                 }
 
                 //Fill in last incomplete byte if any
@@ -424,6 +445,7 @@ import java.time.Duration;
             }
 
             isFinished = true;
+            synchronized(this){this.notifyAll();}
         }
     }
 
@@ -458,43 +480,42 @@ import java.time.Duration;
         public void run(){
             Instant timeStart = Instant.now();
             byte[] shortByteChunk;
+            boolean isMoltenDataEmpty = true;
             boolean isShort = true; //Is the current state of moltenByteChunk incomplete?
+            int tmpMaxByteIndex;
 
             while(!producer.isFinished){
-                //1. Add bytes to the moltenByteChunk
-                if(nextChunkIndex < BYTE_CHUNK_SIZE){
-                    while(nextChunkIndex < BYTE_CHUNK_SIZE){
-                        synchronized(moltenData){
-                            if(moltenData.isEmpty() && nextChunkIndex > 0) {
-                                isShort = true;
-                                break;
-                            }
-                            moltenByteChunk[nextChunkIndex] = moltenData.remove().byteValue();
-                            ++nextChunkIndex;
-                        }
+                synchronized(moltenData){isMoltenDataEmpty = moltenData.isEmpty();}
+                if(isMoltenDataEmpty) synchronized(this){
+                    try{this.wait();}
+                    catch(Exception err){}
+                }
+                else{
+                    //1. Add bytes to the moltenByteChunk
+                    synchronized(moltenData){tmpMaxByteIndex = (moltenData.size() < BYTE_CHUNK_SIZE ? moltenData.size() : BYTE_CHUNK_SIZE);}
+                    for(int i=nextChunkIndex; i<tmpMaxByteIndex; ++i){
+                        synchronized(moltenData){moltenByteChunk[nextChunkIndex] = moltenData.remove().byteValue();}
+                        ++nextChunkIndex;
                     }
 
-                    if(isShort && Duration.between(timeStart,Instant.now()).toMillis() >= MAX_WAIT_TIME_MS){
-                        shortByteChunk = new byte[nextChunkIndex];
-                        for(int i=0; i<nextChunkIndex; ++i){
-                            shortByteChunk[i] = moltenByteChunk[i];
+                    isShort = (nextChunkIndex == BYTE_CHUNK_SIZE);
+                    if(isShort){
+                        if(Duration.between(timeStart,Instant.now()).toMillis() >= MAX_WAIT_TIME_MS){
+                            try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
+                            catch(Exception err){err.printStackTrace();}
+                            timeStart = Instant.now();
+                            nextChunkIndex=0;
                         }
-                        try{resultFile.write(shortByteChunk);}
+                    }else{
+                        try{resultFile.write(moltenByteChunk);}
                         catch(Exception err){err.printStackTrace();}
                         timeStart = Instant.now();
-                        isShort = false;
-                        nextChunkIndex = 0;
+                        nextChunkIndex=0;
                     }
-                }else{
-                    try{resultFile.write(moltenByteChunk);}
-                    catch(Exception err){err.printStackTrace();}
-                    timeStart = Instant.now();
-                    isShort = false;
-                    nextChunkIndex = 0;
                 }
             }
 
-            //Handle last bytes. At this point, this is the last working thread alive, no synchronizing required anymore.
+            //Handle last bytes. At this point, this is the last working thread alive, no more synchronizing.
             //If partially filled then write partial bytes
             if(nextChunkIndex > 0){
                 try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}

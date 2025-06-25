@@ -71,7 +71,7 @@ public class OHLCV_BinaryLexicalFileSmelterTest{
             ismatch = Files.mismatch(testFilePath,resultFilePath) == -1;
         }catch(Exception err){err.printStackTrace();}
 
-        assertTrue(ismatch);
+        assertTrue(ismatch,"Mismatch at index: ");
         //END CHANGE IN FUTURE
     }
 }
