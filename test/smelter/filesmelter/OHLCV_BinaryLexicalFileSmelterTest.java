@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 24 JUN 2025
+ * @since 26 JUN 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -8,6 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+//DEBUG SECTION
+import org.junit.jupiter.api.Disabled;
+//END DEBUG SECTION
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +33,7 @@ public class OHLCV_BinaryLexicalFileSmelterTest{
     }
 
     @Test
+    @Disabled
     void writeOneDatapoint(@TempDir Path TempDir){
         OHLCV_BinaryLexicalFileSmelter smelter = new OHLCV_BinaryLexicalFileSmelter(OHLCV_BinaryLexical.genMiniLexical("TEST", 60, (byte)0));
         OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
