@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 16 JUN 2025
+ * @since 26 JUN 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -154,6 +154,12 @@ import java.time.Duration;
 
     //OHLCV_BinaryLexicalFileSmelter methods
     /**
+     * Returns string of relative file path
+     * @return String of relative file path
+     */
+    public String getTargetStringFile(){return targetFile.toString();}
+
+    /**
      * Sets the preset target file path for future file write operations.
      *
      * @param path the Path file location.
@@ -222,67 +228,60 @@ import java.time.Duration;
         FileOutputStream resultFile;
         try{
             resultFile = new FileOutputStream(file.toFile(),false);
-        }
-        catch(Exception err){
+            //1.2 Initialize working variables
+            ArrayDeque<boolean[]> hotCrucible;
+            ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
+            ArrayDeque<Byte> moltenData; //bytes ready to be written
+            boolean[] header;
+            byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
+
+            synchronized(binaryTranslator){
+                //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
+                synchronized(dataQueue){
+                    hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
+                    binaryTranslator.setDataCount(dataQueue.size());
+                    header = binaryTranslator.getBinaryHeaderFlat();
+                    moltenData = new ArrayDeque<Byte>(((dataQueue.size() + header.length + 1) >>> 3));
+                }
+            }
+
+            //3. Add full bytes of header to molten data.
+            int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
+            for(int i=0; i<fullHeaderBytes; ++i){
+                moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));
+            }
+
+            //4. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
+            for(int i=fullHeaderBytes << 3; i<header.length; ++i){
+                bitAligner.add(Boolean.valueOf(header[i]));
+            }
+
+            //5. Start the data point assembly line
+            CrucibleToHotCrucible worker1 = new CrucibleToHotCrucible(hotCrucible);
+            HotCrucibleToBitAligner worker2 = new HotCrucibleToBitAligner(worker1, hotCrucible, bitAligner);
+            BitAlignerToMoltenData worker3 = new BitAlignerToMoltenData(worker2, bitAligner, moltenData);
+            MoltenDataToFile worker4 = new MoltenDataToFile(worker3, moltenData, resultFile, fileWriteByteChunkSize,500);
+
+            Thread t1 = new Thread(worker1, "worker1");
+            Thread t2 = new Thread(worker2, "worker2");
+            Thread t3 = new Thread(worker3, "worker3");
+            Thread t4 = new Thread(worker4, "worker4");
+
+            t1.start();
+            t2.start();
+            t3.start();
+            t4.start();
+
+            try{
+                t1.join();
+                t2.join();
+                t3.join();
+                t4.join();
+            }catch(Exception err){err.printStackTrace();}
+        }catch(Exception err){
             err.printStackTrace();
             return;
         }
-
-        //1.2 Initialize working variables
-        ArrayDeque<boolean[]> hotCrucible;
-        ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
-        ArrayDeque<Byte> moltenData; //bytes ready to be written
-        boolean[] header;
-        byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
-
-        CrucibleToHotCrucible worker1;
-        HotCrucibleToBitAligner worker2;
-        BitAlignerToMoltenData worker3;
-        MoltenDataToFile worker4;
-
-        synchronized(binaryTranslator){
-            //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
-            synchronized(dataQueue){
-                hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
-                binaryTranslator.setDataCount(dataQueue.size());
-                header = binaryTranslator.getBinaryHeaderFlat();
-                moltenData = new ArrayDeque<Byte>(((dataQueue.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
-            }
-        }
-
-        //3. Add full bytes of header to molten data.
-        int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
-        for(int i=0; i<fullHeaderBytes; ++i){
-            moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));
-        }
-
-        //4. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
-        for(int i=fullHeaderBytes << 3; i<header.length; ++i){
-            bitAligner.add(Boolean.valueOf(header[i]));
-        }
-
-        //5. Start the data point assembly line
-        worker1 = new CrucibleToHotCrucible(hotCrucible);
-        worker2 = new HotCrucibleToBitAligner(worker1, hotCrucible, bitAligner);
-        worker3 = new BitAlignerToMoltenData(worker2, bitAligner, moltenData);
-        worker4 = new MoltenDataToFile(worker3, moltenData, resultFile, fileWriteByteChunkSize,500);
-
-        Thread t1 = new Thread(worker1, "worker1");
-        Thread t2 = new Thread(worker2, "worker2");
-        Thread t3 = new Thread(worker3, "worker3");
-        Thread t4 = new Thread(worker4, "worker4");
-
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
-
-        try{
-            t1.join();
-            t2.join();
-            t3.join();
-            t4.join();
-        }catch(Exception err){err.printStackTrace();}
     }
 
     /**
@@ -314,11 +313,16 @@ import java.time.Duration;
 
         @Override
         public void run(){
-            //simply move ALL elements from global Crucible to HotCrucible. should be a VERY easy task (right?)
-            synchronized (crucible){
-                while(!crucible.isEmpty()){synchronized(hotCrucible){hotCrucible.add(crucible.remove());}}
+            synchronized(crucible){
+                while(!crucible.isEmpty()){
+                    synchronized(hotCrucible){
+                        hotCrucible.add(crucible.remove());
+                        hotCrucible.notifyAll();
+                    }
+                }
             }
             isFinished=true;
+            synchronized(hotCrucible){hotCrucible.notifyAll();}
         }
     }
 
@@ -346,16 +350,35 @@ import java.time.Duration;
             boolean[] currentDataStick;
             boolean isHotCrucibleEmpty;
 
-            synchronized(hotCrucible){isHotCrucibleEmpty = hotCrucible.isEmpty();}
-
-            while(!producer.isFinished || !isHotCrucibleEmpty){
-                synchronized(hotCrucible){ currentDataStick = hotCrucible.remove();}
-                for(int i=0; i<currentDataStick.length; ++i){
-                    synchronized (bitAligner){bitAligner.add(Boolean.valueOf(currentDataStick[i]));}
-                }
+            while(!producer.isFinished){
                 synchronized(hotCrucible){isHotCrucibleEmpty = hotCrucible.isEmpty();}
+                if(isHotCrucibleEmpty) synchronized(hotCrucible){
+                    try{hotCrucible.wait();}
+                    catch(Exception err){err.printStackTrace();}
+                }
+                else{
+                    synchronized(hotCrucible){currentDataStick = hotCrucible.remove();}
+                    for(int i=0; i<currentDataStick.length; ++i){
+                        synchronized(bitAligner){
+                            bitAligner.add(Boolean.valueOf(currentDataStick[i]));
+                            bitAligner.notifyAll();
+                        }
+                    }
+                }
+            }
+
+            //No longer need to sync hotCrucible, this is the only thread that will use it at this point.
+            while(!hotCrucible.isEmpty()){
+                currentDataStick = hotCrucible.remove();
+                for(int i=0; i<currentDataStick.length; ++i){
+                    synchronized(bitAligner){
+                        bitAligner.add(Boolean.valueOf(currentDataStick[i]));
+                        bitAligner.notifyAll();
+                    }
+                }
             }
             isFinished=true;
+            synchronized(bitAligner){bitAligner.notifyAll();}
         }
     }
 
@@ -386,15 +409,24 @@ import java.time.Duration;
         public void run(){
             boolean doesBitAlignerHave8Bits; //At least 8 bits. This var prevents blocking BitAligner use.
 
-            synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
-
             //Full 8-bit character case
             while(!producer.isFinished){
-                if(doesBitAlignerHave8Bits){
-                    for(int i=0; i<8; ++i){currentByte[i] = bitAligner.remove().booleanValue();}
-                    synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
-                }
                 synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
+                if(!doesBitAlignerHave8Bits) synchronized(bitAligner){
+                    try{bitAligner.wait();}
+                    catch(Exception err){err.printStackTrace();}
+                }else{
+                    for(int i=0; i<8; ++i){
+                        synchronized(bitAligner){
+                            currentByte[i] = bitAligner.remove().booleanValue();
+                            bitAligner.notifyAll();
+                        }
+                    }
+                    synchronized(moltenData){
+                        moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));
+                        moltenData.notifyAll();
+                    }
+                }
             }
 
             //No longer need to sync bitAligner, this is the only thread that will use it at this point.
@@ -402,7 +434,10 @@ import java.time.Duration;
                 //Fill in last full bytes.
                 while(bitAligner.size()>=8){
                     for(int i=0; i<8; ++i){currentByte[i]=bitAligner.remove().booleanValue();}
-                    synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
+                    synchronized(moltenData){
+                        moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));
+                        moltenData.notifyAll();
+                    }
                 }
 
                 //Fill in last incomplete byte if any
@@ -419,11 +454,15 @@ import java.time.Duration;
                         ++i;
                     }
 
-                    synchronized(moltenData){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));}
+                    synchronized(moltenData){ 
+                        moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));
+                        moltenData.notifyAll();
+                    }
                 }
             }
 
             isFinished = true;
+            synchronized(moltenData){moltenData.notifyAll();}
         }
     }
 
@@ -458,43 +497,42 @@ import java.time.Duration;
         public void run(){
             Instant timeStart = Instant.now();
             byte[] shortByteChunk;
+            boolean isMoltenDataEmpty = true;
             boolean isShort = true; //Is the current state of moltenByteChunk incomplete?
+            int tmpMaxByteIndex;
 
             while(!producer.isFinished){
-                //1. Add bytes to the moltenByteChunk
-                if(nextChunkIndex < BYTE_CHUNK_SIZE){
-                    while(nextChunkIndex < BYTE_CHUNK_SIZE){
-                        synchronized(moltenData){
-                            if(moltenData.isEmpty() && nextChunkIndex > 0) {
-                                isShort = true;
-                                break;
-                            }
-                            moltenByteChunk[nextChunkIndex] = moltenData.remove().byteValue();
-                            ++nextChunkIndex;
-                        }
+                synchronized(moltenData){isMoltenDataEmpty = moltenData.isEmpty();}
+                if(isMoltenDataEmpty) synchronized(moltenData){
+                    try{moltenData.wait();}
+                    catch(Exception err){err.printStackTrace();}
+                }
+                else{
+                    //1. Add bytes to the moltenByteChunk
+                    synchronized(moltenData){tmpMaxByteIndex = (moltenData.size() < BYTE_CHUNK_SIZE ? moltenData.size() : BYTE_CHUNK_SIZE);}
+                    for(int i=nextChunkIndex; i<tmpMaxByteIndex; ++i){
+                        synchronized(moltenData){moltenByteChunk[nextChunkIndex] = moltenData.remove().byteValue();}
+                        ++nextChunkIndex;
                     }
 
-                    if(isShort && Duration.between(timeStart,Instant.now()).toMillis() >= MAX_WAIT_TIME_MS){
-                        shortByteChunk = new byte[nextChunkIndex];
-                        for(int i=0; i<nextChunkIndex; ++i){
-                            shortByteChunk[i] = moltenByteChunk[i];
+                    isShort = (nextChunkIndex != BYTE_CHUNK_SIZE);
+                    if(isShort){
+                        if(Duration.between(timeStart,Instant.now()).toMillis() >= MAX_WAIT_TIME_MS){
+                            try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
+                            catch(Exception err){err.printStackTrace();}
+                            timeStart = Instant.now();
+                            nextChunkIndex=0;
                         }
-                        try{resultFile.write(shortByteChunk);}
+                    }else{
+                        try{resultFile.write(moltenByteChunk);}
                         catch(Exception err){err.printStackTrace();}
                         timeStart = Instant.now();
-                        isShort = false;
-                        nextChunkIndex = 0;
+                        nextChunkIndex=0;
                     }
-                }else{
-                    try{resultFile.write(moltenByteChunk);}
-                    catch(Exception err){err.printStackTrace();}
-                    timeStart = Instant.now();
-                    isShort = false;
-                    nextChunkIndex = 0;
                 }
             }
 
-            //Handle last bytes. At this point, this is the last working thread alive, no synchronizing required anymore.
+            //Handle last bytes. At this point, this is the last working thread alive, no more synchronizing.
             //If partially filled then write partial bytes
             if(nextChunkIndex > 0){
                 try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
