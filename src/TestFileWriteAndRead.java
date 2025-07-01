@@ -17,7 +17,6 @@ public class TestFileWriteAndRead{
 
         smelter.addData(stick1);
         smelter.addData(stick2);
-
         smelter.setTargetFile(binFileName);
         smelter.smelt();
 

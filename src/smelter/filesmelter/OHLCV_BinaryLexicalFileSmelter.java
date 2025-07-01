@@ -238,11 +238,9 @@ import java.time.Duration;
             synchronized(binaryTranslator){
                 //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
                 synchronized(dataQueue){
-                    System.out.println("DEBUG: Init Thread setting resource variables for threads.");
                     hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
                     binaryTranslator.setDataCount(dataQueue.size());
                     header = binaryTranslator.getBinaryHeaderFlat();
-                    System.out.println("DEBUG: Init Thread bit size: "+header.length);
                     moltenData = new ArrayDeque<Byte>(((dataQueue.size() + header.length + 1) >>> 3));
                 }
             }
@@ -252,13 +250,11 @@ import java.time.Duration;
             for(int i=0; i<fullHeaderBytes; ++i){
                 moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));
             }
-            System.out.println("DEBUG: Init Thread molten data byte count: "+moltenData.size()+" = " + (moltenData.size() << 3) + " bits");
 
             //4. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
             for(int i=fullHeaderBytes << 3; i<header.length; ++i){
                 bitAligner.add(Boolean.valueOf(header[i]));
             }
-            System.out.println("DEBUG: Init Thread bit aligner bit count: "+bitAligner.size());
 
             //5. Start the data point assembly line
             CrucibleToHotCrucible worker1 = new CrucibleToHotCrucible(hotCrucible);
@@ -317,23 +313,15 @@ import java.time.Duration;
 
         @Override
         public void run(){
-            int DEBUG_Count=0;
-            //simply move ALL elements from global Crucible to HotCrucible. should be a VERY easy task (right?)
             synchronized(crucible){
                 while(!crucible.isEmpty()){
-                    //DEBUG SECTION
-                    boolean[] DEBUG_binStick = crucible.peek();
-                    //END DEBUG SECTION
-                    synchronized(hotCrucible){hotCrucible.add(crucible.remove());}
-                    //DEBUG SECTION
-                    ++DEBUG_Count;
-                    System.out.println("DEBUG: W1 Adding next " + DEBUG_Count + " stick of length: " +DEBUG_binStick.length + " bit(s) to Hot Crucible");
-                    //END DEBUG SECTION
-                    synchronized(hotCrucible){hotCrucible.notifyAll();}
+                    synchronized(hotCrucible){
+                        hotCrucible.add(crucible.remove());
+                        hotCrucible.notifyAll();
+                    }
                 }
             }
             isFinished=true;
-            System.out.println("DEBUG: Worker 1 Finished");
             synchronized(hotCrucible){hotCrucible.notifyAll();}
         }
     }
@@ -362,28 +350,19 @@ import java.time.Duration;
             boolean[] currentDataStick;
             boolean isHotCrucibleEmpty;
 
-            int DEBUG_Add_Count = 0;
-            int DEBUG_Remove_Count = 0;
-
             while(!producer.isFinished){
                 synchronized(hotCrucible){isHotCrucibleEmpty = hotCrucible.isEmpty();}
                 if(isHotCrucibleEmpty) synchronized(hotCrucible){
-                    System.out.println("DEBUG: Worker 2 Waiting on hot crucible data.");
                     try{hotCrucible.wait();}
                     catch(Exception err){err.printStackTrace();}
-                    System.out.println("DEBUG: Worker 2 Finished waiting.");
                 }
                 else{
-                    synchronized(hotCrucible){
-                        currentDataStick = hotCrucible.remove();
-                        ++DEBUG_Remove_Count;
-                        System.out.println("DEBUG: W2 removing next "+DEBUG_Remove_Count+" from hot crucible.");
-                    }
+                    synchronized(hotCrucible){currentDataStick = hotCrucible.remove();}
                     for(int i=0; i<currentDataStick.length; ++i){
-                        synchronized(bitAligner){bitAligner.add(Boolean.valueOf(currentDataStick[i]));}
-                        ++DEBUG_Add_Count;
-                        System.out.println("DEBUG: W2 adding next "+DEBUG_Add_Count+" bit to aligner.");
-                        synchronized(bitAligner){bitAligner.notifyAll();}
+                        synchronized(bitAligner){
+                            bitAligner.add(Boolean.valueOf(currentDataStick[i]));
+                            bitAligner.notifyAll();
+                        }
                     }
                 }
             }
@@ -394,8 +373,6 @@ import java.time.Duration;
                 for(int i=0; i<currentDataStick.length; ++i){
                     synchronized(bitAligner){
                         bitAligner.add(Boolean.valueOf(currentDataStick[i]));
-                        ++DEBUG_Add_Count;
-                        System.out.println("DEBUG: W2 adding end game next "+DEBUG_Add_Count+" bit to aligner.");
                         bitAligner.notifyAll();
                     }
                 }
@@ -432,32 +409,23 @@ import java.time.Duration;
         public void run(){
             boolean doesBitAlignerHave8Bits; //At least 8 bits. This var prevents blocking BitAligner use.
 
-            int DEBUG_Add_Count=0;
-            int DEBUG_Remove_Count=0;
-
             //Full 8-bit character case
             while(!producer.isFinished){
                 synchronized(bitAligner){doesBitAlignerHave8Bits = bitAligner.size() >= 8;}
                 if(!doesBitAlignerHave8Bits) synchronized(bitAligner){
-                    System.out.println("DEBUG: Worker 3 Waiting on bit aligner bits.");
                     try{bitAligner.wait();}
                     catch(Exception err){err.printStackTrace();}
-                    System.out.println("DEBUG: Worker 3 Finished waiting.");
                 }else{
                     for(int i=0; i<8; ++i){
                         synchronized(bitAligner){
                             currentByte[i] = bitAligner.remove().booleanValue();
-                            ++DEBUG_Remove_Count;
-                            System.out.println("DEBUG: W3 removing next bit "+DEBUG_Remove_Count+" from bit aligner to a molten byte.");
                             bitAligner.notifyAll();
                         }
                     }
                     synchronized(moltenData){
                         moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));
-                        ++DEBUG_Add_Count;
-                        System.out.println("DEBUG: W3 adding next byte "+DEBUG_Add_Count+" to molten data.");
+                        moltenData.notifyAll();
                     }
-                    synchronized(moltenData){moltenData.notifyAll();}
                 }
             }
 
@@ -465,17 +433,11 @@ import java.time.Duration;
             if(!bitAligner.isEmpty()){
                 //Fill in last full bytes.
                 while(bitAligner.size()>=8){
-                    for(int i=0; i<8; ++i){
-                        currentByte[i]=bitAligner.remove().booleanValue();
-                        ++DEBUG_Remove_Count;
-                        System.out.println("DEBUG: W3 removing end game next bit "+DEBUG_Remove_Count+" from bit aligner to a molten byte.");   
-                    }
+                    for(int i=0; i<8; ++i){currentByte[i]=bitAligner.remove().booleanValue();}
                     synchronized(moltenData){
                         moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));
-                        ++DEBUG_Add_Count;
-                        System.out.println("DEBUG: W3 adding end game next byte "+DEBUG_Add_Count+" to molten data.");   
+                        moltenData.notifyAll();
                     }
-                    synchronized(moltenData){moltenData.notifyAll();}
                 }
 
                 //Fill in last incomplete byte if any
@@ -484,29 +446,22 @@ import java.time.Duration;
                     while(bitAligner.size()>0){
                         currentByte[i] = bitAligner.remove().booleanValue();
                         ++i;
-                        ++DEBUG_Remove_Count;
-                        System.out.println("DEBUG: W3 removing final next bit "+DEBUG_Remove_Count+" from bit aligner to a molten byte.");
                     }
 
                     //Pad remaining 0s to the right
                     while(i<8){
                         currentByte[i] = false;
                         ++i;
-                        ++DEBUG_Remove_Count;
-                        System.out.println("DEBUG: W3 setting excess bit "+DEBUG_Remove_Count);
                     }
 
                     synchronized(moltenData){ 
                         moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedInt(currentByte)));
-                        ++DEBUG_Add_Count;
-                        System.out.println("DEBUG: W3 adding end game final byte "+DEBUG_Add_Count+" to molten data.");
                         moltenData.notifyAll();
                     }
                 }
             }
 
             isFinished = true;
-            System.out.println("DEBUG: W3 finished");
             synchronized(moltenData){moltenData.notifyAll();}
         }
     }
@@ -546,16 +501,11 @@ import java.time.Duration;
             boolean isShort = true; //Is the current state of moltenByteChunk incomplete?
             int tmpMaxByteIndex;
 
-            int DEBUG_Add_Count=0;
-            int DEBUG_Remove_Count=0;
-
             while(!producer.isFinished){
                 synchronized(moltenData){isMoltenDataEmpty = moltenData.isEmpty();}
                 if(isMoltenDataEmpty) synchronized(moltenData){
-                    System.out.println("DEBUG: Worker 4 waiting on molten data.");
                     try{moltenData.wait();}
                     catch(Exception err){err.printStackTrace();}
-                    System.out.println("DEBUG: Worker 4 finished waiting.");
                 }
                 else{
                     //1. Add bytes to the moltenByteChunk
@@ -563,27 +513,21 @@ import java.time.Duration;
                     for(int i=nextChunkIndex; i<tmpMaxByteIndex; ++i){
                         synchronized(moltenData){moltenByteChunk[nextChunkIndex] = moltenData.remove().byteValue();}
                         ++nextChunkIndex;
-                        ++DEBUG_Remove_Count;
-                        System.out.println("DEBUG: W4 removing byte "+DEBUG_Remove_Count+" from moltenData to a byte chunk segment.");
                     }
 
-                    isShort = (nextChunkIndex == BYTE_CHUNK_SIZE);
+                    isShort = (nextChunkIndex != BYTE_CHUNK_SIZE);
                     if(isShort){
                         if(Duration.between(timeStart,Instant.now()).toMillis() >= MAX_WAIT_TIME_MS){
                             try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
                             catch(Exception err){err.printStackTrace();}
                             timeStart = Instant.now();
                             nextChunkIndex=0;
-                            ++DEBUG_Add_Count;
-                            System.out.println("DEBUG: W4 writing partial byte chunk "+DEBUG_Add_Count+" to file.");
                         }
                     }else{
                         try{resultFile.write(moltenByteChunk);}
                         catch(Exception err){err.printStackTrace();}
                         timeStart = Instant.now();
                         nextChunkIndex=0;
-                        ++DEBUG_Add_Count;
-                        System.out.println("DEBUG: W4 writing full byte chunk "+DEBUG_Add_Count+" to file.");
                     }
                 }
             }
@@ -593,8 +537,6 @@ import java.time.Duration;
             if(nextChunkIndex > 0){
                 try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
                 catch(Exception err){err.printStackTrace();}
-                ++DEBUG_Add_Count;
-                System.out.println("DEBUG: W4 writing inital end game byte chunk "+DEBUG_Add_Count+" to file.");
             }
 
             //Write as many full remaining byte chunks as possible
@@ -602,8 +544,6 @@ import java.time.Duration;
                 for(int i=0; i<BYTE_CHUNK_SIZE; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
                 try{resultFile.write(moltenByteChunk);}
                 catch(Exception err){err.printStackTrace();}
-                ++DEBUG_Add_Count;
-                System.out.println("DEBUG: W4 writing full end game byte chunk "+DEBUG_Add_Count+" to file.");
             }
 
             //Write last partial byte chunk (if it exists)
@@ -615,13 +555,10 @@ import java.time.Duration;
             }
             try{
                 resultFile.write(shortByteChunk);
-                ++DEBUG_Add_Count;
-                System.out.println("DEBUG: W4 writing final byte chunk "+DEBUG_Add_Count+" to file.");
                 resultFile.close();
             }
             catch(Exception err){err.printStackTrace();}
             isFinished = true;
-            System.out.println("DEBUG: W4 finished");
         }
     }
 }
