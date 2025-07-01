@@ -154,6 +154,12 @@ import java.time.Duration;
 
     //OHLCV_BinaryLexicalFileSmelter methods
     /**
+     * Returns string of relative file path
+     * @return String of relative file path
+     */
+    public String getTargetStringFile(){return targetFile.toString();}
+
+    /**
      * Sets the preset target file path for future file write operations.
      *
      * @param path the Path file location.
@@ -222,67 +228,64 @@ import java.time.Duration;
         FileOutputStream resultFile;
         try{
             resultFile = new FileOutputStream(file.toFile(),false);
-        }
-        catch(Exception err){
+            //1.2 Initialize working variables
+            ArrayDeque<boolean[]> hotCrucible;
+            ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
+            ArrayDeque<Byte> moltenData; //bytes ready to be written
+            boolean[] header;
+            byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
+
+            synchronized(binaryTranslator){
+                //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
+                synchronized(dataQueue){
+                    System.out.println("DEBUG: Init Thread setting resource variables for threads.");
+                    hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
+                    binaryTranslator.setDataCount(dataQueue.size());
+                    header = binaryTranslator.getBinaryHeaderFlat();
+                    System.out.println("DEBUG: Init Thread bit size: "+header.length);
+                    moltenData = new ArrayDeque<Byte>(((dataQueue.size() + header.length + 1) >>> 3));
+                }
+            }
+
+            //3. Add full bytes of header to molten data.
+            int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
+            for(int i=0; i<fullHeaderBytes; ++i){
+                moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));
+            }
+            System.out.println("DEBUG: Init Thread molten data byte count: "+moltenData.size()+" = " + (moltenData.size() << 3) + " bits");
+
+            //4. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
+            for(int i=fullHeaderBytes << 3; i<header.length; ++i){
+                bitAligner.add(Boolean.valueOf(header[i]));
+            }
+            System.out.println("DEBUG: Init Thread bit aligner bit count: "+bitAligner.size());
+
+            //5. Start the data point assembly line
+            CrucibleToHotCrucible worker1 = new CrucibleToHotCrucible(hotCrucible);
+            HotCrucibleToBitAligner worker2 = new HotCrucibleToBitAligner(worker1, hotCrucible, bitAligner);
+            BitAlignerToMoltenData worker3 = new BitAlignerToMoltenData(worker2, bitAligner, moltenData);
+            MoltenDataToFile worker4 = new MoltenDataToFile(worker3, moltenData, resultFile, fileWriteByteChunkSize,500);
+
+            Thread t1 = new Thread(worker1, "worker1");
+            Thread t2 = new Thread(worker2, "worker2");
+            Thread t3 = new Thread(worker3, "worker3");
+            Thread t4 = new Thread(worker4, "worker4");
+
+            t1.start();
+            t2.start();
+            t3.start();
+            t4.start();
+
+            try{
+                t1.join();
+                t2.join();
+                t3.join();
+                t4.join();
+            }catch(Exception err){err.printStackTrace();}
+        }catch(Exception err){
             err.printStackTrace();
             return;
         }
-
-        //1.2 Initialize working variables
-        ArrayDeque<boolean[]> hotCrucible;
-        ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
-        ArrayDeque<Byte> moltenData; //bytes ready to be written
-        boolean[] header;
-        byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
-
-        CrucibleToHotCrucible worker1;
-        HotCrucibleToBitAligner worker2;
-        BitAlignerToMoltenData worker3;
-        MoltenDataToFile worker4;
-
-        synchronized(binaryTranslator){
-            //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
-            synchronized(dataQueue){
-                hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
-                binaryTranslator.setDataCount(dataQueue.size());
-                header = binaryTranslator.getBinaryHeaderFlat();
-                moltenData = new ArrayDeque<Byte>(((dataQueue.size() + 1) >>> 3) + ((header.length + 1) >>> 3));
-            }
-        }
-
-        //3. Add full bytes of header to molten data.
-        int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
-        for(int i=0; i<fullHeaderBytes; ++i){
-            moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));
-        }
-
-        //4. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
-        for(int i=fullHeaderBytes << 3; i<header.length; ++i){
-            bitAligner.add(Boolean.valueOf(header[i]));
-        }
-
-        //5. Start the data point assembly line
-        worker1 = new CrucibleToHotCrucible(hotCrucible);
-        worker2 = new HotCrucibleToBitAligner(worker1, hotCrucible, bitAligner);
-        worker3 = new BitAlignerToMoltenData(worker2, bitAligner, moltenData);
-        worker4 = new MoltenDataToFile(worker3, moltenData, resultFile, fileWriteByteChunkSize,500);
-
-        Thread t1 = new Thread(worker1, "worker1");
-        Thread t2 = new Thread(worker2, "worker2");
-        Thread t3 = new Thread(worker3, "worker3");
-        Thread t4 = new Thread(worker4, "worker4");
-
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
-
-        try{
-            t1.join();
-            t2.join();
-            t3.join();
-            t4.join();
-        }catch(Exception err){err.printStackTrace();}
     }
 
     /**
@@ -318,10 +321,13 @@ import java.time.Duration;
             //simply move ALL elements from global Crucible to HotCrucible. should be a VERY easy task (right?)
             synchronized(crucible){
                 while(!crucible.isEmpty()){
+                    //DEBUG SECTION
+                    boolean[] DEBUG_binStick = crucible.peek();
+                    //END DEBUG SECTION
                     synchronized(hotCrucible){hotCrucible.add(crucible.remove());}
                     //DEBUG SECTION
                     ++DEBUG_Count;
-                    System.out.println("DEBUG: W1 Adding next " + DEBUG_Count + " stick to Hot Crucible");
+                    System.out.println("DEBUG: W1 Adding next " + DEBUG_Count + " stick of length: " +DEBUG_binStick.length + " bit(s) to Hot Crucible");
                     //END DEBUG SECTION
                     synchronized(hotCrucible){hotCrucible.notifyAll();}
                 }

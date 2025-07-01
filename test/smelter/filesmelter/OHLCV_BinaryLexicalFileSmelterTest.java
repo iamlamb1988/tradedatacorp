@@ -34,12 +34,12 @@ public class OHLCV_BinaryLexicalFileSmelterTest{
 
     @Test
     @Disabled
-    void writeOneDatapoint(@TempDir Path TempDir){
+    void writeOneDatapoint(@TempDir Path tempDir){
         OHLCV_BinaryLexicalFileSmelter smelter = new OHLCV_BinaryLexicalFileSmelter(OHLCV_BinaryLexical.genMiniLexical("TEST", 60, (byte)0));
         OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
 
         Path testFilePath = testFileFetcher.getFilePath("smelter/filesmelter/OneDatapoint.brclmb");
-        Path resultFilePath = TempDir.resolve("result.brclmb");
+        Path resultFilePath = tempDir.resolve("result.brclmb");
 
         smelter.addData(new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5));
         smelter.setTargetFile(resultFilePath);
@@ -57,12 +57,12 @@ public class OHLCV_BinaryLexicalFileSmelterTest{
     }
 
     @Test
-    void writeTwoDatapoints(@TempDir Path TempDir){
+    void writeTwoDatapoints(@TempDir Path tempDir){
         OHLCV_BinaryLexicalFileSmelter smelter = new OHLCV_BinaryLexicalFileSmelter(OHLCV_BinaryLexical.genMiniLexical("TEST", 60, (byte)0));
         OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
 
         Path testFilePath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
-        Path resultFilePath = TempDir.resolve("result.brclmb");
+        Path resultFilePath = tempDir.resolve("result.brclmb");
 
         smelter.addData(new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5));
         smelter.addData(new CandleStickFixedDouble(13, 4.1, 9.7, 2.2, 5, 15.6));
