@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 28 FEB 2025
+ * @since 01 JUL 2025
  */
 
 package tradedatacorp.smelter;
@@ -39,4 +39,25 @@ public interface Smelter<T>{
      * @param rawDataCollection the collection of data elements to process
      */
     public void smelt(Collection<T> rawDataCollection);
+
+    /**
+     * Processes a single data element.
+     *
+     * @param rawDataElement the data element to process
+     */
+    public String smeltToString(T rawDataElement);
+
+     /**
+     * Processes an array of data elements.
+     *
+     * @param rawDataArray the array of data elements to process
+     */
+    public String smeltToString(T[] rawDataArray);
+
+    /**
+     * Processes a collection of data elements.
+     *
+     * @param rawDataCollection the collection of data elements to process
+     */
+    public String smeltToString(Collection<T> rawDataCollection);
 }

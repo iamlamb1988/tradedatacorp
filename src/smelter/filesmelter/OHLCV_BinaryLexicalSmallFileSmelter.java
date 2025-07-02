@@ -79,6 +79,27 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
         writeDataToNewFile(targetFile, rawDataQueue);
     }
 
+    /**
+     * Processes a single data element.
+     *
+     * @param rawDataElement the data element to process
+     */
+    public String smeltToString(StickDouble rawDataElement){return null;}
+
+     /**
+     * Processes an array of data elements.
+     *
+     * @param rawDataArray the array of data elements to process
+     */
+    public String smeltToString(StickDouble[] rawDataArray){return null;}
+
+    /**
+     * Processes a collection of data elements.
+     *
+     * @param rawDataCollection the collection of data elements to process
+     */
+    public String smeltToString(Collection<StickDouble> rawDataCollection){return null;}
+
     //SmelterStateful Overrides
     /**
      * Adds {@code dataStick} to {@code crucible}.
