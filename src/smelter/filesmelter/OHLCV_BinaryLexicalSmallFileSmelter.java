@@ -46,7 +46,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
             rawDataQueue = new ArrayDeque<>(1);
             rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
         }
-        writeDataToNewFile(targetFile, rawDataQueue);
+        writeDataToNewFile(targetFile, rawDataQueue, true);
     }
 
     /**
@@ -61,7 +61,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
                 rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
             }
         }
-        writeDataToNewFile(targetFile, rawDataQueue);
+        writeDataToNewFile(targetFile, rawDataQueue, true);
     }
 
     /**
@@ -76,29 +76,54 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
                 rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
             }
         }
-        writeDataToNewFile(targetFile, rawDataQueue);
+        writeDataToNewFile(targetFile, rawDataQueue, true);
     }
 
     /**
      * Processes a single data element.
      *
-     * @param rawDataElement the data element to process
+     * @param dataStick the data element to process
      */
-    public String smeltToString(StickDouble rawDataElement){return null;}
+    public String smeltToString(StickDouble dataStick){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(dataStick){
+            rawDataQueue = new ArrayDeque<>(1);
+            rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        }
+        return writeDataToNewFile(targetFile, rawDataQueue, false);
+    }
 
      /**
      * Processes an array of data elements.
      *
-     * @param rawDataArray the array of data elements to process
+     * @param stickArray the array of data elements to process
      */
-    public String smeltToString(StickDouble[] rawDataArray){return null;}
+    public String smeltToString(StickDouble[] stickArray){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(stickArray){
+            rawDataQueue = new ArrayDeque<>(stickArray.length);
+            for(StickDouble stick : stickArray){
+                rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
+            }
+        }
+        return writeDataToNewFile(targetFile, rawDataQueue, false);
+    }
 
     /**
      * Processes a collection of data elements.
      *
-     * @param rawDataCollection the collection of data elements to process
+     * @param stickDataCollection the collection of data elements to process
      */
-    public String smeltToString(Collection<StickDouble> rawDataCollection){return null;}
+    public String smeltToString(Collection<StickDouble> stickDataCollection){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(stickDataCollection){
+            rawDataQueue = new ArrayDeque<boolean[]>(stickDataCollection.size());
+            for(StickDouble stick : stickDataCollection){
+                rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
+            }
+        }
+        return writeDataToNewFile(targetFile, rawDataQueue, false);
+    }
 
     //SmelterStateful Overrides
     /**
@@ -138,7 +163,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
      * Writes stored data in {@code crucible} to {@code targetFile} in accordance with the {@code binaryLexical}.
      */
     @Override
-    public void smelt(){writeDataToNewFile(targetFile,crucible);}
+    public void smelt(){writeDataToNewFile(targetFile, crucible, true);}
 
     //FileSmelterStateful Overrides
     /**
@@ -146,7 +171,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
      * @param destinationPathName The file where the binary data will be written to.
      */
     @Override
-    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
+    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible,true);}
 
     //OHLCV_BinaryLexicalFileSmelter methods
     /**
@@ -155,17 +180,13 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
      * @param dataQueue The queue containing the binary data that adheres to {@code binaryLexical}.
      * NOTE: If binaryLexical bits change, the dataQueue boolean[] may be incompatible with change.
      */
-    public void writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue){
+    public String writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue, boolean toFile){
         //1. Initialize variables
         //1.1 Open resultFile to begin writing (OutputFileStream)
         FileOutputStream resultFile;
-        try{
-            resultFile = new FileOutputStream(file.toFile(),false);
-        }
-        catch(Exception err){
-            err.printStackTrace();
-            return;
-        }
+        DataWriter returnData;
+        if(toFile) returnData = new FileWriter(file);
+        else returnData = new StringWriter();
 
         //1.2 Initialize working variables
         ArrayDeque<boolean[]> hotCrucible;
@@ -215,8 +236,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
 
             while(moltenData.size() >= fileWriteByteChunkSize){
                 for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
-                try{resultFile.write(moltenByteChunk);}
-                catch(Exception err){ err.printStackTrace();}
+                returnData.writeBytes(moltenByteChunk);
             }
         }
 
@@ -229,16 +249,14 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
 
         while(moltenData.size() >= fileWriteByteChunkSize){
             for(int i=0; i<fileWriteByteChunkSize; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
-            try{resultFile.write(moltenByteChunk);}
-            catch(Exception err){ err.printStackTrace();}
+            returnData.writeBytes(moltenByteChunk);
         }
 
         //7.2 Write as many full bytes as possible (if any, should be less than fileWriteByteChunkSize)
         if(moltenData.size()>0){
             moltenByteChunk = new byte[moltenData.size()];
             for(int i=0; moltenData.size()>0; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
-            try{resultFile.write(moltenByteChunk);}
-            catch(Exception err){err.printStackTrace();}
+            returnData.writeBytes(moltenByteChunk);
         }
 
         //7.3 Write last incomplete byte to file with appropriate left shift (extra bits will be)
@@ -256,12 +274,11 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
                 lastByte[i]=false;
                 ++i;
             }
-            try{resultFile.write((byte)(BinaryTools.toUnsignedInt(lastByte)));}
-            catch(Exception err){ err.printStackTrace();}
+            returnData.writeBytes(new byte[]{(byte)(BinaryTools.toUnsignedInt(lastByte))});
         }
 
         //8. Close file.
-        try{resultFile.close();}catch(Exception err){err.printStackTrace();}
+        return returnData.finalizeData();
     }
 
     /**
@@ -293,4 +310,65 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
     public void setAbsoluteFromRelativeTargetFile(String relativePathName){
         targetFile = Path.of(relativePathName).toAbsolutePath();
     }
+
+    private abstract class DataWriter{
+        protected abstract void writeBytes(byte[] nextBytes);
+        protected abstract void writeBytes(byte[] nextBytes, int startIndex, int length);
+        protected abstract String finalizeData();
+    }
+
+    protected class FileWriter extends DataWriter{
+        private FileOutputStream resultFile;
+        private FileWriter(Path path){
+            try{resultFile = new FileOutputStream(path.toFile(),false);}
+            catch(Exception err){err.printStackTrace();}
+        }
+
+        @Override
+        protected void writeBytes(byte[] nextBytes){
+            try{resultFile.write(nextBytes);}
+            catch(Exception err){
+                err.printStackTrace();
+                try{resultFile.close();}
+                catch(Exception err2){err2.printStackTrace();}
+            }
+        }
+
+        @Override
+        protected void writeBytes(byte[] nextBytes, int startIndex, int length){
+            try{resultFile.write(nextBytes,0,length);}
+            catch(Exception err){
+                err.printStackTrace();
+                try{resultFile.close();}
+                catch(Exception err2){err2.printStackTrace();}
+            }
+        }
+
+        @Override
+        protected String finalizeData(){
+            try{resultFile.close();}
+            catch(Exception err){err.printStackTrace();}
+            return null;
+        }
+    }
+
+    private class StringWriter extends DataWriter{
+        private StringBuilder strbldr;
+        private StringWriter(){strbldr = new StringBuilder();}
+
+        @Override
+        protected void writeBytes(byte[] nextBytes){
+            for(byte b : nextBytes){strbldr.append((char)b);}
+        }
+
+        @Override
+        protected void writeBytes(byte[] nextBytes, int startIndex, int length){
+            int limit = startIndex + length;
+            for(; startIndex<limit; ++startIndex){strbldr.append((char)nextBytes[startIndex]);}
+        }
+
+        @Override
+        protected String finalizeData(){return strbldr.toString();}
+    }
+
 }
