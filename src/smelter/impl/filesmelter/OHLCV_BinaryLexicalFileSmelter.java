@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 26 JUN 2025
+ * @since 04 JUL 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -13,6 +13,10 @@ import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
+
+import tradedatacorp.smelter.filesmelter.FileSmelterStateful;
+import tradedatacorp.smelter.stringsmelter.StringSmelterStateful;
+
 import java.util.ArrayDeque;
 import java.time.Instant;
 import java.time.Duration;
@@ -22,7 +26,7 @@ import java.time.Duration;
  * This class has a preset Path that represents the file location and name of where the file will be written.
  * This class has a {@link OHLCV_BinaryLexical} that specifies the bit compression formats of OHLCV Stick data.
  */
- public class OHLCV_BinaryLexicalFileSmelter implements FileSmelterStateful<StickDouble>{
+public class OHLCV_BinaryLexicalFileSmelter implements StringSmelterStateful<StickDouble>, FileSmelterStateful<StickDouble>{
     private OHLCV_BinaryLexical binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
@@ -39,67 +43,6 @@ import java.time.Duration;
         binaryTranslator = originalTranslator.clone();
         targetFile = null;
         crucible = new ArrayDeque<boolean[]>();
-    }
-
-    //Smelter Overrides
-    /**
-     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, containing exactly one data point represented by the given {@code dataStick}.
-     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data.
-     * 
-     * @param dataStick The {@link StickDouble} instance to serialize and write to the file.
-     */
-    @Override
-    public void smelt(StickDouble dataStick){
-        ArrayDeque<boolean[]> rawDataQueue;
-        synchronized(dataStick){
-            rawDataQueue = new ArrayDeque<>(1);
-            rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
-        }
-        writeDataToNewFile(targetFile, rawDataQueue);
-    }
-
-    /**
-     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, 
-     * containing data points represented by the provided array of {@link StickDouble} instances.
-     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data points.
-     *
-     * @param rawDataArray the array of {@link StickDouble} instances to serialize and write to the file.
-     */
-    @Override
-    public void smelt(StickDouble[] rawDataArray){
-        synchronized(rawDataArray){
-            ArrayDeque<boolean[]> hotCrucible = new ArrayDeque<boolean[]>(rawDataArray.length);
-            for(int i=0; i<rawDataArray.length; ++i){
-                hotCrucible.add(binaryTranslator.getBinaryDataFlat(rawDataArray[i]));
-            }
-            writeDataToNewFile(targetFile, hotCrucible);
-        }
-    }
-
-    /**
-     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, 
-     * containing data points represented by the provided collection of {@link StickDouble} instances.
-     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data points.
-     *
-     * @param rawDataCollection the collection of {@link StickDouble} instances to serialize and write to the file.
-     */
-    @Override
-    public void smelt(Collection<StickDouble> rawDataCollection){
-        boolean isQueue;
-        synchronized(rawDataCollection){isQueue = (rawDataCollection instanceof ArrayDeque<StickDouble>);}
-        if(isQueue) smeltQueueToFile(targetFile,(ArrayDeque<StickDouble>)rawDataCollection);
-
-        ArrayDeque<boolean[]> hotCrucible;
-        synchronized(rawDataCollection){
-            hotCrucible = new ArrayDeque<boolean[]>(rawDataCollection.size());
-            Iterator<StickDouble> it = rawDataCollection.iterator();
-            StickDouble next;
-            while(it.hasNext()){
-                next = it.next();
-                hotCrucible.add(binaryTranslator.getBinaryDataFlat(next));
-            }
-        }
-        writeDataToNewFile(targetFile,hotCrucible);
     }
 
     //SmelterStateful Overrides
@@ -137,20 +80,147 @@ import java.time.Duration;
         }
     }
 
+    //FileSmelter Overrides from FileSmelterStateful
     /**
-     * Writes all data currently stored in this class's crucible to the preset target file.
-     * All data will be removed from the crucible upon completion.
+     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, containing exactly one data point represented by the given {@code dataStick}.
+     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data.
+     * 
+     * @param dataStick The {@link StickDouble} instance to serialize and write to the file.
+     * @param destinationPathName The resultant file that will be created.
      */
     @Override
-    public void smelt(){writeDataToNewFile(targetFile,crucible);}
+    public void smeltToFile(StickDouble dataStick, Path destinationPathName){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(dataStick){
+            rawDataQueue = new ArrayDeque<>(1);
+            rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        }
+        writeDataToNewFile(destinationPathName, rawDataQueue, true);
+    }
+
+    /**
+     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, 
+     * containing data points represented by the provided array of {@link StickDouble} instances.
+     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data points.
+     *
+     * @param dataStickArray the array of {@link StickDouble} instances to serialize and write to the file.
+     * @param destinationPathName The resultant file that will be created.
+     */
+    @Override
+    public void smeltToFile(StickDouble[] dataStickArray, Path destinationPathName){
+        synchronized(dataStickArray){
+            ArrayDeque<boolean[]> hotCrucible = new ArrayDeque<boolean[]>(dataStickArray.length);
+            for(int i=0; i<dataStickArray.length; ++i){
+                hotCrucible.add(binaryTranslator.getBinaryDataFlat(dataStickArray[i]));
+            }
+            writeDataToNewFile(destinationPathName, hotCrucible, true);
+        }
+    }
+
+    /**
+     * Writes a file to the preset target path using the preset {@link OHLCV_BinaryLexical}, 
+     * containing data points represented by the provided collection of {@link StickDouble} instances.
+     * Note: Data loss may occur if this class's lexical bitfields are too small to represent the data points.
+     *
+     * @param rawDataCollection the collection of {@link StickDouble} instances to serialize and write to the file.
+     * @param destinationPathName The resultant file that will be created.
+     */
+    @Override
+    public void smeltToFile(Collection<StickDouble> rawDataCollection, Path destinationPathName){
+        boolean isQueue;
+        synchronized(rawDataCollection){isQueue = (rawDataCollection instanceof ArrayDeque<StickDouble>);}
+        if(isQueue) smeltQueueToFile(destinationPathName,(ArrayDeque<StickDouble>)rawDataCollection);
+
+        ArrayDeque<boolean[]> hotCrucible;
+        synchronized(rawDataCollection){
+            hotCrucible = new ArrayDeque<boolean[]>(rawDataCollection.size());
+            Iterator<StickDouble> it = rawDataCollection.iterator();
+            StickDouble next;
+            while(it.hasNext()){
+                next = it.next();
+                hotCrucible.add(binaryTranslator.getBinaryDataFlat(next));
+            }
+        }
+        writeDataToNewFile(destinationPathName,hotCrucible,true);
+    }
 
     //FileSmelterStateful Overrides
+    @Override
+    public void smeltToFile(StickDouble dataStick){smeltToFile(dataStick,targetFile);}
+
+    @Override
+    public void smeltToFile(StickDouble[] rawDataArray){smeltToFile(rawDataArray,targetFile);}
+
+    @Override
+    public void smeltToFile(Collection<StickDouble> rawDataCollection){smeltToFile(rawDataCollection,targetFile);}
+
+    @Override
+    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible,true);}
+
+    @Override
+    public void smeltToFile(){writeDataToNewFile(targetFile,crucible,true);}
+
+    //StringSmelter Overides from StringSmelterStateful
     /**
-     * Writes all data currently stored in this class's crucible to the specified target file.
-     * All data will be removed from the crucible upon completion.
+     * Processes a single data element.
+     *
+     * @param rawDataElement the data element to process
      */
     @Override
-    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible);}
+    public String smeltToString(StickDouble dataStick){
+        ArrayDeque<boolean[]> rawDataQueue;
+        synchronized(dataStick){
+            rawDataQueue = new ArrayDeque<>(1);
+            rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
+        }
+        return writeDataToNewFile(targetFile, rawDataQueue, false);
+    }
+
+    /**
+     * Processes an array of data elements.
+     *
+     * @param rawDataArray the array of data elements to process
+     */
+    @Override
+    public String smeltToString(StickDouble[] rawDataArray){
+        synchronized(rawDataArray){
+            ArrayDeque<boolean[]> hotCrucible = new ArrayDeque<boolean[]>(rawDataArray.length);
+            for(int i=0; i<rawDataArray.length; ++i){
+                hotCrucible.add(binaryTranslator.getBinaryDataFlat(rawDataArray[i]));
+            }
+            return writeDataToNewFile(targetFile, hotCrucible, false);
+        }
+    }
+
+    /**
+     * Processes a collection of data elements.
+     *
+     * @param rawDataCollection the collection of data elements to process
+     */
+    public String smeltToString(Collection<StickDouble> rawDataCollection){
+        boolean isQueue;
+        synchronized(rawDataCollection){isQueue = (rawDataCollection instanceof ArrayDeque<StickDouble>);}
+        if(isQueue) smeltQueueToFile(targetFile,(ArrayDeque<StickDouble>)rawDataCollection);
+
+        ArrayDeque<boolean[]> hotCrucible;
+        synchronized(rawDataCollection){
+            hotCrucible = new ArrayDeque<boolean[]>(rawDataCollection.size());
+            Iterator<StickDouble> it = rawDataCollection.iterator();
+            StickDouble next;
+            while(it.hasNext()){
+                next = it.next();
+                hotCrucible.add(binaryTranslator.getBinaryDataFlat(next));
+            }
+        }
+        return writeDataToNewFile(targetFile,hotCrucible,false);
+    }
+
+    //StringSmelterStateful Overrides
+    /**
+     * Processes all data elements currently stored in the crucible.
+     */
+    @Override
+    public String smeltToString(){return writeDataToNewFile(targetFile,crucible,false);}
 
     //OHLCV_BinaryLexicalFileSmelter methods
     /**
@@ -197,7 +267,7 @@ import java.time.Duration;
                 }
             }   
         }
-        writeDataToNewFile(destinationPathName, hotCrucible);
+        writeDataToNewFile(destinationPathName, hotCrucible, true);
     }
 
     /**
@@ -223,65 +293,125 @@ import java.time.Duration;
      * @param file the target file {@link Path} where binary data will be written; the file will be created or overwritten.
      * @param dataQueue a queue of boolean arrays, each representing a single data record to serialize and write.
      */
-    public void writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue){
+    public String writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue, boolean toFile){
         //1. Initialize variables
-        FileOutputStream resultFile;
-        try{
-            resultFile = new FileOutputStream(file.toFile(),false);
-            //1.2 Initialize working variables
-            ArrayDeque<boolean[]> hotCrucible;
-            ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
-            ArrayDeque<Byte> moltenData; //bytes ready to be written
-            boolean[] header;
-            byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
+        DataWriter returnData;
+        if(toFile) returnData = new FileWriter(file);
+        else returnData = new StringWriter();
 
-            synchronized(binaryTranslator){
-                //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
-                synchronized(dataQueue){
-                    hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
-                    binaryTranslator.setDataCount(dataQueue.size());
-                    header = binaryTranslator.getBinaryHeaderFlat();
-                    moltenData = new ArrayDeque<Byte>(((dataQueue.size() + header.length + 1) >>> 3));
-                }
+        //1.2 Initialize working variables
+        ArrayDeque<boolean[]> hotCrucible;
+        ArrayDeque<Boolean> bitAligner = new ArrayDeque<Boolean>(); //Used to store partial bits for alignment.
+        ArrayDeque<Byte> moltenData; //bytes ready to be written
+        boolean[] header;
+        byte[] moltenByteChunk = new byte[fileWriteByteChunkSize]; //Chunk to be actively written when full.
+
+        synchronized(binaryTranslator){
+            //2. Set boolean[] header based on binaryLexical settings and localCrubible size.
+            synchronized(dataQueue){
+                hotCrucible = new ArrayDeque<boolean[]>(dataQueue.size());
+                binaryTranslator.setDataCount(dataQueue.size());
+                header = binaryTranslator.getBinaryHeaderFlat();
+                moltenData = new ArrayDeque<Byte>(((dataQueue.size() + header.length + 1) >>> 3));
             }
-
-            //3. Add full bytes of header to molten data.
-            int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
-            for(int i=0; i<fullHeaderBytes; ++i){
-                moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));
-            }
-
-            //4. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
-            for(int i=fullHeaderBytes << 3; i<header.length; ++i){
-                bitAligner.add(Boolean.valueOf(header[i]));
-            }
-
-            //5. Start the data point assembly line
-            CrucibleToHotCrucible worker1 = new CrucibleToHotCrucible(hotCrucible);
-            HotCrucibleToBitAligner worker2 = new HotCrucibleToBitAligner(worker1, hotCrucible, bitAligner);
-            BitAlignerToMoltenData worker3 = new BitAlignerToMoltenData(worker2, bitAligner, moltenData);
-            MoltenDataToFile worker4 = new MoltenDataToFile(worker3, moltenData, resultFile, fileWriteByteChunkSize,500);
-
-            Thread t1 = new Thread(worker1, "worker1");
-            Thread t2 = new Thread(worker2, "worker2");
-            Thread t3 = new Thread(worker3, "worker3");
-            Thread t4 = new Thread(worker4, "worker4");
-
-            t1.start();
-            t2.start();
-            t3.start();
-            t4.start();
-
-            try{
-                t1.join();
-                t2.join();
-                t3.join();
-                t4.join();
-            }catch(Exception err){err.printStackTrace();}
-        }catch(Exception err){
-            err.printStackTrace();
-            return;
         }
+
+        //3. Add full bytes of header to molten data.
+        int fullHeaderBytes = header.length >>> 3; //everything except last complete byte (if it exists)
+        for(int i=0; i<fullHeaderBytes; ++i){moltenData.add(Byte.valueOf((byte)BinaryTools.toUnsignedIntFromBoolSubset(header,i << 3,8)));}
+
+        //4. If not memory alligned, add last part of header. (Should skip loop if perfectly aligned by 8 bits)
+        for(int i=fullHeaderBytes << 3; i<header.length; ++i){bitAligner.add(Boolean.valueOf(header[i]));}
+
+        //5. Start the data point assembly line
+        CrucibleToHotCrucible worker1 = new CrucibleToHotCrucible(hotCrucible);
+        HotCrucibleToBitAligner worker2 = new HotCrucibleToBitAligner(worker1, hotCrucible, bitAligner);
+        BitAlignerToMoltenData worker3 = new BitAlignerToMoltenData(worker2, bitAligner, moltenData);
+        MoltenDataToFile worker4 = new MoltenDataToFile(worker3, moltenData, returnData, fileWriteByteChunkSize,500);
+
+        Thread t1 = new Thread(worker1, "worker1");
+        Thread t2 = new Thread(worker2, "worker2");
+        Thread t3 = new Thread(worker3, "worker3");
+        Thread t4 = new Thread(worker4, "worker4");
+
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+
+        try{
+            t1.join();
+            t2.join();
+            t3.join();
+            t4.join();
+        }catch(Exception err){err.printStackTrace();}
+        while(!worker4.isFinished){
+            synchronized(returnData){
+                try{returnData.wait();}
+                catch(Exception err){err.printStackTrace();}
+            }
+        }
+        return returnData.finalizeData();
+    }
+
+    private abstract class DataWriter{
+        protected abstract void writeBytes(byte[] nextBytes);
+        protected abstract void writeBytes(byte[] nextBytes, int startIndex, int length);
+        protected abstract String finalizeData();
+    }
+
+    protected class FileWriter extends DataWriter{
+        private FileOutputStream resultFile;
+        private FileWriter(Path path){
+            try{resultFile = new FileOutputStream(path.toFile(),false);}
+            catch(Exception err){err.printStackTrace();}
+        }
+
+        @Override
+        protected void writeBytes(byte[] nextBytes){
+            try{resultFile.write(nextBytes);}
+            catch(Exception err){
+                err.printStackTrace();
+                try{resultFile.close();}
+                catch(Exception err2){err2.printStackTrace();}
+            }
+        }
+
+        @Override
+        protected void writeBytes(byte[] nextBytes, int startIndex, int length){
+            try{resultFile.write(nextBytes,0,length);}
+            catch(Exception err){
+                err.printStackTrace();
+                try{resultFile.close();}
+                catch(Exception err2){err2.printStackTrace();}
+            }
+        }
+
+        @Override
+        protected String finalizeData(){
+            try{resultFile.close();}
+            catch(Exception err){err.printStackTrace();}
+            return null;
+        }
+    }
+
+    private class StringWriter extends DataWriter{
+        private StringBuilder strbldr;
+        private StringWriter(){strbldr = new StringBuilder();}
+
+        @Override
+        protected void writeBytes(byte[] nextBytes){
+            for(byte b : nextBytes){strbldr.append((char)b);}
+        }
+
+        @Override
+        protected void writeBytes(byte[] nextBytes, int startIndex, int length){
+            int limit = startIndex + length;
+            for(; startIndex<limit; ++startIndex){strbldr.append((char)nextBytes[startIndex]);}
+        }
+
+        @Override
+        protected String finalizeData(){return strbldr.toString();}
     }
 
     /**
@@ -290,7 +420,7 @@ import java.time.Duration;
      * to process and write data in parallel.
      * The {@code isFinished} flag is used to signal when a worker has completed its task.
      *
-     * @see #writeDataToNewFile(Path, ArrayDeque)
+     * @see #writeDataToNewFile(Path, ArrayDeque, true)
      */
     private abstract class TempAssemblyWorker{
         protected volatile boolean isFinished;
@@ -475,17 +605,17 @@ import java.time.Duration;
     private class MoltenDataToFile extends TempAssemblyWorker implements Runnable{
         private BitAlignerToMoltenData producer;
         private ArrayDeque<Byte> moltenData;
-        private FileOutputStream resultFile;
+        private DataWriter result;
         private byte[] moltenByteChunk;
         private int nextChunkIndex;
         private final int BYTE_CHUNK_SIZE;
         private final int MAX_WAIT_TIME_MS;
 
-        private MoltenDataToFile(BitAlignerToMoltenData producer, ArrayDeque<Byte> productSource, FileOutputStream resultFile, int byteChunkSize, int maxWaitTimeMilliseconds){
+        private MoltenDataToFile(BitAlignerToMoltenData producer, ArrayDeque<Byte> productSource, DataWriter result, int byteChunkSize, int maxWaitTimeMilliseconds){
             super();
             this.producer = producer;
             moltenData = productSource;
-            this.resultFile = resultFile;
+            this.result = result;
             moltenByteChunk = new byte[byteChunkSize];
             nextChunkIndex = 0;
             BYTE_CHUNK_SIZE=byteChunkSize;
@@ -518,14 +648,12 @@ import java.time.Duration;
                     isShort = (nextChunkIndex != BYTE_CHUNK_SIZE);
                     if(isShort){
                         if(Duration.between(timeStart,Instant.now()).toMillis() >= MAX_WAIT_TIME_MS){
-                            try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
-                            catch(Exception err){err.printStackTrace();}
+                            result.writeBytes(moltenByteChunk,0,nextChunkIndex);
                             timeStart = Instant.now();
                             nextChunkIndex=0;
                         }
                     }else{
-                        try{resultFile.write(moltenByteChunk);}
-                        catch(Exception err){err.printStackTrace();}
+                        result.writeBytes(moltenByteChunk);
                         timeStart = Instant.now();
                         nextChunkIndex=0;
                     }
@@ -534,16 +662,12 @@ import java.time.Duration;
 
             //Handle last bytes. At this point, this is the last working thread alive, no more synchronizing.
             //If partially filled then write partial bytes
-            if(nextChunkIndex > 0){
-                try{resultFile.write(moltenByteChunk,0,nextChunkIndex);}
-                catch(Exception err){err.printStackTrace();}
-            }
+            if(nextChunkIndex > 0){result.writeBytes(moltenByteChunk,0,nextChunkIndex);}
 
             //Write as many full remaining byte chunks as possible
             while(moltenData.size() >= BYTE_CHUNK_SIZE){
                 for(int i=0; i<BYTE_CHUNK_SIZE; ++i){moltenByteChunk[i] = moltenData.remove().byteValue();}
-                try{resultFile.write(moltenByteChunk);}
-                catch(Exception err){err.printStackTrace();}
+                result.writeBytes(moltenByteChunk);
             }
 
             //Write last partial byte chunk (if it exists)
@@ -553,11 +677,7 @@ import java.time.Duration;
                 shortByteChunk[nextChunkIndex] = moltenData.remove().byteValue();
                 ++nextChunkIndex;
             }
-            try{
-                resultFile.write(shortByteChunk);
-                resultFile.close();
-            }
-            catch(Exception err){err.printStackTrace();}
+            result.writeBytes(shortByteChunk);
             isFinished = true;
         }
     }
