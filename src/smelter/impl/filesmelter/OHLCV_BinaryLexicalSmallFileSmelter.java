@@ -14,14 +14,13 @@ import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
-
 import java.util.ArrayDeque;
 
 /**
  * This class writes StickDouble types to a compressed binary file that is formated to an OHLCV_BinaryLexical binaryTranslator.
  * This class is a functional prototype that will be used as a blueprint for {@link OHLCV_BinaryLexicalSmallFileSmelter}.
  */
-public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<StickDouble>{
+public class OHLCV_BinaryLexicalSmallFileSmelter implements StringSmelterStateful<StickDouble>, FileSmelterStateful<StickDouble>{
     private OHLCV_BinaryLexical binaryTranslator; //Translates from ? to flattened bin (type boolean[])
     private Path targetFile;
     private ArrayDeque<boolean[]> crucible;
@@ -138,12 +137,13 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
     @Override
     public void smeltToFile(){writeDataToNewFile(targetFile,crucible,true);}
 
-    ///////////// OLD STUFF
+    //StringSmelter Overrides
     /**
      * Processes a single data element.
      *
      * @param dataStick the data element to process
      */
+    @Override
     public String smeltToString(StickDouble dataStick){
         ArrayDeque<boolean[]> rawDataQueue;
         synchronized(dataStick){
@@ -153,7 +153,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
         return writeDataToNewFile(targetFile, rawDataQueue, false);
     }
 
-     /**
+    /**
      * Processes an array of data elements.
      *
      * @param stickArray the array of data elements to process
@@ -185,7 +185,10 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
         return writeDataToNewFile(targetFile, rawDataQueue, false);
     }
 
-    //OHLCV_BinaryLexicalFileSmelter methods
+    //StringSmelterStateful Overrides
+    public String smeltToString(){return writeDataToNewFile(targetFile,crucible,false);}
+
+    //OHLCV_BinaryLexicalSmallFileSmelter methods
     /**
      * The core function that is used to write binary data in {@code dataQueue} to  to {@code file}.
      * @param file The file where the binary data will be written to.

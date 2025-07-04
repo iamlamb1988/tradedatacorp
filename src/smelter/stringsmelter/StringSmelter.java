@@ -21,7 +21,7 @@ public interface StringSmelter<T>{
      */
     public String smeltToString(T rawDataElement);
 
-     /**
+    /**
      * Processes an array of data elements to a String.
      *
      * @param rawDataArray the array of data elements to process

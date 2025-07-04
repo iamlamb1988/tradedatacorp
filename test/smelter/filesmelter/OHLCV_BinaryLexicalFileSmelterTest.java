@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import tradedatacorp.test.java.TestResourceFetcher;
+import tradedatacorp.smelter.filesmelter.OHLCV_ExpectedResourceValues;
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
@@ -24,8 +25,13 @@ import java.nio.file.Path;
 
 public class OHLCV_BinaryLexicalFileSmelterTest{
     TestResourceFetcher testFileFetcher;
+    byte[] EXPECTED_ONEDATAPOINT_BYTE_VALUES;
+    byte[] EXPECTED_TWODATAPOINTS_BYTE_VALUES;
+
     OHLCV_BinaryLexicalFileSmelterTest(){
         testFileFetcher = new TestResourceFetcher();
+        EXPECTED_ONEDATAPOINT_BYTE_VALUES = OHLCV_ExpectedResourceValues.expectedOneDatapoint();
+        EXPECTED_TWODATAPOINTS_BYTE_VALUES = OHLCV_ExpectedResourceValues.expectedTwoDatapoints();
     }
 
     @Test
@@ -39,20 +45,25 @@ public class OHLCV_BinaryLexicalFileSmelterTest{
         smelter.addData(new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5));
         smelter.setTargetFile(resultFilePath);
         smelter.smeltToFile();
-
         String stringResult = smelter.smeltToString();
 
-        //CHANGE IN FUTURE
-        //Future issue: Should not test for exact file match, only need to check if rendered candles stick is exact match within the file
         boolean ismatch = false;
-        try{
-            ismatch = Files.mismatch(testFilePath,resultFilePath) == -1;
+        try{ismatch = Files.mismatch(testFilePath,resultFilePath) == -1;
         }catch(Exception err){err.printStackTrace();}
 
-        assertTrue(ismatch);
-        //END CHANGE IN FUTURE
+        assertTrue(ismatch); //Gurantees no mismatch or errors on resultant file
 
+        //Additional checks, will ensure String resolution is also a match
+        assertEquals(21,EXPECTED_ONEDATAPOINT_BYTE_VALUES.length);
+        assertEquals(21,stringResult.length());
 
+        for(int i=0;i<stringResult.length(); ++i){
+            assertEquals(
+                EXPECTED_ONEDATAPOINT_BYTE_VALUES[i],
+                (byte)stringResult.charAt(i),
+                "byte mismatch: expected: "+EXPECTED_ONEDATAPOINT_BYTE_VALUES[i]+" but was "+(byte)stringResult.charAt(i)
+            );
+        }
     }
 
     @Test
