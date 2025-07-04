@@ -173,4 +173,10 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         return stickList;
     }
+
+    //TODO
+    public Collection<StickDouble> unsmeltFromTo(String originalBinaryFile, int fromIndex, int toIndex){return null;}
+
+    //TODO
+    public Collection<StickDouble> unsmeltFromQuantity(String originalBinaryFile, int fromIndex, int quantity){return null;}
 }
