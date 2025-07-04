@@ -1,12 +1,11 @@
 /**
  * @author Bruce Lamb
- * @since 16 JUN 2025
+ * @since 04 JUL 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.tools.binarytools.BinaryTools;
-
 import tradedatacorp.item.stick.primitive.StickDouble;
 
 import java.io.FileInputStream;
@@ -16,7 +15,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 /**
- * Reads binary files encoded with {@link OHLCV_BinaryLexical} and reconstructs a collection of {@link StickDouble} objects.
+ * Reads binary files encoded with {@link OHLCV_BinaryLexical} and reconstructs a collection of {@link StickDouble} objects from the binary files.
  */
 public class OHLCV_BinaryLexicalFileUnsmelter{
     int fileReadByteChunkSize;
