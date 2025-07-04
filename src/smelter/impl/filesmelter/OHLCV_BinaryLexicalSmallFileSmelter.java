@@ -1,17 +1,20 @@
 /**
  * @author Bruce Lamb
- * @since 16 JUN 2025
+ * @since 04 JUL 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
+import tradedatacorp.smelter.filesmelter.FileSmelterStateful;
+import tradedatacorp.smelter.stringsmelter.StringSmelterStateful;
 
 import java.io.FileOutputStream;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
+
 import java.util.ArrayDeque;
 
 /**
@@ -35,25 +38,63 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
         crucible = new ArrayDeque<boolean[]>();
     }
 
-    //Smelter Overrides
+    //SmelterStateful Overrides
     /**
-     * Writes stored {@code dataStick} to {@code targetFile} in accordance with the {@code binaryLexical}.
-     * @param dataStick The data stick that will be written to binary file.
+     * Adds {@code dataStick} to {@code crucible}.
+     * @param dataStick The value to be added to the {@code crucible} after binary conversion with {@code binaryLexical}.
      */
-    public void smelt(StickDouble dataStick){
+    @Override
+    public void addData(StickDouble dataStick){
+        synchronized(crucible){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
+    }
+
+    /**
+     * Adds {@code dataStickArray} to {@code crucible}.
+     * @param dataStickArray The values to be added to the {@code crucible} after binary conversion with {@code binaryLexical}.
+     */
+    @Override
+    public void addData(StickDouble[] dataStickArray){
+        synchronized(crucible){
+            for(StickDouble dataStick : dataStickArray){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
+        }
+    }
+
+    /**
+     * Adds {@code dataStickCollection} to {@code crucible}.
+     * @param dataStickCollection The values to be added to {@code crucible} after binary conversion with {@code binaryLexical}.
+     */
+    @Override
+    public void addData(Collection<StickDouble> dataStickCollection){
+        synchronized(crucible){
+            for(StickDouble dataStick : dataStickCollection){
+                crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
+            }
+        }
+    }
+
+    //FileSmelter Overrides from FileSmelterStateful
+    /**
+     * Writes stored {@code dataStick} to {@code destinationPathName} in accordance with the {@code binaryLexical}.
+     * @param dataStick The data stick that will be written to binary file.
+     * @param destinationPathName The resultant file that will be created.
+     */
+    @Override
+    public void smeltToFile(StickDouble dataStick, Path destinationPathName){
         ArrayDeque<boolean[]> rawDataQueue;
         synchronized(dataStick){
             rawDataQueue = new ArrayDeque<>(1);
             rawDataQueue.add(binaryTranslator.getBinaryDataFlat(dataStick));
         }
-        writeDataToNewFile(targetFile, rawDataQueue, true);
+        writeDataToNewFile(destinationPathName, rawDataQueue, true);
     }
 
     /**
-     * Writes stored {@code stickArray} to {@code targetFile} in accordance with the {@code binaryLexical}.
+     * Writes stored {@code stickArray} to {@code destinationPathName} in accordance with the {@code binaryLexical}.
      * @param stickArray The array of data sticks that will be written to binary file.
+     * @param destinationPathName The resultant file that will be created.
      */
-    public void smelt(StickDouble[] stickArray){
+    @Override
+    public void smeltToFile(StickDouble[] stickArray, Path destinationPathName){
         ArrayDeque<boolean[]> rawDataQueue;
         synchronized(stickArray){
             rawDataQueue = new ArrayDeque<>(stickArray.length);
@@ -61,14 +102,16 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
                 rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
             }
         }
-        writeDataToNewFile(targetFile, rawDataQueue, true);
+        writeDataToNewFile(destinationPathName, rawDataQueue, true);
     }
 
     /**
      * Writes stored {@code stickDataCollection} to {@code targetFile} in accordance with the {@code binaryLexical}.
      * @param stickDataCollection The collection of data sticks that will be written to binary file.
+     * @param destinationPathName The resultant file that will be created.
      */
-    public void smelt(Collection<StickDouble> stickDataCollection){
+    @Override
+    public void smeltToFile(Collection<StickDouble> stickDataCollection, Path destinationPathName){
         ArrayDeque<boolean[]> rawDataQueue;
         synchronized(stickDataCollection){
             rawDataQueue = new ArrayDeque<boolean[]>(stickDataCollection.size());
@@ -76,9 +119,26 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
                 rawDataQueue.add(binaryTranslator.getBinaryDataFlat(stick));
             }
         }
-        writeDataToNewFile(targetFile, rawDataQueue, true);
+        writeDataToNewFile(destinationPathName, rawDataQueue, true);
     }
 
+    //FileSmelterStateful Overrides
+    @Override
+    public void smeltToFile(StickDouble dataStick){smeltToFile(dataStick,targetFile);}
+
+    @Override
+    public void smeltToFile(StickDouble[] rawDataArray){smeltToFile(rawDataArray,targetFile);}
+
+    @Override
+    public void smeltToFile(Collection<StickDouble> rawDataCollection){smeltToFile(rawDataCollection,targetFile);}
+
+    @Override
+    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible,true);}
+
+    @Override
+    public void smeltToFile(){writeDataToNewFile(targetFile,crucible,true);}
+
+    ///////////// OLD STUFF
     /**
      * Processes a single data element.
      *
@@ -124,54 +184,6 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements FileSmelterStateful<
         }
         return writeDataToNewFile(targetFile, rawDataQueue, false);
     }
-
-    //SmelterStateful Overrides
-    /**
-     * Adds {@code dataStick} to {@code crucible}.
-     * @param dataStick The value to be added to the {@code crucible} after binary conversion with {@code binaryLexical}.
-     */
-    @Override
-    public void addData(StickDouble dataStick){
-        synchronized(crucible){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
-    }
-
-    /**
-     * Adds {@code dataStickArray} to {@code crucible}.
-     * @param dataStickArray The values to be added to the {@code crucible} after binary conversion with {@code binaryLexical}.
-     */
-    @Override
-    public void addData(StickDouble[] dataStickArray){
-        synchronized(crucible){
-            for(StickDouble dataStick : dataStickArray){crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));}
-        }
-    }
-
-    /**
-     * Adds {@code dataStickCollection} to {@code crucible}.
-     * @param dataStickCollection The values to be added to {@code crucible} after binary conversion with {@code binaryLexical}.
-     */
-    @Override
-    public void addData(Collection<StickDouble> dataStickCollection){
-        synchronized(crucible){
-            for(StickDouble dataStick : dataStickCollection){
-                crucible.add(binaryTranslator.getBinaryDataFlat(dataStick));
-            }
-        }
-    }
-
-    /**
-     * Writes stored data in {@code crucible} to {@code targetFile} in accordance with the {@code binaryLexical}.
-     */
-    @Override
-    public void smelt(){writeDataToNewFile(targetFile, crucible, true);}
-
-    //FileSmelterStateful Overrides
-    /**
-     * Writes stored data in {@code crucible} to {@code destinationPathName} in accordance with the {@code binaryLexical}.
-     * @param destinationPathName The file where the binary data will be written to.
-     */
-    @Override
-    public void smeltToFile(Path destinationPathName){writeDataToNewFile(destinationPathName,crucible,true);}
 
     //OHLCV_BinaryLexicalFileSmelter methods
     /**

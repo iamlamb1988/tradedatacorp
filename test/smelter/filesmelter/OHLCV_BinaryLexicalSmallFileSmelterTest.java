@@ -38,7 +38,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelterTest{
 
         smelter.addData(new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5));
         smelter.setTargetFile(resultFilePath);
-        smelter.smelt();
+        smelter.smeltToFile();
 
         //CHANGE IN FUTURE
         //Future issue: Should not test for exact file match, only need to check if rendered candles stick is exact match within the file
@@ -62,7 +62,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelterTest{
         smelter.addData(new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5));
         smelter.addData(new CandleStickFixedDouble(13, 4.1, 9.7, 2.2, 5, 15.6));
         smelter.setTargetFile(resultFilePath);
-        smelter.smelt();
+        smelter.smeltToFile();
 
         //CHANGE IN FUTURE
         //Future issue: Should not test for exact file match, only need to check if rendered candles stick is exact match within the file

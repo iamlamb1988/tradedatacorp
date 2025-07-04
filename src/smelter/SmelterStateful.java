@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 28 FEB 2025
+ * @since 04 JUL 2025
  */
 
 package tradedatacorp.smelter;
@@ -40,9 +40,4 @@ public interface SmelterStateful<T> extends Smelter<T>{
      * @param rawDataCollection the collection of data elements to add to the crucible
      */
     public void addData(Collection<T> rawDataCollection);
-
-    /**
-     * Processes all data elements currently stored in the crucible.
-     */
-    public void smelt();
 }
