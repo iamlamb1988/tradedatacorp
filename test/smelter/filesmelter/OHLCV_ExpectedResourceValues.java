@@ -59,7 +59,7 @@ public class OHLCV_ExpectedResourceValues{
             (byte)0xD4, //Index 21
             (byte)0x19, //Index 22
             (byte)0x72, //Index 23
-            (byte)0x49, //Index 24
+            (byte)0x25, //Index 24
             (byte)0x0F, //Index 25
             (byte)0x60  //Index 26
         };
