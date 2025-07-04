@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 03 JUL 2025
+ * @since 04 JUL 2025
  */
 
 package tradedatacorp.smelter.stringsmelter;
@@ -18,6 +18,8 @@ public interface StringSmelter<T>{
      * Processes a single data element to a String.
      *
      * @param rawDataElement the data element to process
+     * @return The string representation of a collection containing a single element.
+     * NOTE: Not necessarily the .toString() Object method
      */
     public String smeltToString(T rawDataElement);
 
@@ -25,6 +27,8 @@ public interface StringSmelter<T>{
      * Processes an array of data elements to a String.
      *
      * @param rawDataArray the array of data elements to process
+     * @return The string representation of a collection containing a single element.
+     * NOTE: Not necessarily the .toString() Object method
      */
     public String smeltToString(T[] rawDataArray);
 
@@ -32,6 +36,8 @@ public interface StringSmelter<T>{
      * Processes a collection of data elements to a String.
      *
      * @param rawDataCollection the collection of data elements to process
+     * @return The string representation of a collection containing a single element.
+     * NOTE: Not necessarily the .toString() Object method
      */
     public String smeltToString(Collection<T> rawDataCollection);
 }

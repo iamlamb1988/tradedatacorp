@@ -7,8 +7,10 @@ miner.impl
 miner.web.api
 smelter
 smelter.filesmelter
+smelter.impl.filesmelter
 smelter.lexical
 smelter.lexical.binary
+smelter.stringsmelter
 tools.binarytools
 tools.jsonparser
 tradedatacorp.item.stick
@@ -20,6 +22,7 @@ tradedatacorp.smelter
 tradedatacorp.smelter.filesmelter
 tradedatacorp.smelter.lexical
 tradedatacorp.smelter.lexical.binary
+tradedatacorp.smelter.stringsmelter
 tradedatacorp.tools.binarytools
 tradedatacorp.tools.jsonparser
 tradedatacorp.warehouse

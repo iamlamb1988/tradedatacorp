@@ -14,9 +14,9 @@ import java.util.Collection;
  */
 public interface StringSmelterStateful<T> extends StringSmelter<T>{
     /**
-     * Processes data elements to a String.
-     *
-     * @param rawDataElement the data element to process
+     * Processes data elements to a String. The data is handled by the state of implementing class.
+     * @return the string representation of collection of data.
+     * NOTE: Not necessarily the .toString() Object method.
      */
     public String smeltToString();
 }

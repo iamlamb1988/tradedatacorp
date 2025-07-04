@@ -29,7 +29,7 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements StringSmelterStatefu
     //Constructor
     /**
      * Creates an instance of this class from a clone of {@code originalTranslator}
-     * @param originalTranslator
+     * @param originalTranslator Lexical that will be used to encode and decode {@link StickDouble} within crucible
      */
     public OHLCV_BinaryLexicalSmallFileSmelter(OHLCV_BinaryLexical originalTranslator){
         binaryTranslator = originalTranslator.clone();
@@ -191,9 +191,14 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements StringSmelterStatefu
     //OHLCV_BinaryLexicalSmallFileSmelter methods
     /**
      * The core function that is used to write binary data in {@code dataQueue} to  to {@code file}.
-     * @param file The file where the binary data will be written to.
-     * @param dataQueue The queue containing the binary data that adheres to {@code binaryLexical}.
-     * NOTE: If binaryLexical bits change, the dataQueue boolean[] may be incompatible with change.
+     * @param file the target file {@link Path} where binary data will be written; the file will be created or overwritten.
+     * This will have no relevance if {@code toFile} is true.
+     * @param dataQueue a queue of boolean arrays, each representing a single data record to serialize and write.
+     * * NOTE: If binaryLexical bits change, the dataQueue boolean[] may be incompatible with change.
+     * @param toFile will write to specified file if true, otherwise will return content of file as string
+     * @return The content of the binary file. If {@code toFile} is false then will return null
+     * Each character represents an 8 bit ASCII char value.
+     * NOTE: Java primitive char's are 16 bits but should be treated as 8 bits.
      */
     public String writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue, boolean toFile){
         //1. Initialize variables
@@ -327,12 +332,28 @@ public class OHLCV_BinaryLexicalSmallFileSmelter implements StringSmelterStatefu
     }
 
     private abstract class DataWriter{
+        /**
+         * Writes bytes to String or File based on implementation child class.
+         * @param nextBytes
+         */
         protected abstract void writeBytes(byte[] nextBytes);
+
+        /**
+         * Writes bytes to String or File based on implementation child class.
+         * @param nextBytes The byte array that will be written
+         * @param startIndex The starting inclusive index of byte array
+         * @param length The length of the array that will be written.
+         */
         protected abstract void writeBytes(byte[] nextBytes, int startIndex, int length);
+
+        /**
+         * Returns the string or closes the file based on implementing child class.
+         * @return returns the string or closes the file based on implementing child class.
+         */
         protected abstract String finalizeData();
     }
 
-    protected class FileWriter extends DataWriter{
+    private class FileWriter extends DataWriter{
         private FileOutputStream resultFile;
         private FileWriter(Path path){
             try{resultFile = new FileOutputStream(path.toFile(),false);}

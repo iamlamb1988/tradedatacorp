@@ -164,7 +164,10 @@ public class OHLCV_BinaryLexicalFileSmelter implements StringSmelterStateful<Sti
     /**
      * Processes a single data element.
      *
-     * @param rawDataElement the data element to process
+     * @param dataStick the data element to process
+     * @return The content of the binary file.
+     * Each character represents an 8 bit ASCII char value.
+     * NOTE: Java primitive char's are 16 bits but should be treated as 8 bits.
      */
     @Override
     public String smeltToString(StickDouble dataStick){
@@ -180,6 +183,9 @@ public class OHLCV_BinaryLexicalFileSmelter implements StringSmelterStateful<Sti
      * Processes an array of data elements.
      *
      * @param rawDataArray the array of data elements to process
+     * @return The content of the binary file.
+     * Each character represents an 8 bit ASCII char value.
+     * NOTE: Java primitive char's are 16 bits but should be treated as 8 bits.
      */
     @Override
     public String smeltToString(StickDouble[] rawDataArray){
@@ -196,6 +202,9 @@ public class OHLCV_BinaryLexicalFileSmelter implements StringSmelterStateful<Sti
      * Processes a collection of data elements.
      *
      * @param rawDataCollection the collection of data elements to process
+     * @return The content of the binary file.
+     * Each character represents an 8 bit ASCII char value.
+     * NOTE: Java primitive char's are 16 bits but should be treated as 8 bits.
      */
     public String smeltToString(Collection<StickDouble> rawDataCollection){
         boolean isQueue;
@@ -218,6 +227,9 @@ public class OHLCV_BinaryLexicalFileSmelter implements StringSmelterStateful<Sti
     //StringSmelterStateful Overrides
     /**
      * Processes all data elements currently stored in the crucible.
+     * @return The content of the binary file.
+     * Each character represents an 8 bit ASCII char value.
+     * NOTE: Java primitive char's are 16 bits but should be treated as 8 bits.
      */
     @Override
     public String smeltToString(){return writeDataToNewFile(targetFile,crucible,false);}
@@ -291,7 +303,12 @@ public class OHLCV_BinaryLexicalFileSmelter implements StringSmelterStateful<Sti
      * </p>
      *
      * @param file the target file {@link Path} where binary data will be written; the file will be created or overwritten.
+     * This will have no relevance if {@code toFile} is true.
      * @param dataQueue a queue of boolean arrays, each representing a single data record to serialize and write.
+     * @param toFile will write to specified file if true, otherwise will return content of file as string
+     * @return The content of the binary file. If {@code toFile} is false then will return null
+     * Each character represents an 8 bit ASCII char value.
+     * NOTE: Java primitive char's are 16 bits but should be treated as 8 bits.
      */
     public String writeDataToNewFile(Path file, ArrayDeque<boolean[]> dataQueue, boolean toFile){
         //1. Initialize variables
@@ -360,7 +377,7 @@ public class OHLCV_BinaryLexicalFileSmelter implements StringSmelterStateful<Sti
         protected abstract String finalizeData();
     }
 
-    protected class FileWriter extends DataWriter{
+    private class FileWriter extends DataWriter{
         private FileOutputStream resultFile;
         private FileWriter(Path path){
             try{resultFile = new FileOutputStream(path.toFile(),false);}
