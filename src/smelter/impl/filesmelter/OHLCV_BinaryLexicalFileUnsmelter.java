@@ -64,7 +64,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         boolean[][] binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
         boolean[][] binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
 
-        try {byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
+        try{byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
 
         //1.2 Read flattened H1 array from byte array (plus extra)
         for(int i=0; i<byteCount; ++i){
@@ -175,8 +175,77 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
     }
 
     //TODO
-    public Collection<StickDouble> unsmeltFromTo(String originalBinaryFile, int fromIndex, int toIndex){return null;}
+    public Collection<StickDouble> unsmeltFromTo(String originalBinaryFile, int fromIndex, int toIndex){
+        return null;
+    }
 
     //TODO
-    public Collection<StickDouble> unsmeltFromQuantity(String originalBinaryFile, int fromIndex, int quantity){return null;}
+    public Collection<StickDouble> unsmeltFromQuantity(String originalBinaryFile, int fromIndex, int quantity){
+        return null;
+    }
+
+    private abstract class DataReader{
+        protected abstract int readBytes(byte[] nextBytes);
+        protected abstract int readBytes(byte[] nextBytes, int startIndex, int length);
+        protected abstract String finalizeData();
+    }
+
+    private class FileReader extends DataReader{
+        private FileInputStream reader;
+
+        private FileReader(Path filePath){
+            try{reader = new FileInputStream(filePath.toFile());}
+            catch(Exception err){err.printStackTrace();}
+        }
+
+        @Override
+        protected int readBytes(byte[] nextBytes){
+            try{return reader.read(nextBytes);}
+            catch(Exception err){err.printStackTrace();}
+        }
+
+        @Override
+        protected int readBytes(byte[] nextBytes, int startIndex, int length){
+            try{return reader.read(nextBytes,startIndex,length);}
+            catch(Exception err){err.printStackTrace();}
+        }
+
+        @Override
+        protected String finalizeData(){
+            try{reader.close();}
+            catch(Exception err){err.printStackTrace();}
+            return null;
+        }
+    }
+
+    private class StringReader extends DataReader{
+
+    }
+
+    /**
+     * This is a helper private class that contains information for reading header and translating relevant parts for data reading.
+     * 
+     */
+    private class HeaderReaderHelperBundle{
+        OHLCV_BinaryLexical lexical;
+        boolean[][] binH1;
+        boolean[][] binH2;
+        int totalBytesRead;
+
+        private HeaderReaderHelperBundle(DataReader reader){
+            binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
+            binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
+
+            int byteCount; //For H1
+            if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0) byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3);
+            else byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3) + 1;
+        }
+    }
+
+    private class BitByteTrack{
+        long byteIndex;
+        byte bitIndex;
+
+        private void addMultiple(long n, long bytes, byte bits){}
+    }
 }
