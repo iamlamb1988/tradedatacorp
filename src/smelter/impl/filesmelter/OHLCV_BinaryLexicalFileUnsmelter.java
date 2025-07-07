@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 04 JUL 2025
+ * @since 07 JUL 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -175,7 +175,12 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
     }
 
     //TODO
-    public Collection<StickDouble> unsmeltFromTo(String originalBinaryFile, int fromIndex, int toIndex){
+    public Collection<StickDouble> unsmeltFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile){
+        DataReader byteReader;
+        if(isFile) byteReader = new FileReader(originalBinaryFile);
+        else byteReader = new StringReader();
+
+
         return null;
     }
 
@@ -185,6 +190,8 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
     }
 
     private abstract class DataReader{
+        int totalReadBytes;
+
         protected abstract int readBytes(byte[] nextBytes);
         protected abstract int readBytes(byte[] nextBytes, int startIndex, int length);
         protected abstract String finalizeData();
@@ -196,18 +203,28 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         private FileReader(Path filePath){
             try{reader = new FileInputStream(filePath.toFile());}
             catch(Exception err){err.printStackTrace();}
+            totalReadBytes = 0;
         }
 
         @Override
         protected int readBytes(byte[] nextBytes){
-            try{return reader.read(nextBytes);}
-            catch(Exception err){err.printStackTrace();}
+            int readBytes=0;
+            try{
+                readBytes = reader.read(nextBytes);;
+                totalReadBytes += readBytes;
+            }catch(Exception err){err.printStackTrace();}
+            return readBytes;
         }
 
         @Override
         protected int readBytes(byte[] nextBytes, int startIndex, int length){
-            try{return reader.read(nextBytes,startIndex,length);}
+            int readBytes=0;
+            try{
+                readBytes = reader.read(nextBytes,startIndex,length);
+                totalReadBytes += readBytes;
+            }
             catch(Exception err){err.printStackTrace();}
+            return readBytes;
         }
 
         @Override
@@ -219,7 +236,30 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
     }
 
     private class StringReader extends DataReader{
+        private StringBuilder strbldr;
 
+        private StringReader(){
+            strbldr = new StringBuilder();
+            totalReadBytes = 0;
+        }
+
+        @Override
+        protected int readBytes(byte[] nextBytes){
+            for(byte b : nextBytes){strbldr.append((char)b);}
+            totalReadBytes += nextBytes.length;
+            return nextBytes.length;
+        }
+
+        @Override
+        protected int readBytes(byte[] nextBytes, int startIndex, int length){
+            int end = startIndex + length;
+            for(int i=startIndex; i<end; ++i){strbldr.append((char)nextBytes[i]);}
+            totalReadBytes += length;
+            return length;
+        }
+
+        @Override
+        protected String finalizeData(){return strbldr.toString();}
     }
 
     /**
@@ -228,24 +268,132 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
      */
     private class HeaderReaderHelperBundle{
         OHLCV_BinaryLexical lexical;
-        boolean[][] binH1;
-        boolean[][] binH2;
-        int totalBytesRead;
+        int h2_bit_length;
+        long firstDatapointByteIndex;
+        byte firstDatapointBitIndex;
 
         private HeaderReaderHelperBundle(DataReader reader){
-            binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
-            binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
+            //0. Initialize fields
+            boolean[][] binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
+            boolean[][] binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
+
+            boolean[] flatBinH1 = new boolean[OHLCV_BinaryLexical.H1_TOTAL_LEN];
+            boolean[] flatBinH2;
 
             int byteCount; //For H1
             if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0) byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3);
             else byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3) + 1;
+
+            byte[] byteChunk = new byte[byteCount];
+
+            byteCount = reader.readBytes(byteChunk);            
+
+            //1. Extract H1 bits into flat Header 1
+            for(int i=0; i<byteCount; ++i){
+                BinaryTools.setSubsetUnsignedInt(i << 3,8,byteChunk[i] & 0xFF,flatBinH1);
+            }
+
+            //2. Set each H1 binary array from flattened H1 array
+            int flatIndex=0;
+            for(int i=0; i<binH1.length; ++i){
+                binH1[i] = new boolean[OHLCV_BinaryLexical.getHeader1BitLength(i)];
+                for(int j=0; j<binH1[i].length; ++flatIndex, ++j){binH1[i][j] = flatBinH1[flatIndex];}
+            }
+
+            //3 Set the lengths of the H2 fields from the translated H1 values.
+            binH2[0] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_SYM_LEN])];
+            binH2[1] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_CT_LEN])];
+            binH2[2] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_H_GAP_LEN])];
+            h2_bit_length = binH2[0].length + binH2[1].length + binH2[2].length;
+
+            //4 Read in next batch of next bytes to include to include all of H2
+            byte excessBits = (byte)(flatBinH1.length - flatIndex);
+            byte h2startbyteIndex;
+            if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0){ //If no overflow bits from H1 to H2
+                h2startbyteIndex = (byte)0;
+                flatIndex = 0;
+                byteCount = (h2_bit_length >>> 3);
+                byteChunk = new byte[byteCount];
+                flatBinH2 = new boolean[byteCount << 3];
+                reader.readBytes(byteChunk);
+            }else{
+                h2startbyteIndex = (byte)1;
+                flatIndex = 8 - excessBits;
+                byte firstH2Byte = byteChunk[byteChunk.length - 1];
+                byteCount = (h2_bit_length >>> 3) + 1;
+                byteChunk = new byte[byteCount];
+                flatBinH2 = new boolean[byteCount << 3];
+                byteChunk[0] = firstH2Byte;
+                reader.readBytes(byteChunk);
+            }
+
+            //5. Process new byte Array elements into new respective bin array.
+            for(int i=0; i<byteChunk.length; ++i){
+                BinaryTools.setSubsetUnsignedInt(i << 3,8,byteChunk[i] & 0xFF,flatBinH2);
+            }
+
+            //6. Set H2 from flattened h2 bits
+            for(int i=0; i<binH2.length; ++i){
+                for(int j=0; j<binH2[i].length; ++j, ++flatIndex){binH2[i][j]=flatBinH2[flatIndex];}
+            }
+
+            //7. Generate lexical
+            lexical = new OHLCV_BinaryLexical(
+                binH1[0],
+                binH1[1],
+                binH1[2],
+                binH1[3],
+                binH1[4],
+                binH1[5],
+                binH1[6],
+                binH1[7],
+                binH1[8],
+                binH1[9],
+                binH1[10],
+                binH2[0],
+                binH2[1],
+                binH2[2]
+            );
         }
     }
 
+    //Could be a public generic use binary tool in tools package....
     private class BitByteTrack{
-        long byteIndex;
-        byte bitIndex;
+        private long byteIndex;
+        private byte bitIndex;
 
-        private void addMultiple(long n, long bytes, byte bits){}
+        private void constructorHelper(){
+            byteIndex = 0;
+            bitIndex = 0;
+        }
+        private BitByteTrack(){constructorHelper();}
+
+        private BitByteTrack(long n, long bytes, byte bits){
+            constructorHelper();
+            addMultiple(n,bits,bytes);
+        }
+
+        private BitByteTrack(long n, long bits){
+            constructorHelper();
+            addMultiple(n,bits);
+        }
+
+        private BitByteTrack(long bytes, long bits){
+            constructorHelper();
+            addMultiple(bytes,bits);
+        }
+
+        private void addMultiple(long n, long bytes, long bits){
+            long incomingBytes = n * bytes;
+            long incomingBits =  n * bits + bitIndex;
+            long extraBytes = incomingBits >>> 3;
+            long remainingBits = incomingBits - (extraBytes << 3);
+            byteIndex += incomingBytes + extraBytes;
+            bitIndex += (byte)remainingBits;
+        }
+
+        private void addMultiple(long n, byte bits){addMultiple(n,0, bits);}
+
+        private void addMultiple(byte bits){addMultiple(1, 0, bits);}
     }
 }
