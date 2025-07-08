@@ -43,133 +43,72 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
      * @return a {@link Collection} of {@link StickDouble} objects read in by {@code BinaryFile}.
      */
     public Collection<StickDouble> unsmelt(String originalBinaryFile){
-        //1. Open binary file.
-        //1.0 Open binary file in OHLCV_BinaryLexical format.
-        FileInputStream binFile;
-        try{
-            binFile = new FileInputStream(originalBinaryFile);
-        }
-        catch(Exception err){
-            err.printStackTrace();
-            return null;
-        }
+        //1. Construct and read header bytes into file
+        FileReader dataReader = new FileReader(originalBinaryFile);
+        HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
+        OHLCV_BinaryLexical lexical = headerReader.lexical;
 
-        //1.1 Read H1 bytes (all static lengths) plus extra.
-        int byteCount;
-        if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0) byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3);
-        else byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3) + 1;
-
-        byte[] byteArray = new byte[byteCount];
-        boolean[] binArray = new boolean[byteCount << 3];
-        boolean[][] binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
-        boolean[][] binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
-
-        try{byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
-
-        //1.2 Read flattened H1 array from byte array (plus extra)
-        for(int i=0; i<byteCount; ++i){
-            BinaryTools.setSubsetUnsignedInt(i << 3,8,byteArray[i] & 0xFF,binArray);
-        }
-
-        //1.3 Create and set each H1 binary array from flattened H1 array
-        int flatIndex=0;
-        for(int i=0; i<binH1.length; ++i){
-            binH1[i] = new boolean[OHLCV_BinaryLexical.getHeader1BitLength(i)];
-            for(int k=0; k<binH1[i].length; ++flatIndex, ++k){binH1[i][k] = binArray[flatIndex];}
-        }
-
-        //1.4 Set the lengths of the H2 fields from the translated H1 values.
-        binH2[0] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_SYM_LEN])];
-        binH2[1] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_CT_LEN])];
-        binH2[2] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_H_GAP_LEN])];
-        int h2_len = binH2[0].length + binH2[1].length + binH2[2].length;
-
-        //1.5 Read in next batch of next bytes to include to include all of H2
-        byte excessBits = (byte)(binArray.length - flatIndex);
-        byte h2startbyteIndex;
-        if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0){
-            h2startbyteIndex = (byte)0;
-            flatIndex = 0;
-            byteCount = (h2_len >>> 3);
-            byteArray = new byte[byteCount];
-            binArray = new boolean[byteCount << 3];
-            try{byteCount=binFile.read(byteArray);}catch(Exception err){err.printStackTrace();}
-        }else{
-            h2startbyteIndex = (byte)1;
-            flatIndex = 8 - excessBits;
-            byte firstH2Byte = byteArray[byteArray.length - 1];
-            byteCount = (h2_len >>> 3) + 1;
-            byteArray = new byte[byteCount];
-            binArray = new boolean[byteCount << 3];
-            byteArray[0] = firstH2Byte;
-            try{byteCount=binFile.read(byteArray,1,byteCount - 1);}catch(Exception err){err.printStackTrace();}
-        }
-
-        //1.6 Process new byte Array elements into new respective bin array.
-        for(int i=0; i<byteArray.length; ++i){
-            BinaryTools.setSubsetUnsignedInt(i << 3,8,byteArray[i] & 0xFF,binArray);
-        }
-
-        //1.7 Set H2 from flattened h2 bits
-        for(int i=0; i<binH2.length; ++i){
-            for(int j=0; j<binH2[i].length; ++j, ++flatIndex){
-                binH2[i][j]=binArray[flatIndex];
+        //DEBUG SECTION
+        boolean[][] DEBUG_LexicalHeader = lexical.getBinaryHeader();
+        int DEBUG_headerIndex = 0;
+        for(int i=0; i<DEBUG_LexicalHeader.length; ++i){
+            for(int j=0; j<DEBUG_LexicalHeader[i].length; ++j, ++DEBUG_headerIndex){
+                System.out.printf("DEBUG Header[%d][%d] : [%d] : %s\n",i,j,DEBUG_headerIndex,DEBUG_LexicalHeader[i][j]);
             }
         }
+        //END DEBUG SECTION
+        System.out.println("DEBUG: Lexical Symbol: "+lexical.getSymbol());
+        System.out.println("DEBUG: Lexical Interval: "+lexical.getInterval());
+        System.out.println("DEBUG: Lexical Bit length: "+lexical.getHeaderBitLength());
+        System.out.println("DEBUG: Lexical Data Stick count: "+lexical.getDataCount());
 
-        //2. Generate working objects to parse all data points.
-        OHLCV_BinaryLexical lexical = new OHLCV_BinaryLexical(
-            binH1[0],
-            binH1[1],
-            binH1[2],
-            binH1[3],
-            binH1[4],
-            binH1[5],
-            binH1[6],
-            binH1[7],
-            binH1[8],
-            binH1[9],
-            binH1[10],
-            binH2[0],
-            binH2[1],
-            binH2[2]
-        );
-
+        byte[] byteArray = new byte[fileReadByteChunkSize];
+        boolean[] dataBinArray = new boolean[lexical.getDataBitLength()];
+        int byteCount;
         ArrayDeque<Boolean> bitQueue = new ArrayDeque<Boolean>(fileReadByteChunkSize << 3);
         ArrayList<StickDouble> stickList = new ArrayList<StickDouble>(lexical.getDataCount());
 
-        //3. Fill in excess bits into the bitQueue
-        for(int i=flatIndex; i<binArray.length; ++i){
-            bitQueue.add(Boolean.valueOf(binArray[i]));
+        //2. Fill in excess bits into the bitQueue (if any)
+        if(headerReader.firstDataBitIndex != 0){
+            int value = headerReader.lastByteValue & 0xFF;
+            System.out.println("DEBUG: Shared byte value: "+value);
+            for(int i=headerReader.firstDataBitIndex; i<8; ++i){
+                bitQueue.add(Boolean.valueOf(((value >>> (8-i-1)) & 1) == 1));
+                System.out.printf("DEBUG: Initial Databits index: %d, val: %s\n",i,bitQueue.peek().booleanValue());
+            }
         }
 
-        byteArray = new byte[fileReadByteChunkSize];
-        binArray = new boolean[lexical.getDataBitLength()];
-
         //Main loop for gathering data
-        try{byteCount=binFile.read(byteArray);}catch(Exception err){}
-
+        byteCount = dataReader.readBytes(byteArray);
+        System.out.println("DEBUG: Enter data ingestion loop.");
         do{
-            //4. Set all bits from byteCHunk
+            //3. Set all bits from byteCHunk
+            System.out.println("DEBUG: Initial Bit Size: "+bitQueue.size());
             for(int i=0; i<byteCount; ++i){
                 int tmp=byteArray[i] & 0xFF;
-                for(int j=0; j<8; ++j){bitQueue.add(Boolean.valueOf((((tmp >>> (8-j-1)) & 1) == 1)));}
+                for(int j=0; j<8; ++j){
+                    bitQueue.add(Boolean.valueOf(((tmp >>> (8-j-1)) & 1) == 1));
+                }
+                
             }
 
-            //5. Read in datapoints to final collection
+            //4. Read in datapoints to final collection
+            System.out.println("DEBUG: Post Bit Size: "+bitQueue.size());
             while(bitQueue.size() >= lexical.getDataBitLength()){
-                //5.1 Set data point bits
-                for(int i=0; i<lexical.getDataBitLength(); ++i){binArray[i]=bitQueue.remove();}
+                //4.1 Set data point bits
+                for(int i=0; i<lexical.getDataBitLength(); ++i){
+                    dataBinArray[i]=bitQueue.remove().booleanValue();
+                }
 
-                //5.2 Add data point to collection
-                stickList.add(lexical.getRefinedDataFlat(binArray));
+                //4.2 Add data point to collection
+                stickList.add(lexical.getRefinedDataFlat(dataBinArray));
             }
 
-            try{byteCount=binFile.read(byteArray);}catch(Exception err){}
-        }while(byteCount == fileReadByteChunkSize);
+            byteCount = dataReader.readBytes(byteArray);
+        }while(byteCount != -1 || bitQueue.size() >= lexical.getDataBitLength());
 
-        //6. Close file and return
-        try{binFile.close();}catch(Exception err){err.printStackTrace();}
+        //5. Close file and return
+        dataReader.finalizeData();
 
         return stickList;
     }
@@ -194,11 +133,17 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         protected abstract int readBytes(byte[] nextBytes);
         protected abstract int readBytes(byte[] nextBytes, int startIndex, int length);
-        protected abstract String finalizeData();
+        protected abstract void finalizeData();
     }
 
     private class FileReader extends DataReader{
         private FileInputStream reader;
+
+        private FileReader(String filePathName){
+            try{reader = new FileInputStream(filePathName);}
+            catch(Exception err){err.printStackTrace();}
+            totalReadBytes = 0;
+        }
 
         private FileReader(Path filePath){
             try{reader = new FileInputStream(filePath.toFile());}
@@ -228,15 +173,15 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         }
 
         @Override
-        protected String finalizeData(){
+        protected void finalizeData(){
             try{reader.close();}
             catch(Exception err){err.printStackTrace();}
-            return null;
         }
     }
 
+    //TODO
     private class StringReader extends DataReader{
-        private StringBuilder strbldr;
+        private StringBuilder strbldr; //TODO: No file writing here!!
 
         private StringReader(){
             strbldr = new StringBuilder();
@@ -258,63 +203,62 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             return length;
         }
 
+        //TODO
         @Override
-        protected String finalizeData(){return strbldr.toString();}
+        protected void finalizeData(){}
     }
 
     /**
      * This is a helper private class that contains information for reading header and translating relevant parts for data reading.
-     * 
+     * Will not close the file upon completion.
      */
     private class HeaderReaderHelperBundle{
         OHLCV_BinaryLexical lexical;
-        int h2_bit_length;
-        long firstDatapointByteIndex;
-        byte firstDatapointBitIndex;
+        byte lastByteValue; //byte containing last bit of H2
+        byte firstDataBitIndex; // IF 0, datapoint is on the next Byte, not this "lastByteValue"
 
         private HeaderReaderHelperBundle(DataReader reader){
             //0. Initialize fields
             boolean[][] binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
             boolean[][] binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
 
-            boolean[] flatBinH1 = new boolean[OHLCV_BinaryLexical.H1_TOTAL_LEN];
-            boolean[] flatBinH2;
-
             int byteCount; //For H1
             if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0) byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3);
             else byteCount = (OHLCV_BinaryLexical.H1_TOTAL_LEN >>> 3) + 1;
 
             byte[] byteChunk = new byte[byteCount];
+            boolean[] flatBinH1plus = new boolean[byteCount << 3];
+            boolean[] flatBinH2plus;
 
             byteCount = reader.readBytes(byteChunk);            
 
             //1. Extract H1 bits into flat Header 1
             for(int i=0; i<byteCount; ++i){
-                BinaryTools.setSubsetUnsignedInt(i << 3,8,byteChunk[i] & 0xFF,flatBinH1);
+                BinaryTools.setSubsetUnsignedInt(i << 3,8,byteChunk[i] & 0xFF,flatBinH1plus);
             }
 
             //2. Set each H1 binary array from flattened H1 array
             int flatIndex=0;
             for(int i=0; i<binH1.length; ++i){
                 binH1[i] = new boolean[OHLCV_BinaryLexical.getHeader1BitLength(i)];
-                for(int j=0; j<binH1[i].length; ++flatIndex, ++j){binH1[i][j] = flatBinH1[flatIndex];}
+                for(int j=0; j<binH1[i].length; ++flatIndex, ++j){binH1[i][j] = flatBinH1plus[flatIndex];}
             }
 
-            //3 Set the lengths of the H2 fields from the translated H1 values.
+            //3. Set the lengths of the H2 fields from the translated H1 values.
             binH2[0] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_SYM_LEN])];
             binH2[1] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_CT_LEN])];
             binH2[2] = new boolean[BinaryTools.toUnsignedInt(binH1[OHLCV_BinaryLexical.H_INDEX_H_GAP_LEN])];
-            h2_bit_length = binH2[0].length + binH2[1].length + binH2[2].length;
+            int h2_bit_length = binH2[0].length + binH2[1].length + binH2[2].length;
 
-            //4 Read in next batch of next bytes to include to include all of H2
-            byte excessBits = (byte)(flatBinH1.length - flatIndex);
+            //4. Read in next batch of next bytes to include to include all of H2
+            byte excessBits = (byte)(flatBinH1plus.length - flatIndex);
             byte h2startbyteIndex;
             if(OHLCV_BinaryLexical.H1_TOTAL_LEN%8 == 0){ //If no overflow bits from H1 to H2
                 h2startbyteIndex = (byte)0;
                 flatIndex = 0;
                 byteCount = (h2_bit_length >>> 3);
                 byteChunk = new byte[byteCount];
-                flatBinH2 = new boolean[byteCount << 3];
+                flatBinH2plus = new boolean[byteCount << 3];
                 reader.readBytes(byteChunk);
             }else{
                 h2startbyteIndex = (byte)1;
@@ -322,19 +266,19 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 byte firstH2Byte = byteChunk[byteChunk.length - 1];
                 byteCount = (h2_bit_length >>> 3) + 1;
                 byteChunk = new byte[byteCount];
-                flatBinH2 = new boolean[byteCount << 3];
+                flatBinH2plus = new boolean[byteCount << 3];
                 byteChunk[0] = firstH2Byte;
-                reader.readBytes(byteChunk);
+                reader.readBytes(byteChunk,1,byteCount - 1);
             }
 
             //5. Process new byte Array elements into new respective bin array.
             for(int i=0; i<byteChunk.length; ++i){
-                BinaryTools.setSubsetUnsignedInt(i << 3,8,byteChunk[i] & 0xFF,flatBinH2);
+                BinaryTools.setSubsetUnsignedInt(i << 3,8,byteChunk[i] & 0xFF,flatBinH2plus);
             }
 
             //6. Set H2 from flattened h2 bits
             for(int i=0; i<binH2.length; ++i){
-                for(int j=0; j<binH2[i].length; ++j, ++flatIndex){binH2[i][j]=flatBinH2[flatIndex];}
+                for(int j=0; j<binH2[i].length; ++j, ++flatIndex){binH2[i][j]=flatBinH2plus[flatIndex];}
             }
 
             //7. Generate lexical
@@ -354,6 +298,9 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 binH2[1],
                 binH2[2]
             );
+
+            lastByteValue = byteChunk[byteChunk.length - 1];
+            firstDataBitIndex = (byte)(lexical.getHeaderBitLength()%8);
         }
     }
 
@@ -368,7 +315,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         }
         private BitByteTrack(){constructorHelper();}
 
-        private BitByteTrack(long n, long bytes, byte bits){
+        private BitByteTrack(long n, long bytes, long bits){
             constructorHelper();
             addMultiple(n,bits,bytes);
         }
@@ -378,9 +325,9 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             addMultiple(n,bits);
         }
 
-        private BitByteTrack(long bytes, long bits){
+        private BitByteTrack(long bits){
             constructorHelper();
-            addMultiple(bytes,bits);
+            addMultiple(0, bits);
         }
 
         private void addMultiple(long n, long bytes, long bits){
@@ -392,8 +339,8 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             bitIndex += (byte)remainingBits;
         }
 
-        private void addMultiple(long n, byte bits){addMultiple(n,0, bits);}
+        private void addMultiple(long n, long bits){addMultiple(n,0, bits);}
 
-        private void addMultiple(byte bits){addMultiple(1, 0, bits);}
+        private void addMultiple(long bits){addMultiple(1, 0, bits);}
     }
 }

@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 14 MAY 2025
+ * @since 07 JUL 2025
  */
 package tradedatacorp.smelter.lexical.binary;
 
@@ -252,7 +252,7 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         bitsNeededForTenPow = new byte[16];
         bitsNeededForMaxFraction = new byte[20];
 
-        H1_LEN[H_INDEX_FREE_FORM] = H1_FREE_FORM_LEN;           // Index 0
+        H1_LEN[H_INDEX_FREE_FORM] = H1_FREE_FORM_LEN; // Index 0
         H1_LEN[H_INDEX_INT] = H1_INT_LEN;             // Index 1
         H1_LEN[H_INDEX_CT_LEN] = H1_CT_LEN_LEN;       // Index 2
         H1_LEN[H_INDEX_DATA_LEN] = H1_DATA_LEN_LEN;   // Index 3
@@ -364,26 +364,26 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         maxFractionFrombits[63] = 19; // Encapsulates 19 base 10 .0 to .9_999_999_999_999_999_999
 
         //Reverse min lookup for maxFractionFrombits
-        bitsNeededForMaxFraction[0] = 0; //No bits needed for no fraction
-        bitsNeededForMaxFraction[1] = 4; //log2(9) =~ 3.1 => 4
-        bitsNeededForMaxFraction[2] = 7; //log2(99) =~ 6.6 => 7
-        bitsNeededForMaxFraction[3] = 10; //log2(999) =~ 10.0 => 10
-        bitsNeededForMaxFraction[4] = 14; //log2(9,999) =~ 13.2 => 14
-        bitsNeededForMaxFraction[5] = 17; //log2(99,999) =~ 16.6 => 17
-        bitsNeededForMaxFraction[6] = 20; //log2(999,999) =~ 19.9 => 20
-        bitsNeededForMaxFraction[7] = 24; //log2(9,999,999) =~ 23.2 => 24
-        bitsNeededForMaxFraction[8] = 27; //log2(99,999,999) =~ 26.6 => 27
-        bitsNeededForMaxFraction[9] = 30; //log2(999,999,999) =~ 29.9 => 30
+        bitsNeededForMaxFraction[0] = 0;   //No bits needed for no fraction
+        bitsNeededForMaxFraction[1] = 4;   //log2(9) =~ 3.1 => 4
+        bitsNeededForMaxFraction[2] = 7;   //log2(99) =~ 6.6 => 7
+        bitsNeededForMaxFraction[3] = 10;  //log2(999) =~ 10.0 => 10
+        bitsNeededForMaxFraction[4] = 14;  //log2(9,999) =~ 13.2 => 14
+        bitsNeededForMaxFraction[5] = 17;  //log2(99,999) =~ 16.6 => 17
+        bitsNeededForMaxFraction[6] = 20;  //log2(999,999) =~ 19.9 => 20
+        bitsNeededForMaxFraction[7] = 24;  //log2(9,999,999) =~ 23.2 => 24
+        bitsNeededForMaxFraction[8] = 27;  //log2(99,999,999) =~ 26.6 => 27
+        bitsNeededForMaxFraction[9] = 30;  //log2(999,999,999) =~ 29.9 => 30
         bitsNeededForMaxFraction[10] = 34; //log2(9,999,999,999) =~ 33.2 => 34
         bitsNeededForMaxFraction[11] = 37; //log2(99,999,999,999) =~ 36.5 => 37
         bitsNeededForMaxFraction[12] = 40; //log2(999,999,999,999) =~ 39.9 => 40
         bitsNeededForMaxFraction[13] = 44; //log2(9,999,999,999,999) =~ 43.1 => 44
         bitsNeededForMaxFraction[14] = 47; //log2(99,999,999,999,999) =~ 46.5 => 47
         bitsNeededForMaxFraction[15] = 50; //log2(999,999,999,999,999) =~ 49.8 => 50
-        bitsNeededForMaxFraction[16] = 54;
-        bitsNeededForMaxFraction[17] = 57;
-        bitsNeededForMaxFraction[18] = 60;
-        bitsNeededForMaxFraction[19] = 63;
+        bitsNeededForMaxFraction[16] = 54; //log2(9,999,999,999,999,999) =~ 53.1 => 54
+        bitsNeededForMaxFraction[17] = 57; //log2(99,999,999,999,999,999) =~ 56.5 => 57
+        bitsNeededForMaxFraction[18] = 60; //log2(999,999,999,999,999,999) =~ 59.85 => 60
+        bitsNeededForMaxFraction[19] = 64; //log2(9,999,999,999,999,999,999) =~ 63.1 => 64
     }
 
     /**
@@ -538,8 +538,8 @@ public class OHLCV_BinaryLexical implements BinaryLexical<StickDouble>, Cloneabl
         h2_h_gap = header[H_INDEX_H_GAP] = BinaryTools.genClone(H_h2_h_gap);
 
         //Header length
-        h2_total_len = getHeader2BitLength();
-        h_total_len = getHeaderBitLength();
+        h2_total_len = h2_sym.length + h2_data_ct.length + h2_h_gap.length;
+        h_total_len = H1_TOTAL_LEN + h2_total_len;
 
         //Cache/memoization
         base10PriceMaxFractionDigit  = maxFractionFrombits[t_h1_pf_len];
