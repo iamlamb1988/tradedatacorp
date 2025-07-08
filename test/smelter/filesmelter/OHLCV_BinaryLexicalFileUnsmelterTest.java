@@ -50,6 +50,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         assertEquals(expectedStick1.getV(),actualStick1.getV());
     }
 
+    @Test
     public void TwoDataPointTest(){
         StickDouble[] expectedStickArr = new StickDouble[2];
         expectedStickArr[0] = new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5);

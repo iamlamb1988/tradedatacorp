@@ -48,20 +48,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
         OHLCV_BinaryLexical lexical = headerReader.lexical;
 
-        //DEBUG SECTION
-        boolean[][] DEBUG_LexicalHeader = lexical.getBinaryHeader();
-        int DEBUG_headerIndex = 0;
-        for(int i=0; i<DEBUG_LexicalHeader.length; ++i){
-            for(int j=0; j<DEBUG_LexicalHeader[i].length; ++j, ++DEBUG_headerIndex){
-                System.out.printf("DEBUG Header[%d][%d] : [%d] : %s\n",i,j,DEBUG_headerIndex,DEBUG_LexicalHeader[i][j]);
-            }
-        }
-        //END DEBUG SECTION
-        System.out.println("DEBUG: Lexical Symbol: "+lexical.getSymbol());
-        System.out.println("DEBUG: Lexical Interval: "+lexical.getInterval());
-        System.out.println("DEBUG: Lexical Bit length: "+lexical.getHeaderBitLength());
-        System.out.println("DEBUG: Lexical Data Stick count: "+lexical.getDataCount());
-
         byte[] byteArray = new byte[fileReadByteChunkSize];
         boolean[] dataBinArray = new boolean[lexical.getDataBitLength()];
         int byteCount;
@@ -71,29 +57,21 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         //2. Fill in excess bits into the bitQueue (if any)
         if(headerReader.firstDataBitIndex != 0){
             int value = headerReader.lastByteValue & 0xFF;
-            System.out.println("DEBUG: Shared byte value: "+value);
             for(int i=headerReader.firstDataBitIndex; i<8; ++i){
                 bitQueue.add(Boolean.valueOf(((value >>> (8-i-1)) & 1) == 1));
-                System.out.printf("DEBUG: Initial Databits index: %d, val: %s\n",i,bitQueue.peek().booleanValue());
             }
         }
 
         //Main loop for gathering data
         byteCount = dataReader.readBytes(byteArray);
-        System.out.println("DEBUG: Enter data ingestion loop.");
         do{
             //3. Set all bits from byteCHunk
-            System.out.println("DEBUG: Initial Bit Size: "+bitQueue.size());
             for(int i=0; i<byteCount; ++i){
                 int tmp=byteArray[i] & 0xFF;
-                for(int j=0; j<8; ++j){
-                    bitQueue.add(Boolean.valueOf(((tmp >>> (8-j-1)) & 1) == 1));
-                }
-                
+                for(int j=0; j<8; ++j){bitQueue.add(Boolean.valueOf(((tmp >>> (8-j-1)) & 1) == 1));}
             }
 
             //4. Read in datapoints to final collection
-            System.out.println("DEBUG: Post Bit Size: "+bitQueue.size());
             while(bitQueue.size() >= lexical.getDataBitLength()){
                 //4.1 Set data point bits
                 for(int i=0; i<lexical.getDataBitLength(); ++i){
