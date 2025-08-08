@@ -9,6 +9,7 @@ import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.item.stick.primitive.StickDouble;
 
 import java.io.FileInputStream;
+import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.ArrayDeque;
@@ -46,6 +47,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         //1. Construct and read header bytes into file
         FileReader dataReader = new FileReader(originalBinaryFile);
         HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
+        headerReader.readHeader();
         OHLCV_BinaryLexical lexical = headerReader.lexical;
 
         byte[] byteArray = new byte[fileReadByteChunkSize];
@@ -93,17 +95,95 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
     //TODO
     public Collection<StickDouble> unsmeltFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile){
-        DataReader byteReader;
-        if(isFile) byteReader = new FileReader(originalBinaryFile);
-        else byteReader = new StringReader();
-
-
-        return null;
+        return unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile);
     }
 
     //TODO
-    public Collection<StickDouble> unsmeltFromQuantity(String originalBinaryFile, int fromIndex, int quantity){
-        return null;
+    public Collection<StickDouble> unsmeltFromQuantity(String originalBinaryFilePathName, int fromIndex, int quantity, boolean isFile){
+        return unsmeltFromQuantity(Paths.get(originalBinaryFilePathName), fromIndex, quantity, isFile);
+    }
+
+    //TODO
+    public Collection<StickDouble> unsmeltFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile){
+        if(fromIndex < 0 || quantity < 0) return null;
+        if(quantity == 0) return new ArrayList<StickDouble>(0);
+
+        //1. Construct and read header bytes into file
+        DataReader dataReader = new FileReader(originalBinaryFile);
+        HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
+        headerReader.readHeader();
+        OHLCV_BinaryLexical lexical = headerReader.lexical;
+        byte[] byteArray = new byte[fileReadByteChunkSize];
+        boolean[] dataBinArray = new boolean[lexical.getDataBitLength()];
+
+        int byteCount;
+        int byteReadSize; //Will not exceed this.fileReadByteChunkSize.
+        int tmpByteValue; //Leave as int to avoid implicity bit shift promotion to an unsigned value.
+        int tmpIndex;
+        ArrayDeque<Boolean> bitQueue = new ArrayDeque<Boolean>(fileReadByteChunkSize << 3);
+        ArrayList<StickDouble> stickList = new ArrayList<StickDouble>(quantity);
+
+        BitByteTrack multiplier = new BitByteTrack(lexical.getDataBitLength()); //used to jump to Byte and Bit of from index.
+        BitByteTrack nextDataPoint = new BitByteTrack(
+            1,
+            headerReader.firstDataBitIndex == 0 ? 1 : 0,
+            headerReader.firstDataBitIndex
+        );
+        BitByteTrack lastDataPoint;
+
+        //2. Update from Byte Index after read bytes
+        nextDataPoint.addMultiple(fromIndex, multiplier); //From DataIndex to DataIndex fromIndex
+
+        //3. Add multiple to Jump to target starting index.
+        nextDataPoint.addMultiple(fromIndex, multiplier); //add from 0 to from Index
+        nextDataPoint.byteIndex = 0; //After reader skip, set to 0
+
+        //4. Skip all bytes except upto the TobByte
+        byteCount = (int)(nextDataPoint.byteIndex - 1);
+        if(byteCount > 0) dataReader.skip(byteCount);
+        nextDataPoint.byteIndex = 0; //From this point forward, this represents the relative unread byte index of file.
+
+        //5. Get last index
+        lastDataPoint = new BitByteTrack(0, nextDataPoint.bitIndex);
+        lastDataPoint.addMultiple(0, (quantity * lexical.getDataBitLength()) << 3);
+
+        //6. Read first batch of bytes from file containing targeted datapoints.
+        byteReadSize = lastDataPoint.byteIndex < fileReadByteChunkSize ? (int)lastDataPoint.byteIndex : fileReadByteChunkSize;
+
+        //7. Read data
+        byteCount = dataReader.readBytes(byteArray, 0, byteReadSize);
+
+        //7.1 Read first offset bits.
+        tmpByteValue = byteArray[0];
+        for(int i=nextDataPoint.bitIndex; i<8; ++i){
+            bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-i)) & 1) == 1 ? true : false));
+        }
+
+        //7.2 Read full bytes
+        tmpIndex=1;
+        do{
+            while(tmpIndex < byteCount){
+                tmpByteValue=byteArray[tmpIndex];
+                for(int i=0; i<8; ++i){
+                    bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-i)) & 1) == 1 ? true : false));
+                }
+                ++tmpIndex;
+            }
+
+            while(stickList.size() < quantity && bitQueue.size() >= lexical.getDataBitLength()){
+                for(int i=0; i<lexical.getDataBitLength(); ++i){
+                    dataBinArray[i] = bitQueue.remove().booleanValue();
+                }
+                stickList.add(lexical.getRefinedDataFlat(dataBinArray));
+            }
+            tmpIndex = 0;
+            byteCount = dataReader.readBytes(byteArray);
+        }while(stickList.size() < quantity);
+
+        //8. Cleanup
+        dataReader.finalizeData();
+
+        return stickList;
     }
 
     private abstract class DataReader{
@@ -111,6 +191,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         protected abstract int readBytes(byte[] nextBytes);
         protected abstract int readBytes(byte[] nextBytes, int startIndex, int length);
+        protected abstract long skip(long numberOfBytesToSkip);
         protected abstract void finalizeData();
     }
 
@@ -151,6 +232,13 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         }
 
         @Override
+        protected long skip(long numberOfBytesToSkip){
+            try{reader.skip(numberOfBytesToSkip);}
+            catch(Exception err){System.err.println();}
+            return -1;
+        }
+
+        @Override
         protected void finalizeData(){
             try{reader.close();}
             catch(Exception err){err.printStackTrace();}
@@ -181,6 +269,11 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             return length;
         }
 
+        @Override
+        protected long skip(long numberOfBytesToSkip){
+           return -1; //TODO
+        }
+
         //TODO
         @Override
         protected void finalizeData(){}
@@ -192,10 +285,15 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
      */
     private class HeaderReaderHelperBundle{
         OHLCV_BinaryLexical lexical;
-        byte lastByteValue; //byte containing last bit of H2
+        DataReader reader;
+        byte lastByteValue; //value of byte containing last bit of H2
         byte firstDataBitIndex; // IF 0, datapoint is on the next Byte, not this "lastByteValue"
 
         private HeaderReaderHelperBundle(DataReader reader){
+            this.reader = reader;
+        }
+
+        void readHeader(){
             //0. Initialize fields
             boolean[][] binH1 = new boolean[OHLCV_BinaryLexical.H1_COUNT][];
             boolean[][] binH2 = new boolean[OHLCV_BinaryLexical.H2_COUNT][];
@@ -284,13 +382,14 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
     //Could be a public generic use binary tool in tools package....
     private class BitByteTrack{
-        private long byteIndex;
-        private byte bitIndex;
+        long byteIndex;
+        byte bitIndex;
 
         private void constructorHelper(){
             byteIndex = 0;
             bitIndex = 0;
         }
+
         private BitByteTrack(){constructorHelper();}
 
         private BitByteTrack(long n, long bytes, long bits){
@@ -320,5 +419,9 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         private void addMultiple(long n, long bits){addMultiple(n,0, bits);}
 
         private void addMultiple(long bits){addMultiple(1, 0, bits);}
+
+        private void addMultiple(long n, BitByteTrack multiplier){
+            addMultiple(n,multiplier.bitIndex,multiplier.byteIndex);
+        }
     }
 }

@@ -94,4 +94,38 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         assertEquals(expectedStickArr[1].getC(),actualStickArr[1].getC());
         assertEquals(expectedStickArr[1].getV(),actualStickArr[1].getV());
     }
+
+    @Test
+    public void TwoDatapointsExtractSecondDataPoint(){
+        StickDouble expectedStick2 = new CandleStickFixedDouble(13, 4.1, 9.7, 2.2, 5, 15.6);
+        StickDouble actualStick2; //Actual Stick saved in the file.
+
+        OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+        Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
+
+        Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            filepath,
+            1,
+            1,
+            true
+        );
+
+        assertEquals(1, actualStickCollection.size());
+        actualStick2 = actualStickCollection.iterator().next();
+
+        //2nd data point
+        System.out.printf("DEBUG: UTC: %d\n", actualStick2.getUTC());
+        System.out.printf("DEBUG: O: %f\n", actualStick2.getO());
+        System.out.printf("DEBUG: H: %f\n", actualStick2.getH());
+        System.out.printf("DEBUG: L: %f\n", actualStick2.getL());
+        System.out.printf("DEBUG: C: %f\n", actualStick2.getC());
+        System.out.printf("DEBUG: V: %f\n", actualStick2.getV());
+
+        // assertEquals(expectedStick2.getUTC(),actualStick2.getUTC());
+        // assertEquals(expectedStick2.getO(),actualStick2.getO());
+        // assertEquals(expectedStick2.getH(),actualStick2.getH());
+        // assertEquals(expectedStick2.getL(),actualStick2.getL());
+        // assertEquals(expectedStick2.getC(),actualStick2.getC());
+        // assertEquals(expectedStick2.getV(),actualStick2.getV());
+    }
 }
