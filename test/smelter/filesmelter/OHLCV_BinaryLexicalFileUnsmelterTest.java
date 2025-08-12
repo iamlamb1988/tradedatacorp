@@ -114,18 +114,20 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         actualStick2 = actualStickCollection.iterator().next();
 
         //2nd data point
+        //DEBUG SECTION
         System.out.printf("DEBUG: UTC: %d\n", actualStick2.getUTC());
         System.out.printf("DEBUG: O: %f\n", actualStick2.getO());
         System.out.printf("DEBUG: H: %f\n", actualStick2.getH());
         System.out.printf("DEBUG: L: %f\n", actualStick2.getL());
         System.out.printf("DEBUG: C: %f\n", actualStick2.getC());
         System.out.printf("DEBUG: V: %f\n", actualStick2.getV());
+        //END DEBUG SECTION
 
-        // assertEquals(expectedStick2.getUTC(),actualStick2.getUTC());
-        // assertEquals(expectedStick2.getO(),actualStick2.getO());
-        // assertEquals(expectedStick2.getH(),actualStick2.getH());
-        // assertEquals(expectedStick2.getL(),actualStick2.getL());
-        // assertEquals(expectedStick2.getC(),actualStick2.getC());
-        // assertEquals(expectedStick2.getV(),actualStick2.getV());
+        assertEquals(expectedStick2.getUTC(),actualStick2.getUTC());
+        assertEquals(expectedStick2.getO(),actualStick2.getO());
+        assertEquals(expectedStick2.getH(),actualStick2.getH());
+        assertEquals(expectedStick2.getL(),actualStick2.getL());
+        assertEquals(expectedStick2.getC(),actualStick2.getC());
+        assertEquals(expectedStick2.getV(),actualStick2.getV());
     }
 }

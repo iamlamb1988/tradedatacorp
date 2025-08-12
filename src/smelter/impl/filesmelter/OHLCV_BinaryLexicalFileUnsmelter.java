@@ -3,6 +3,7 @@
  * @since 07 JUL 2025
  */
 package tradedatacorp.smelter.filesmelter;
+// package smelter.impl.filesmelter; //DEBUG TODO change back to package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.tools.binarytools.BinaryTools;
@@ -187,8 +188,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
     }
 
     private abstract class DataReader{
-        int totalReadBytes;
-
         protected abstract int readBytes(byte[] nextBytes);
         protected abstract int readBytes(byte[] nextBytes, int startIndex, int length);
         protected abstract long skip(long numberOfBytesToSkip);
@@ -201,21 +200,18 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         private FileReader(String filePathName){
             try{reader = new FileInputStream(filePathName);}
             catch(Exception err){err.printStackTrace();}
-            totalReadBytes = 0;
         }
 
         private FileReader(Path filePath){
             try{reader = new FileInputStream(filePath.toFile());}
             catch(Exception err){err.printStackTrace();}
-            totalReadBytes = 0;
         }
 
         @Override
         protected int readBytes(byte[] nextBytes){
             int readBytes=0;
             try{
-                readBytes = reader.read(nextBytes);;
-                totalReadBytes += readBytes;
+                readBytes = reader.read(nextBytes);
             }catch(Exception err){err.printStackTrace();}
             return readBytes;
         }
@@ -225,7 +221,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             int readBytes=0;
             try{
                 readBytes = reader.read(nextBytes,startIndex,length);
-                totalReadBytes += readBytes;
             }
             catch(Exception err){err.printStackTrace();}
             return readBytes;
@@ -249,15 +244,11 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
     private class StringReader extends DataReader{
         private StringBuilder strbldr; //TODO: No file writing here!!
 
-        private StringReader(){
-            strbldr = new StringBuilder();
-            totalReadBytes = 0;
-        }
+        private StringReader(){strbldr = new StringBuilder();}
 
         @Override
         protected int readBytes(byte[] nextBytes){
             for(byte b : nextBytes){strbldr.append((char)b);}
-            totalReadBytes += nextBytes.length;
             return nextBytes.length;
         }
 
@@ -265,7 +256,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         protected int readBytes(byte[] nextBytes, int startIndex, int length){
             int end = startIndex + length;
             for(int i=startIndex; i<end; ++i){strbldr.append((char)nextBytes[i]);}
-            totalReadBytes += length;
             return length;
         }
 
@@ -409,7 +399,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         private void addMultiple(long n, long bytes, long bits){
             long incomingBytes = n * bytes;
-            long incomingBits =  n * bits + bitIndex;
+            long incomingBits = bits + bitIndex;
             long extraBytes = incomingBits >>> 3;
             long remainingBits = incomingBits - (extraBytes << 3);
             byteIndex += incomingBytes + extraBytes;
