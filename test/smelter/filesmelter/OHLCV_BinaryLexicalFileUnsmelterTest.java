@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 23 JUN 2025
+ * @since 16 AUG 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -93,6 +93,33 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         assertEquals(expectedStickArr[1].getL(),actualStickArr[1].getL());
         assertEquals(expectedStickArr[1].getC(),actualStickArr[1].getC());
         assertEquals(expectedStickArr[1].getV(),actualStickArr[1].getV());
+    }
+
+    @Test
+    public void TwoDatapointsExtractFirstDataPoint(){
+        StickDouble expectedStick1 = new CandleStickFixedDouble(12, 4, 9, 2, 5, 10.5);
+        StickDouble actualStick1; //Actual Stick saved in the file.
+
+        OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+        Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
+
+        Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            filepath,
+            0,
+            1,
+            true
+        );
+
+        assertEquals(1, actualStickCollection.size());
+        actualStick1 = actualStickCollection.iterator().next();
+
+        //2nd data point
+        assertEquals(expectedStick1.getUTC(),actualStick1.getUTC());
+        assertEquals(expectedStick1.getO(),actualStick1.getO());
+        assertEquals(expectedStick1.getH(),actualStick1.getH());
+        assertEquals(expectedStick1.getL(),actualStick1.getL());
+        assertEquals(expectedStick1.getC(),actualStick1.getC());
+        assertEquals(expectedStick1.getV(),actualStick1.getV());
     }
 
     @Test
