@@ -140,7 +140,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             for(int i=firstDataPoint.bitIndex; i<8; ++i){
                 bitQueue.add(Boolean.valueOf(((headerReader.lastByteValue >>> (7-i)) & 1) == 1 ? true : false));
             }
-            //Should now jump to readBytes until data is full
+            nextDataPoint = new BitByteTrack();
         }else if(firstDataPoint.byteIndex == 1 && fromIndex == 0){ //First firstDatapoint IS the starting target data point and byte aligned.
             //Should now jump to readBytes until data is full
         }else{ //Will need to skip up to the first target data point.

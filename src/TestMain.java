@@ -21,7 +21,7 @@ public class TestMain {
         // OHLCV_BinaryLexicalFileUnsmelter unsmelter = new OHLCV_BinaryLexicalFileUnsmelter();
         // Collection<StickDouble> stickCollection = unsmelter.unsmeltFromQuantity(
         //     binFilePath,
-        //     1,
+        //     0,
         //     1,
         //     true
         // );
