@@ -29,7 +29,7 @@ Hex Content: 00 00 00 07 83 16 01 04 10 41 10 2A 22 A9 AA 1C 40 90 20 50 A5
 | H[9]=H1[9] = Fractional portion of Volume Data portion | 6 | 0001 00 | 4 bits for D[n].VF| |
 | H[10]=H1[10] = Number of bits to represent Symbol value of 8 bit ASCII characters | 7 | 0100 000 | 32 bits for H[11]=H2[0] | NOTE: 32 bits is 4 bytes (1 byte for each char) = "TEST" |
 | H[11]=H2[0] | 32 | 0101 0100 0100 0101 0101 0011 0101 0100 | "TEST" Each 8 bit chunk is ASCII char value | NOTE: 0101 0100 = "T", 0100 0101 = "E", 0101 0011 = "S", 0101 0100 = "T" |
-| H[12]=H2[1] | 3 | 001 | 1 data pont | |
+| H[12]=H2[1] | 3 | 001 | 1 data point | |
 | H[13]=H2[2] | 0 | NA | NA | Value not relevant, only bit length is relevant |
 
 Translated Data point:
@@ -457,27 +457,27 @@ Encoded Data point format:
         <td colspan="4" id="hex_41">5</td>
     </tr>
     <tr><td>Word</td>
-        <td colspan="8" id="word_0">00</td>
-        <td colspan="8" id="word_1">00</td>
-        <td colspan="8" id="word_2">00</td>
-        <td colspan="8" id="word_3">07</td>
-        <td colspan="8" id="word_4">83</td>
-        <td colspan="8" id="word_5">16</td>
-        <td colspan="8" id="word_6">01</td>
-        <td colspan="8" id="word_7">04</td>
-        <td colspan="8" id="word_8">10</td>
-        <td colspan="8" id="word_9">41</td>
-        <td colspan="8" id="word_10">10</td>
-        <td colspan="8" id="word_11">2A</td>
-        <td colspan="8" id="word_12">22</td>
-        <td colspan="8" id="word_13">A9</td>
-        <td colspan="8" id="word_14">AA</td>
-        <td colspan="8" id="word_15">1C</td>
-        <td colspan="8" id="word_16">40</td>
-        <td colspan="8" id="word_17">90</td>
-        <td colspan="8" id="word_18">20</td>
-        <td colspan="8" id="word_19">50</td>
-        <td colspan="8" id="word_20">A5</td>
+        <td colspan="8" id="word_0">0:00</td>
+        <td colspan="8" id="word_1">1:00</td>
+        <td colspan="8" id="word_2">2:00</td>
+        <td colspan="8" id="word_3">3:07</td>
+        <td colspan="8" id="word_4">4:83</td>
+        <td colspan="8" id="word_5">5:16</td>
+        <td colspan="8" id="word_6">6:01</td>
+        <td colspan="8" id="word_7">7:04</td>
+        <td colspan="8" id="word_8">8:10</td>
+        <td colspan="8" id="word_9">9:41</td>
+        <td colspan="8" id="word_10">10:10</td>
+        <td colspan="8" id="word_11">11:2A</td>
+        <td colspan="8" id="word_12">12:22</td>
+        <td colspan="8" id="word_13">13:A9</td>
+        <td colspan="8" id="word_14">14:AA</td>
+        <td colspan="8" id="word_15">15:1C</td>
+        <td colspan="8" id="word_16">16:40</td>
+        <td colspan="8" id="word_17">17:90</td>
+        <td colspan="8" id="word_18">18:20</td>
+        <td colspan="8" id="word_19">19:50</td>
+        <td colspan="8" id="word_20">20:A5</td>
     </tr>
 </table>
 
@@ -501,7 +501,7 @@ OLHCV_BINARYLexical Translation Details:
 | H[9]=H1[9] = Fractional portion of Volume Data portion | 6 | 0001 00 | 4 bits for D[n].VF| |
 | H[10]=H1[10] = Number of bits to represent Symbol value of 8 bit ASCII characters | 7 | 0100 000 | 32 bits for H[11]=H2[0] | NOTE: 32 bits is 4 bytes (1 byte for each char) = "TEST" |
 | H[11]=H2[0] | 32 | 0101 0100 0100 0101 0101 0011 0101 0100 | "TEST" Each 8 bit chunk is ASCII char value | NOTE: 0101 0100 = "T", 0100 0101 = "E", 0101 0011 = "S", 0101 0100 = "T" |
-| H[12]=H2[1] | 3 | 001 | 1 data pont | |
+| H[12]=H2[1] | 3 | 010 | 2 data points | |
 | H[13]=H2[2] | 0 | NA | NA | Value not relevant, only bit length is relevant |
 
 Encoded Data point format:
@@ -892,8 +892,8 @@ Encoded Data point format:
         <td id="h_11_30_119" style="color:green">0</td>
         <td id="h_11_31_120" style="color:green">0</td>
         <td id="h_12_0_121" style="color:orange">0</td>
-        <td id="h_12_1_122" style="color:orange">0</td>
-        <td id="h_12_2_123" style="color:orange">1</td>
+        <td id="h_12_1_122" style="color:orange">1</td>
+        <td id="h_12_2_123" style="color:orange">0</td>
         <td style="color:cyan">NA</td>
         <td id="d_0_UTC_0_124" style="color:magenta">1</td>
         <td id="d_0_UTC_1_125" style="color:magenta">1</td>
@@ -1045,32 +1045,32 @@ Encoded Data point format:
         <td colspan="4" id="hex_53">0</td>
     </tr>
     <tr><td>Word</td>
-        <td colspan="8" id="word_0">00</td>
-        <td colspan="8" id="word_1">00</td>
-        <td colspan="8" id="word_2">00</td>
-        <td colspan="8" id="word_3">07</td>
-        <td colspan="8" id="word_4">83</td>
-        <td colspan="8" id="word_5">16</td>
-        <td colspan="8" id="word_6">01</td>
-        <td colspan="8" id="word_7">04</td>
-        <td colspan="8" id="word_8">10</td>
-        <td colspan="8" id="word_9">41</td>
-        <td colspan="8" id="word_10">10</td>
-        <td colspan="8" id="word_11">2A</td>
-        <td colspan="8" id="word_12">22</td>
-        <td colspan="8" id="word_13">A9</td>
-        <td colspan="8" id="word_14">AA</td>
-        <td colspan="8" id="word_15">2C</td>
-        <td colspan="8" id="word_16">40</td>
-        <td colspan="8" id="word_17">90</td>
-        <td colspan="8" id="word_18">20</td>
-        <td colspan="8" id="word_19">50</td>
-        <td colspan="8" id="word_20">A5</td>
-        <td colspan="8" id="word_21">D4</td>
-        <td colspan="8" id="word_22">19</td>
-        <td colspan="8" id="word_23">72</td>
-        <td colspan="8" id="word_24">25</td>
-        <td colspan="8" id="word_25">0F</td>
-        <td colspan="8" id="word_26">60</td>
+        <td colspan="8" id="word_0">0:00</td>
+        <td colspan="8" id="word_1">1:00</td>
+        <td colspan="8" id="word_2">2:00</td>
+        <td colspan="8" id="word_3">3:07</td>
+        <td colspan="8" id="word_4">4:83</td>
+        <td colspan="8" id="word_5">5:16</td>
+        <td colspan="8" id="word_6">6:01</td>
+        <td colspan="8" id="word_7">7:04</td>
+        <td colspan="8" id="word_8">8:10</td>
+        <td colspan="8" id="word_9">9:41</td>
+        <td colspan="8" id="word_10">10:10</td>
+        <td colspan="8" id="word_11">11:2A</td>
+        <td colspan="8" id="word_12">12:22</td>
+        <td colspan="8" id="word_13">13:A9</td>
+        <td colspan="8" id="word_14">14:AA</td>
+        <td colspan="8" id="word_15">15:2C</td>
+        <td colspan="8" id="word_16">16:40</td>
+        <td colspan="8" id="word_17">17:90</td>
+        <td colspan="8" id="word_18">18:20</td>
+        <td colspan="8" id="word_19">19:50</td>
+        <td colspan="8" id="word_20">20:A5</td>
+        <td colspan="8" id="word_21">21:D4</td>
+        <td colspan="8" id="word_22">22:19</td>
+        <td colspan="8" id="word_23">23:72</td>
+        <td colspan="8" id="word_24">24:25</td>
+        <td colspan="8" id="word_25">25:0F</td>
+        <td colspan="8" id="word_26">26:60</td>
     </tr>
 </table>
