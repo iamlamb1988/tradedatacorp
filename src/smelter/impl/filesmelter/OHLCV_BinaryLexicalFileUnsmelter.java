@@ -3,8 +3,6 @@
  * @since 23 AUG 2025
  */
 package tradedatacorp.smelter.filesmelter;
-// package smelter.impl.filesmelter; //DEBUG TODO change back to package tradedatacorp.smelter.filesmelter;
-
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.item.stick.primitive.StickDouble;
@@ -152,17 +150,11 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             else bytesToSkip = (int)(nextDataPoint.byteIndex - 1);
 
             if(bytesToSkip == -1){ //Rare case, if targetByte is still in the first byte with header.
-                //TODO need to stuff as many bits into bitqueue as possible (1 to 7 bits)
-                System.out.println("DEBUG: Currently possess some relevant bits");
+                //Nothing to do here.
             }else if (bytesToSkip == 0){ //target byte is in next header.
                 //Nothing to do here.
-                System.out.println("DEBUG: First set of bits are somewhere within the next byte in file.");
             }else{
-                System.out.printf("DEBUG: Skipping %d byte(s) where the next byte in file contains first relevant bit(s).\n", bytesToSkip);
                 dataReader.skip(bytesToSkip);
-                // for(int i=firstDataPoint.bitIndex; i<8; ++i){
-                //     bitQueue.add(Boolean.valueOf(((headerReader.lastByteValue >>> (7-i)) & 1) == 1 ? true : false));
-                // }
             }
 
             nextDataPoint.byteIndex = 0;
@@ -215,9 +207,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
     }
 
     private abstract class DataReader{
-        int DEBUG_bytesRead = 0;
-        int DEBUG_bytesSkipped = 0;
-        int DEBUG_totalBytesProcessed = 0;
         protected abstract int readBytes(byte[] nextBytes);
         protected abstract int readBytes(byte[] nextBytes, int startIndex, int length);
         protected abstract long skip(long numberOfBytesToSkip);
@@ -243,8 +232,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             try{
                 readBytes = reader.read(nextBytes);
             }catch(Exception err){err.printStackTrace();}
-            DEBUG_bytesRead += readBytes;
-            DEBUG_totalBytesProcessed += readBytes;
             return readBytes;
         }
 
@@ -255,8 +242,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 readBytes = reader.read(nextBytes,startIndex,length);
             }
             catch(Exception err){err.printStackTrace();}
-            DEBUG_bytesRead += readBytes;
-            DEBUG_totalBytesProcessed += readBytes;
             return readBytes;
         }
 
@@ -264,8 +249,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         protected long skip(long numberOfBytesToSkip){
             try{
                 long bytesSkipped = reader.skip(numberOfBytesToSkip);
-                DEBUG_bytesSkipped += bytesSkipped;
-                DEBUG_totalBytesProcessed += bytesSkipped;
             }catch(Exception err){System.err.println();}
             return -1;
         }
@@ -311,9 +294,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
      * Will not close the file upon completion.
      */
     private class HeaderReaderHelperBundle{
-        int DEBUG_H1_ByteCountRead = 0;
-        int DEBUG_H2_ByteCountRead = 0;
-        int DEBUG_H_ByteCountRead = 0;
         OHLCV_BinaryLexical lexical;
         DataReader reader;
         byte lastByteValue; //value of byte containing last bit of H2
@@ -337,8 +317,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             boolean[] flatBinH2plus;
 
             byteCount = reader.readBytes(byteChunk);
-            DEBUG_H1_ByteCountRead+=byteCount;
-            DEBUG_H_ByteCountRead+=byteCount;
 
             //1. Extract H1 bits into flat Header 1
             for(int i=0; i<byteCount; ++i){
@@ -367,8 +345,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 byteCount = (h2_bit_length >>> 3);
                 byteChunk = new byte[byteCount];
                 flatBinH2plus = new boolean[byteCount << 3];
-                DEBUG_H2_ByteCountRead=reader.readBytes(byteChunk);
-                DEBUG_H_ByteCountRead+=DEBUG_H2_ByteCountRead;
+                reader.readBytes(byteChunk);
             }else{
                 h2startbyteIndex = (byte)1;
                 flatIndex = 8 - excessBits;
@@ -377,8 +354,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 byteChunk = new byte[byteCount];
                 flatBinH2plus = new boolean[byteCount << 3];
                 byteChunk[0] = firstH2Byte;
-                DEBUG_H2_ByteCountRead=reader.readBytes(byteChunk,1,byteCount - 1);
-                DEBUG_H_ByteCountRead+=DEBUG_H2_ByteCountRead;
+                reader.readBytes(byteChunk,1,byteCount - 1);
             }
 
             //5. Process new byte Array elements into new respective bin array.
