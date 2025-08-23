@@ -8,6 +8,8 @@ Note: Tutorials and additional documentation will be provided soon.
 
 ## Release Notes
 
+Preparing to convert into a Maven File Structure before continuing work.
+
 Current Version: 0-M
 This version is incomplete. Many parts are stable and tested. Most of this code is modular and easy to test.
 Upon completion of first Warehouse implementation, will move forward with a component release.

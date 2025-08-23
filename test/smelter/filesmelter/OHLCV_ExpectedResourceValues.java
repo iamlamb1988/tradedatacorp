@@ -64,4 +64,41 @@ public class OHLCV_ExpectedResourceValues{
             (byte)0x60  //Index 26
         };
     }
+
+    public static byte[] expectedThreeDatapoints(){
+        return new byte[]{
+            (byte)0x00, //Index 0
+            (byte)0x00, //Index 1
+            (byte)0x00, //Index 2
+            (byte)0x07, //Index 3
+            (byte)0x83, //Index 4
+            (byte)0x16, //Index 5
+            (byte)0x01, //Index 6
+            (byte)0x04, //Index 7
+            (byte)0x10, //Index 8
+            (byte)0x41, //Index 9
+            (byte)0x10, //Index 10
+            (byte)0x2A, //Index 11
+            (byte)0x22, //Index 12
+            (byte)0xA9, //Index 13
+            (byte)0xAA, //Index 14
+            (byte)0x3C, //Index 15
+            (byte)0x40, //Index 16
+            (byte)0x90, //Index 17
+            (byte)0x20, //Index 18
+            (byte)0x50, //Index 19
+            (byte)0xA5, //Index 20
+            (byte)0xD4, //Index 21
+            (byte)0x19, //Index 22
+            (byte)0x72, //Index 23
+            (byte)0x25, //Index 24
+            (byte)0x0F, //Index 25
+            (byte)0x6E, //Index 26
+            (byte)0x53, //Index 27
+            (byte)0x86, //Index 28
+            (byte)0x26, //Index 29
+            (byte)0x67, //Index 30
+            (byte)0x97  //Index 31
+        };
+    }
 }
