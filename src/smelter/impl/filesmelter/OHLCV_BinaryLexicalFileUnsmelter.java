@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 16 AUG 2025
+ * @since 23 AUG 2025
  */
 package tradedatacorp.smelter.filesmelter;
 // package smelter.impl.filesmelter; //DEBUG TODO change back to package tradedatacorp.smelter.filesmelter;
@@ -181,21 +181,14 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         byteCount = byteCount < fileReadByteChunkSize ? byteCount : fileReadByteChunkSize;
         byteCount = dataReader.readBytes(byteArray, 0, byteCount);
 
-        //3.1 read first batch of data bytes from file
+        //4. Add relevant bits from first byte with appropriate offset.
         tmpByteValue = byteArray[0];
         for(int i=nextDataPoint.bitIndex; i<8; ++i){
             bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-i)) & 1) == 1));
         }
 
-        for(int i=1; i<byteCount; ++i){
-            tmpByteValue = byteArray[i];
-            for(int j=0; j<8; ++j){
-                bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-j)) & 1) == 1));
-            }
-        }
-
-        //4. Read full data bytes from file.
-        tmpIndex=0;
+        //5. Read remaining bytes and generate sticks
+        tmpIndex = 1; // Index of byte array
         while(stickList.size() < quantity){
             while(tmpIndex < byteCount){
                 tmpByteValue=byteArray[tmpIndex];
@@ -215,7 +208,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             byteCount = dataReader.readBytes(byteArray);
         }
 
-        //5. Cleanup
+        //6. Clean and return
         dataReader.finalizeData();
 
         return stickList;

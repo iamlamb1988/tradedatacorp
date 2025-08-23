@@ -8,7 +8,7 @@ import tradedatacorp.smelter.filesmelter.OHLCV_BinaryLexicalFileUnsmelter;
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
-// import tradedatacorp.test.java.TestResourceFetcher;
+import tradedatacorp.test.java.TestResourceFetcher;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
@@ -36,8 +36,8 @@ public class TestMain {
         // OHLCV_BinaryLexicalFileUnsmelter unsmelter = new OHLCV_BinaryLexicalFileUnsmelter();
         // Collection<StickDouble> stickCollection = unsmelter.unsmeltFromQuantity(
         //     binFilePath,
-        //     2,
         //     1,
+        //     2,
         //     true
         // );
 
