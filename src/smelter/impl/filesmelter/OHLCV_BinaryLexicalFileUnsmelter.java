@@ -2,8 +2,8 @@
  * @author Bruce Lamb
  * @since 16 AUG 2025
  */
-package tradedatacorp.smelter.filesmelter;
-// package smelter.impl.filesmelter; //DEBUG TODO change back to package tradedatacorp.smelter.filesmelter;
+// package tradedatacorp.smelter.filesmelter;
+package smelter.impl.filesmelter; //DEBUG TODO change back to package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.tools.binarytools.BinaryTools;
@@ -147,39 +147,50 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             nextDataPoint = new BitByteTrack(firstDataPoint);
             nextDataPoint.addMultiple(fromIndex, multiplier);
 
-            int bytesToSkip = (int)(nextDataPoint.byteIndex - 1);
+            int bytesToSkip = (int)nextDataPoint.byteIndex;
+            if(nextDataPoint.bitIndex == 0) bytesToSkip = (int)nextDataPoint.byteIndex;
+            else bytesToSkip = (int)(nextDataPoint.byteIndex - 1);
+
             if(bytesToSkip == -1){ //Rare case, if targetByte is still in the first byte with header.
                 //TODO need to stuff as many bits into bitqueue as possible (1 to 7 bits)
+                System.out.println("DEBUG: Currently possess some relevant bits");
             }else if (bytesToSkip == 0){ //target byte is in next header.
                 //Nothing to do here.
+                System.out.println("DEBUG: First set of bits are somewhere within the next byte in file.");
             }else{
+                System.out.printf("DEBUG: Skipping %d byte(s) where the next byte in file contains first relevant bit(s).\n", bytesToSkip);
                 dataReader.skip(bytesToSkip);
+                // for(int i=firstDataPoint.bitIndex; i<8; ++i){
+                //     bitQueue.add(Boolean.valueOf(((headerReader.lastByteValue >>> (7-i)) & 1) == 1 ? true : false));
+                // }
             }
+
             nextDataPoint.byteIndex = 0;
         }
 
         //3. Read in first batch of bits and handle first
         lastDataPoint = new BitByteTrack(nextDataPoint);
-        lastDataPoint.addMultiple(quantity, multiplier);
-        byteCount = (int)(lastDataPoint.byteIndex + 1); //Maximum number of bytes to read ( may not need all of them)
+        lastDataPoint.addMultiple(quantity - 1, multiplier);
+
+        multiplier.subtractMultiple(1); //reducing by 1 bit to jump to last relevant bit.
+        lastDataPoint.addMultiple(1, multiplier); //Last relevant bit on lastDataPoint
+        lastDataPoint.roundUp();
+
+        byteCount = (int)lastDataPoint.byteIndex; //Maximum number of bytes to read
 
         byteCount = byteCount < fileReadByteChunkSize ? byteCount : fileReadByteChunkSize;
         byteCount = dataReader.readBytes(byteArray, 0, byteCount);
 
         //3.1 read first batch of data bytes from file
-        boolean[] DEBUG_queVal = new boolean[byteCount << 3];
-
         tmpByteValue = byteArray[0];
         for(int i=nextDataPoint.bitIndex; i<8; ++i){
-            bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-i)) & 1) == 1 ? true : false));
-            DEBUG_queVal[i] = ((tmpByteValue >>> (7-i)) & 1) == 1 ? true : false;
+            bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-i)) & 1) == 1));
         }
 
         for(int i=1; i<byteCount; ++i){
             tmpByteValue = byteArray[i];
             for(int j=0; j<8; ++j){
-                bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-j)) & 1) == 1 ? true : false));
-                DEBUG_queVal[(i << 3) + j] = ((tmpByteValue >>> (7-j)) & 1) == 1 ? true : false;
+                bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-j)) & 1) == 1));
             }
         }
 
@@ -204,13 +215,16 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             byteCount = dataReader.readBytes(byteArray);
         }
 
-        //8. Cleanup
+        //5. Cleanup
         dataReader.finalizeData();
 
         return stickList;
     }
 
     private abstract class DataReader{
+        int DEBUG_bytesRead = 0;
+        int DEBUG_bytesSkipped = 0;
+        int DEBUG_totalBytesProcessed = 0;
         protected abstract int readBytes(byte[] nextBytes);
         protected abstract int readBytes(byte[] nextBytes, int startIndex, int length);
         protected abstract long skip(long numberOfBytesToSkip);
@@ -236,6 +250,8 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             try{
                 readBytes = reader.read(nextBytes);
             }catch(Exception err){err.printStackTrace();}
+            DEBUG_bytesRead += readBytes;
+            DEBUG_totalBytesProcessed += readBytes;
             return readBytes;
         }
 
@@ -246,13 +262,18 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 readBytes = reader.read(nextBytes,startIndex,length);
             }
             catch(Exception err){err.printStackTrace();}
+            DEBUG_bytesRead += readBytes;
+            DEBUG_totalBytesProcessed += readBytes;
             return readBytes;
         }
 
         @Override
         protected long skip(long numberOfBytesToSkip){
-            try{reader.skip(numberOfBytesToSkip);}
-            catch(Exception err){System.err.println();}
+            try{
+                long bytesSkipped = reader.skip(numberOfBytesToSkip);
+                DEBUG_bytesSkipped += bytesSkipped;
+                DEBUG_totalBytesProcessed += bytesSkipped;
+            }catch(Exception err){System.err.println();}
             return -1;
         }
 
@@ -424,7 +445,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         private BitByteTrack(long bits){
             constructorHelper();
-            addMultiple(0, bits);
+            addMultiple(bits);
         }
 
         private BitByteTrack(BitByteTrack initialValue){
@@ -434,11 +455,10 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         private void addMultiple(long n, long bytes, long bits){
             long incomingBytes = n * bytes;
-            long incomingBits = bits + bitIndex;
+            long incomingBits = n * bits + bitIndex;
             long extraBytes = incomingBits >>> 3;
-            long remainingBits = incomingBits - (extraBytes << 3);
+            bitIndex = (byte)(incomingBits - (extraBytes << 3));
             byteIndex += incomingBytes + extraBytes;
-            bitIndex = (byte)remainingBits;
         }
 
         private void addMultiple(long n, long bits){addMultiple(n,0, bits);}
@@ -447,6 +467,24 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         private void addMultiple(long n, BitByteTrack multiplier){
             addMultiple(n, multiplier.byteIndex, multiplier.bitIndex);
+        }
+
+        private void subtractMultiple(long bits){
+            long deductedBytes = (bits >>> 3);
+            long remaingBitsToDeduct = bits - (deductedBytes << 3);
+            byteIndex -= deductedBytes;
+            bitIndex -= (byte)remaingBitsToDeduct;
+            if(bitIndex < 0){
+                byteIndex -= 1;
+                bitIndex += 8;
+            }
+        }
+
+        private void roundUp(){
+            if(bitIndex != 0){
+                ++byteIndex;
+                bitIndex = 0;
+            }
         }
     }
 }
