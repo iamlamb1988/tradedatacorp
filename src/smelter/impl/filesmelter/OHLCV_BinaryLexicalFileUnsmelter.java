@@ -2,8 +2,8 @@
  * @author Bruce Lamb
  * @since 16 AUG 2025
  */
-// package tradedatacorp.smelter.filesmelter;
-package smelter.impl.filesmelter; //DEBUG TODO change back to package tradedatacorp.smelter.filesmelter;
+package tradedatacorp.smelter.filesmelter;
+// package smelter.impl.filesmelter; //DEBUG TODO change back to package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
 import tradedatacorp.tools.binarytools.BinaryTools;
@@ -148,7 +148,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
             nextDataPoint.addMultiple(fromIndex, multiplier);
 
             int bytesToSkip = (int)nextDataPoint.byteIndex;
-            if(nextDataPoint.bitIndex == 0) bytesToSkip = (int)nextDataPoint.byteIndex;
+            if(firstDataPoint.bitIndex == 0) bytesToSkip = (int)nextDataPoint.byteIndex;
             else bytesToSkip = (int)(nextDataPoint.byteIndex - 1);
 
             if(bytesToSkip == -1){ //Rare case, if targetByte is still in the first byte with header.

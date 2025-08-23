@@ -3,12 +3,12 @@
  * @since 17 AUG 2025
  */
 import tradedatacorp.smelter.filesmelter.OHLCV_BinaryLexicalFileSmelter;
-// import tradedatacorp.smelter.filesmelter.OHLCV_BinaryLexicalFileUnsmelter;
-import smelter.impl.filesmelter.OHLCV_BinaryLexicalFileUnsmelter; //DEBUG TODO, restore
+import tradedatacorp.smelter.filesmelter.OHLCV_BinaryLexicalFileUnsmelter;
+// import smelter.impl.filesmelter.OHLCV_BinaryLexicalFileUnsmelter; //DEBUG TODO, restore
 import tradedatacorp.item.stick.primitive.StickDouble;
 import tradedatacorp.item.stick.primitive.CandleStickFixedDouble;
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
-import tradedatacorp.test.java.TestResourceFetcher;
+// import tradedatacorp.test.java.TestResourceFetcher;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
@@ -28,27 +28,27 @@ public class TestMain {
         // stickFileWriter.smeltToFile();
 
         ////////
-        TestResourceFetcher filePathFetcher = new TestResourceFetcher();
-        Path binFilePath = filePathFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
-        StickDouble[] stickArray;
-        System.out.printf("PATH: %s\n", binFilePath.toAbsolutePath());
+        // TestResourceFetcher filePathFetcher = new TestResourceFetcher();
+        // Path binFilePath = filePathFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
+        // StickDouble[] stickArray;
+        // System.out.printf("PATH: %s\n", binFilePath.toAbsolutePath());
 
-        OHLCV_BinaryLexicalFileUnsmelter unsmelter = new OHLCV_BinaryLexicalFileUnsmelter();
-        Collection<StickDouble> stickCollection = unsmelter.unsmeltFromQuantity(
-            binFilePath,
-            2,
-            1,
-            true
-        );
+        // OHLCV_BinaryLexicalFileUnsmelter unsmelter = new OHLCV_BinaryLexicalFileUnsmelter();
+        // Collection<StickDouble> stickCollection = unsmelter.unsmeltFromQuantity(
+        //     binFilePath,
+        //     2,
+        //     1,
+        //     true
+        // );
 
-        Iterator<StickDouble> it = stickCollection.iterator();
-        stickArray = new StickDouble[stickCollection.size()];
+        // Iterator<StickDouble> it = stickCollection.iterator();
+        // stickArray = new StickDouble[stickCollection.size()];
 
-        int i=0;
-        while(it.hasNext()){
-            stickArray[i] = it.next();
-            ++i;
-        }
-        System.out.println("End");
+        // int i=0;
+        // while(it.hasNext()){
+        //     stickArray[i] = it.next();
+        //     ++i;
+        // }
+        // System.out.println("End");
     }
 }
