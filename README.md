@@ -8,14 +8,13 @@ Note: Tutorials and additional documentation will be provided soon.
 
 ## Release Notes
 
-Preparing to convert into a Maven File Structure before continuing work.
-
 Current Version: 0-M
 This version is incomplete. Many parts are stable and tested. Most of this code is modular and easy to test.
 Upon completion of first Warehouse implementation, will move forward with a component release.
 
 ## Introduction
 
+Restructure coming soon.
 This abstract library models a business corporation, encapsulating fundamental information such as the company name and headquarters address. The corporation consists of various tangible components, including:
 - Workers
   - Miners
@@ -31,13 +30,14 @@ This abstract library models a business corporation, encapsulating fundamental i
   - App
 - Products
   - Summaries
-  - Files
-    - Binary Files
-    - CSV
-	- JSON
-	- XML/HTML
-  - GUI images
+    - Files
+      - Binary Files
+      - CSV
+    - JSON
+    - XML/HTML
+    - GUI images
 - Tools
+  - Candlesticks
   - Binary Conversion Tools
   - JSON Parser
 
