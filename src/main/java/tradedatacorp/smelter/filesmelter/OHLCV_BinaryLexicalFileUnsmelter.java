@@ -5,6 +5,7 @@
 package tradedatacorp.smelter.filesmelter;
 
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
+import tradedatacorp.tools.binarytools.BitByteTrack;
 import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.tools.stick.primitive.StickDouble;
 
@@ -135,20 +136,20 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         BitByteTrack lastDataPoint;
 
         //2. Update from Byte Index after header read. skip to point in file with relative index and bit value
-        if(firstDataPoint.byteIndex == 0 && fromIndex == 0){ //First firstDatapoint IS the starting target data point.
-            for(int i=firstDataPoint.bitIndex; i<8; ++i){
+        if(firstDataPoint.getByteIndex() == 0 && fromIndex == 0){ //First firstDatapoint IS the starting target data point.
+            for(int i=firstDataPoint.getBitIndex(); i<8; ++i){
                 bitQueue.add(Boolean.valueOf(((headerReader.lastByteValue >>> (7-i)) & 1) == 1 ? true : false));
             }
             nextDataPoint = new BitByteTrack();
-        }else if(firstDataPoint.byteIndex == 1 && fromIndex == 0){ //First firstDatapoint IS the starting target data point and byte aligned.
+        }else if(firstDataPoint.getByteIndex() == 1 && fromIndex == 0){ //First firstDatapoint IS the starting target data point and byte aligned.
             //Should now jump to readBytes until data is full
         }else{ //Will need to skip up to the first target data point.
             nextDataPoint = new BitByteTrack(firstDataPoint);
             nextDataPoint.addMultiple(fromIndex, multiplier);
 
-            int bytesToSkip = (int)nextDataPoint.byteIndex;
-            if(firstDataPoint.bitIndex == 0) bytesToSkip = (int)nextDataPoint.byteIndex;
-            else bytesToSkip = (int)(nextDataPoint.byteIndex - 1);
+            int bytesToSkip = (int)nextDataPoint.getByteIndex();
+            if(firstDataPoint.getBitIndex() == 0) bytesToSkip = (int)nextDataPoint.getByteIndex();
+            else bytesToSkip = (int)(nextDataPoint.getByteIndex() - 1);
 
             if(bytesToSkip == -1){ //Rare case, if targetByte is still in the first byte with header.
                 //Nothing to do here.
@@ -158,7 +159,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 dataReader.skip(bytesToSkip);
             }
 
-            nextDataPoint.byteIndex = 0;
+            nextDataPoint.clearBytes();
         }
 
         //3. Read in first batch of bits and handle first
@@ -166,17 +167,17 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         lastDataPoint.addMultiple(quantity - 1, multiplier);
 
         multiplier.subtractMultiple(1); //reducing by 1 bit to jump to last relevant bit.
-        lastDataPoint.addMultiple(1, multiplier); //Last relevant bit on lastDataPoint
+        lastDataPoint.addMultiple(multiplier); //Last relevant bit on lastDataPoint
         lastDataPoint.roundUp();
 
-        byteCount = (int)lastDataPoint.byteIndex; //Maximum number of bytes to read
+        byteCount = (int)lastDataPoint.getByteIndex(); //Maximum number of bytes to read
 
         byteCount = byteCount < fileReadByteChunkSize ? byteCount : fileReadByteChunkSize;
         byteCount = dataReader.readBytes(byteArray, 0, byteCount);
 
         //4. Add relevant bits from first byte with appropriate offset.
         tmpByteValue = byteArray[0];
-        for(int i=nextDataPoint.bitIndex; i<8; ++i){
+        for(int i=nextDataPoint.getBitIndex(); i<8; ++i){
             bitQueue.add(Boolean.valueOf(((tmpByteValue >>> (7-i)) & 1) == 1));
         }
 
@@ -388,73 +389,6 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
             lastByteValue = byteChunk[byteChunk.length - 1];
             firstDataBitIndex = (byte)(lexical.getHeaderBitLength()%8);
-        }
-    }
-
-    //Could be a public generic use binary tool in tools package....
-    private class BitByteTrack{
-        long byteIndex;
-        byte bitIndex;
-
-        private void constructorHelper(){
-            byteIndex = 0;
-            bitIndex = 0;
-        }
-
-        private BitByteTrack(){constructorHelper();}
-
-        private BitByteTrack(long n, long bytes, long bits){
-            constructorHelper();
-            addMultiple(n, bytes, bits);
-        }
-
-        private BitByteTrack(long n, long bits){
-            constructorHelper();
-            addMultiple(n,bits);
-        }
-
-        private BitByteTrack(long bits){
-            constructorHelper();
-            addMultiple(bits);
-        }
-
-        private BitByteTrack(BitByteTrack initialValue){
-            byteIndex = initialValue.byteIndex;
-            bitIndex = initialValue.bitIndex;
-        }
-
-        private void addMultiple(long n, long bytes, long bits){
-            long incomingBytes = n * bytes;
-            long incomingBits = n * bits + bitIndex;
-            long extraBytes = incomingBits >>> 3;
-            bitIndex = (byte)(incomingBits - (extraBytes << 3));
-            byteIndex += incomingBytes + extraBytes;
-        }
-
-        private void addMultiple(long n, long bits){addMultiple(n,0, bits);}
-
-        private void addMultiple(long bits){addMultiple(1, 0, bits);}
-
-        private void addMultiple(long n, BitByteTrack multiplier){
-            addMultiple(n, multiplier.byteIndex, multiplier.bitIndex);
-        }
-
-        private void subtractMultiple(long bits){
-            long deductedBytes = (bits >>> 3);
-            long remaingBitsToDeduct = bits - (deductedBytes << 3);
-            byteIndex -= deductedBytes;
-            bitIndex -= (byte)remaingBitsToDeduct;
-            if(bitIndex < 0){
-                byteIndex -= 1;
-                bitIndex += 8;
-            }
-        }
-
-        private void roundUp(){
-            if(bitIndex != 0){
-                ++byteIndex;
-                bitIndex = 0;
-            }
         }
     }
 }

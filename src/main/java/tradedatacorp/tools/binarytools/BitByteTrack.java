@@ -113,4 +113,6 @@ public class BitByteTrack{
         if(bitIndex < 4) roundDown();
         else roundUp();
     }
+
+    public void clearBytes(){byteIndex = 0;}
 }
