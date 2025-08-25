@@ -379,10 +379,10 @@ public class BitByteTrackTest{
             // [2, 5] - 5 * [3, 3]
             // [2, 5] + [-15, -15]
             // [-13, -10]
-            // [-13 + 2, -10 + 16]
-            // [-11, 6]
+            // [-13 - 2, -10 + 16]
+            // [-15, 6]
 
-            assertEquals(-11, t.getByteIndex());
+            assertEquals(-15, t.getByteIndex());
             assertEquals(6, t.getBitIndex());
         }
     }
