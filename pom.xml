@@ -6,7 +6,7 @@
 
   <groupId>com.github.iamlamb1988</groupId>
   <artifactId>tradedatacorp</artifactId>
-  <version>0.0.0.0</version>
+  <version>0.0.0.0-M</version>
 
   <name>tradedatacorp</name>
   <description>The purpose of this project is to store, analyze, backtest, and detect trading patterns.</description>
