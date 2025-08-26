@@ -8,9 +8,8 @@ Note: Tutorials and additional documentation will be provided soon.
 
 ## Release Notes
 
-Current Version: 0-M
-This version is incomplete. Many parts are stable and tested. Most of this code is modular and easy to test.
-Upon completion of first Warehouse implementation, will move forward with a component release.
+Current Version: 0.0.0.0-M
+This version is in progress. Core internal components in development.
 
 ## Introduction
 
