@@ -118,10 +118,13 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         boolean[] dataBinArray = new boolean[lexical.getDataBitLength()];
 
         int byteCount;
-        int byteReadSize; //Will not exceed this.fileReadByteChunkSize.
         int tmpByteValue; //Leave as int to avoid implicity bit shift promotion to an unsigned value.
         int tmpIndex;
         ArrayDeque<Boolean> bitQueue = new ArrayDeque<Boolean>(fileReadByteChunkSize << 3);
+
+        //Check valid quantity
+        if(quantity + fromIndex > lexical.getDataCount()) quantity = lexical.getDataCount() - fromIndex;
+
         ArrayList<StickDouble> stickList = new ArrayList<StickDouble>(quantity);
 
         BitByteTrack multiplier = new BitByteTrack(lexical.getDataBitLength()); //used to jump to Byte and Bit of from index.
