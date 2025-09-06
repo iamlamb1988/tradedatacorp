@@ -37,7 +37,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
     @DisplayName("OneDatapoint Unsmelt tests")
     class TestsForOneDatapoint{
         @Test
-        public void unsmeltAllFromCollectionTest(){
+        public void unsmeltAllCollectionTest(){
             StickDouble expectedStick0 = expectedStickList[0];
             StickDouble actualStick0; //Actual Stick saved in the file.
 
@@ -59,7 +59,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         }
 
         @Test
-        public void unsmeltAllFromArrayTest(){
+        public void unsmeltAllArrayTest(){
             StickDouble expectedStick0 = expectedStickList[0];
             StickDouble actualStick0; //Actual Stick saved in the file.
 
@@ -80,7 +80,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         }
 
         @Test
-        public void ThreeDatapointsExtractAllDataPoints(){
+        public void OneDatapointExtractOnlyDataPointCollectionTest(){
             StickDouble[] expectedStickArr = new StickDouble[]{expectedStickList[0]};
             StickDouble expectedStick0 = expectedStickList[0];
 
@@ -88,9 +88,9 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             StickDouble actualStick0; //Actual Stick saved in the file.
 
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
-            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/OneDatapoint.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 0,
                 1,
@@ -112,6 +112,33 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
                 }
             }
             actualStick0 = actualStickArr[0];
+
+            //data point
+            assertEquals(expectedStick0.getUTC(),actualStick0.getUTC());
+            assertEquals(expectedStick0.getO(),actualStick0.getO());
+            assertEquals(expectedStick0.getH(),actualStick0.getH());
+            assertEquals(expectedStick0.getL(),actualStick0.getL());
+            assertEquals(expectedStick0.getC(),actualStick0.getC());
+            assertEquals(expectedStick0.getV(),actualStick0.getV());
+        }
+
+        @Test
+        public void OneDatapointExtractOnlyDataPointArrayTest(){
+            StickDouble[] expectedStickArr = new StickDouble[]{expectedStickList[0]};
+            StickDouble expectedStick0 = expectedStickList[0];
+
+            OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/OneDatapoint.brclmb");
+
+            StickDouble[] actualStickArr = reader.unsmeltFileToArrayFromQuantity(
+                filepath,
+                0,
+                1,
+                true
+            );
+            StickDouble actualStick0 = actualStickArr[0]; //Actual Stick saved in the file.
+
+            assertEquals(1, actualStickArr.length);
 
             //data point
             assertEquals(expectedStick0.getUTC(),actualStick0.getUTC());
@@ -210,7 +237,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 0,
                 1,
@@ -237,7 +264,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 1,
                 1,
@@ -272,7 +299,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 0,
                 2,
@@ -419,7 +446,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 0,
                 1,
@@ -446,7 +473,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 1,
                 1,
@@ -473,7 +500,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 2,
                 1,
@@ -508,7 +535,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 0,
                 2,
@@ -565,7 +592,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 1,
                 2,
@@ -625,7 +652,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 0,
                 3,
@@ -691,7 +718,7 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
-            Collection<StickDouble> actualStickCollection = reader.unsmeltFromQuantity(
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollectionFromQuantity(
                 filepath,
                 1,
                 3,
