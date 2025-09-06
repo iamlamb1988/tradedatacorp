@@ -22,6 +22,9 @@ import java.util.Iterator;
 public class OHLCV_BinaryLexicalFileUnsmelterTest{
     private static TestResourceFetcher testFileFetcher;
     private static CandleStickFixedDouble[] expectedStickList;
+    private static boolean[][] cachedOneDatapointHeader;
+    private static boolean[][] cachedTwoDatapointsHeader;
+    private static boolean[][] cachedThreeDatapointsHeader;
 
     @BeforeAll
     static void initialize(){
@@ -31,6 +34,16 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             new CandleStickFixedDouble(13, 4.1, 9.7, 2.2, 5, 15.6), //Index: 1
             new CandleStickFixedDouble(14, 5.3, 8.6, 2.6, 6.7, 9.7) //Index: 2
         };
+
+        Path cachePathOneDP = testFileFetcher.getFilePath("smelter/filesmelter/OneDatapoint.brclmb");
+        Path cachePathTwoDP = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
+        Path cachePathThreeDP = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
+
+        OHLCV_BinaryLexicalFileUnsmelter tmpHeaderReader = new OHLCV_BinaryLexicalFileUnsmelter();
+
+        cachedOneDatapointHeader = tmpHeaderReader.unsmeltFileHeader(cachePathOneDP);
+        cachedTwoDatapointsHeader = tmpHeaderReader.unsmeltFileHeader(cachePathTwoDP);
+        cachedThreeDatapointsHeader = tmpHeaderReader.unsmeltFileHeader(cachePathThreeDP);
     }
 
     @Nested
@@ -59,6 +72,28 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         }
 
         @Test
+        public void unsmeltAllCollectionCachedHeaderTest(){
+            StickDouble expectedStick0 = expectedStickList[0];
+            StickDouble actualStick0; //Actual Stick saved in the file.
+
+            OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/OneDatapoint.brclmb");
+
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollection(filepath, cachedOneDatapointHeader);
+            assertEquals(1,actualStickCollection.size());
+
+            Iterator<StickDouble> it = actualStickCollection.iterator();
+            actualStick0 = it.next();
+
+            assertEquals(expectedStick0.getUTC(),actualStick0.getUTC());
+            assertEquals(expectedStick0.getO(),actualStick0.getO());
+            assertEquals(expectedStick0.getH(),actualStick0.getH());
+            assertEquals(expectedStick0.getL(),actualStick0.getL());
+            assertEquals(expectedStick0.getC(),actualStick0.getC());
+            assertEquals(expectedStick0.getV(),actualStick0.getV());
+        }
+
+        @Test
         public void unsmeltAllArrayTest(){
             StickDouble expectedStick0 = expectedStickList[0];
             StickDouble actualStick0; //Actual Stick saved in the file.
@@ -67,6 +102,27 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/OneDatapoint.brclmb");
 
             StickDouble[] actualStickArr = reader.unsmeltFileToArray(filepath);
+            assertEquals(1,actualStickArr.length);
+
+            actualStick0 = actualStickArr[0];
+
+            assertEquals(expectedStick0.getUTC(),actualStick0.getUTC());
+            assertEquals(expectedStick0.getO(),actualStick0.getO());
+            assertEquals(expectedStick0.getH(),actualStick0.getH());
+            assertEquals(expectedStick0.getL(),actualStick0.getL());
+            assertEquals(expectedStick0.getC(),actualStick0.getC());
+            assertEquals(expectedStick0.getV(),actualStick0.getV());
+        }
+
+        @Test
+        public void unsmeltAllArrayCachedHeaderTest(){
+            StickDouble expectedStick0 = expectedStickList[0];
+            StickDouble actualStick0; //Actual Stick saved in the file.
+
+            OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/OneDatapoint.brclmb");
+
+            StickDouble[] actualStickArr = reader.unsmeltFileToArray(filepath, cachedOneDatapointHeader);
             assertEquals(1,actualStickArr.length);
 
             actualStick0 = actualStickArr[0];
@@ -200,6 +256,52 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         }
 
         @Test
+        public void unsmeltAllFromCollectionCachedHeaderTest(){
+            StickDouble[] expectedStickArr = new StickDouble[]{
+                expectedStickList[0],
+                expectedStickList[1]
+            };
+
+            StickDouble[] actualStickArr = new StickDouble[2];
+
+            OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
+
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollection(filepath, cachedTwoDatapointsHeader);
+            assertEquals(2,actualStickCollection.size());
+
+            Iterator<StickDouble> it = actualStickCollection.iterator();
+            StickDouble currentStick;
+            int actualIndex=0;
+            while(it.hasNext()){
+                currentStick = it.next();
+                for(int i=0; i<expectedStickArr.length; ++i){ //Minor redundancy. OK for 2 elements.
+                    if(expectedStickArr[i].getUTC() == currentStick.getUTC()){
+                        actualStickArr[actualIndex] = currentStick;
+                        ++actualIndex;
+                        break;
+                    }
+                }
+            }
+
+            //1st data point
+            assertEquals(expectedStickArr[0].getUTC(),actualStickArr[0].getUTC());
+            assertEquals(expectedStickArr[0].getO(),actualStickArr[0].getO());
+            assertEquals(expectedStickArr[0].getH(),actualStickArr[0].getH());
+            assertEquals(expectedStickArr[0].getL(),actualStickArr[0].getL());
+            assertEquals(expectedStickArr[0].getC(),actualStickArr[0].getC());
+            assertEquals(expectedStickArr[0].getV(),actualStickArr[0].getV());
+
+            //2nd data point
+            assertEquals(expectedStickArr[1].getUTC(),actualStickArr[1].getUTC());
+            assertEquals(expectedStickArr[1].getO(),actualStickArr[1].getO());
+            assertEquals(expectedStickArr[1].getH(),actualStickArr[1].getH());
+            assertEquals(expectedStickArr[1].getL(),actualStickArr[1].getL());
+            assertEquals(expectedStickArr[1].getC(),actualStickArr[1].getC());
+            assertEquals(expectedStickArr[1].getV(),actualStickArr[1].getV());
+        }
+
+        @Test
         public void unsmeltAllFromArrayTest(){
             StickDouble[] expectedStickArr = new StickDouble[]{
                 expectedStickList[0],
@@ -210,6 +312,36 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
 
             StickDouble[] actualStickArr = reader.unsmeltFileToArray(filepath);
+            assertEquals(2, actualStickArr.length);
+
+            //1st data point
+            assertEquals(expectedStickArr[0].getUTC(),actualStickArr[0].getUTC());
+            assertEquals(expectedStickArr[0].getO(),actualStickArr[0].getO());
+            assertEquals(expectedStickArr[0].getH(),actualStickArr[0].getH());
+            assertEquals(expectedStickArr[0].getL(),actualStickArr[0].getL());
+            assertEquals(expectedStickArr[0].getC(),actualStickArr[0].getC());
+            assertEquals(expectedStickArr[0].getV(),actualStickArr[0].getV());
+
+            //2nd data point
+            assertEquals(expectedStickArr[1].getUTC(),actualStickArr[1].getUTC());
+            assertEquals(expectedStickArr[1].getO(),actualStickArr[1].getO());
+            assertEquals(expectedStickArr[1].getH(),actualStickArr[1].getH());
+            assertEquals(expectedStickArr[1].getL(),actualStickArr[1].getL());
+            assertEquals(expectedStickArr[1].getC(),actualStickArr[1].getC());
+            assertEquals(expectedStickArr[1].getV(),actualStickArr[1].getV());
+        }
+
+        @Test
+        public void unsmeltAllFromArrayCachedHeaderTest(){
+            StickDouble[] expectedStickArr = new StickDouble[]{
+                expectedStickList[0],
+                expectedStickList[1]
+            };
+
+            OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/TwoDatapoints.brclmb");
+
+            StickDouble[] actualStickArr = reader.unsmeltFileToArray(filepath, cachedTwoDatapointsHeader);
             assertEquals(2, actualStickArr.length);
 
             //1st data point
@@ -400,6 +532,61 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
         }
 
         @Test
+        public void unsmeltAllFromCollectionCachedHeaderTest(){
+            StickDouble[] expectedStickArr = new StickDouble[]{
+                expectedStickList[0],
+                expectedStickList[1],
+                expectedStickList[2]
+            };
+
+            StickDouble[] actualStickArr = new StickDouble[3];
+
+            OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
+
+            Collection<StickDouble> actualStickCollection = reader.unsmeltFileToCollection(filepath, cachedThreeDatapointsHeader);
+            assertEquals(3,actualStickCollection.size());
+
+            Iterator<StickDouble> it = actualStickCollection.iterator();
+            StickDouble currentStick;
+            int actualIndex=0;
+            while(it.hasNext()){
+                currentStick = it.next();
+                for(int i=0; i<expectedStickArr.length; ++i){ //Minor redundancy. OK for 2 elements.
+                    if(expectedStickArr[i].getUTC() == currentStick.getUTC()){
+                        actualStickArr[actualIndex] = currentStick;
+                        ++actualIndex;
+                        break;
+                    }
+                }
+            }
+
+            //1st data point
+            assertEquals(expectedStickArr[0].getUTC(),actualStickArr[0].getUTC());
+            assertEquals(expectedStickArr[0].getO(),actualStickArr[0].getO());
+            assertEquals(expectedStickArr[0].getH(),actualStickArr[0].getH());
+            assertEquals(expectedStickArr[0].getL(),actualStickArr[0].getL());
+            assertEquals(expectedStickArr[0].getC(),actualStickArr[0].getC());
+            assertEquals(expectedStickArr[0].getV(),actualStickArr[0].getV());
+
+            //2nd data point
+            assertEquals(expectedStickArr[1].getUTC(),actualStickArr[1].getUTC());
+            assertEquals(expectedStickArr[1].getO(),actualStickArr[1].getO());
+            assertEquals(expectedStickArr[1].getH(),actualStickArr[1].getH());
+            assertEquals(expectedStickArr[1].getL(),actualStickArr[1].getL());
+            assertEquals(expectedStickArr[1].getC(),actualStickArr[1].getC());
+            assertEquals(expectedStickArr[1].getV(),actualStickArr[1].getV());
+
+            //3rd data point
+            assertEquals(expectedStickArr[2].getUTC(),actualStickArr[2].getUTC());
+            assertEquals(expectedStickArr[2].getO(),actualStickArr[2].getO());
+            assertEquals(expectedStickArr[2].getH(),actualStickArr[2].getH());
+            assertEquals(expectedStickArr[2].getL(),actualStickArr[2].getL());
+            assertEquals(expectedStickArr[2].getC(),actualStickArr[2].getC());
+            assertEquals(expectedStickArr[2].getV(),actualStickArr[2].getV());
+        }
+
+        @Test
         public void unsmeltAllFromArrayTest(){
             StickDouble[] expectedStickArr = new StickDouble[]{
                 expectedStickList[0],
@@ -411,6 +598,45 @@ public class OHLCV_BinaryLexicalFileUnsmelterTest{
             Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
 
             StickDouble[] actualStickArr = reader.unsmeltFileToArray(filepath);
+            assertEquals(3, actualStickArr.length);
+
+            //1st data point
+            assertEquals(expectedStickArr[0].getUTC(),actualStickArr[0].getUTC());
+            assertEquals(expectedStickArr[0].getO(),actualStickArr[0].getO());
+            assertEquals(expectedStickArr[0].getH(),actualStickArr[0].getH());
+            assertEquals(expectedStickArr[0].getL(),actualStickArr[0].getL());
+            assertEquals(expectedStickArr[0].getC(),actualStickArr[0].getC());
+            assertEquals(expectedStickArr[0].getV(),actualStickArr[0].getV());
+
+            //2nd data point
+            assertEquals(expectedStickArr[1].getUTC(),actualStickArr[1].getUTC());
+            assertEquals(expectedStickArr[1].getO(),actualStickArr[1].getO());
+            assertEquals(expectedStickArr[1].getH(),actualStickArr[1].getH());
+            assertEquals(expectedStickArr[1].getL(),actualStickArr[1].getL());
+            assertEquals(expectedStickArr[1].getC(),actualStickArr[1].getC());
+            assertEquals(expectedStickArr[1].getV(),actualStickArr[1].getV());
+
+            //3rd data point
+            assertEquals(expectedStickArr[2].getUTC(),actualStickArr[2].getUTC());
+            assertEquals(expectedStickArr[2].getO(),actualStickArr[2].getO());
+            assertEquals(expectedStickArr[2].getH(),actualStickArr[2].getH());
+            assertEquals(expectedStickArr[2].getL(),actualStickArr[2].getL());
+            assertEquals(expectedStickArr[2].getC(),actualStickArr[2].getC());
+            assertEquals(expectedStickArr[2].getV(),actualStickArr[2].getV());
+        }
+
+        @Test
+        public void unsmeltAllFromArrayCachedHeaderTest(){
+            StickDouble[] expectedStickArr = new StickDouble[]{
+                expectedStickList[0],
+                expectedStickList[1],
+                expectedStickList[2]
+            };
+
+            OHLCV_BinaryLexicalFileUnsmelter reader = new OHLCV_BinaryLexicalFileUnsmelter();
+            Path filepath = testFileFetcher.getFilePath("smelter/filesmelter/ThreeDatapoints.brclmb");
+
+            StickDouble[] actualStickArr = reader.unsmeltFileToArray(filepath, cachedThreeDatapointsHeader);
             assertEquals(3, actualStickArr.length);
 
             //1st data point

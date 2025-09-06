@@ -19,11 +19,12 @@ import java.util.ArrayList;
  * Reads binary files encoded with {@link OHLCV_BinaryLexical} and reconstructs a collection of {@link StickDouble} objects from the binary files.
  */
 public class OHLCV_BinaryLexicalFileUnsmelter implements
+    FileBinaryHeaderUnsmelter,
     FileUnsmelter<StickDouble>,
     FileUnsmelterCachedHeader<StickDouble>,
     FileUnsmelterPartial<StickDouble>
 {
-    int fileReadByteChunkSize;
+    private int fileReadByteChunkSize;
 
     /**
      * Constructs an unsmelter with a specified byte chunk size for file reading.
@@ -40,6 +41,14 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
      */
     public OHLCV_BinaryLexicalFileUnsmelter(){
         this(64);
+    }
+
+    //FileBinaryHeaderUnsmelter Overrides
+    public boolean[][] unsmeltFileHeader(Path originalBinaryFile){
+        FileReader dataReader = new FileReader(originalBinaryFile);
+        HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
+        headerReader.readHeader();
+        return headerReader.lexical.getBinaryHeader();
     }
 
     //FileSmelter<StickDouble> Overrides
@@ -107,7 +116,9 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
         //1. Construct and read header bytes into file
         FileReader dataReader = new FileReader(originalBinaryFile);
         HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
-        headerReader.readHeader();
+        if(cachedHeader != null) headerReader.readHeader(cachedHeader);
+        else headerReader.readHeader();
+
         OHLCV_BinaryLexical lexical = headerReader.lexical;
 
         byte[] byteArray = new byte[fileReadByteChunkSize];
@@ -493,6 +504,36 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
 
             lastByteValue = byteChunk[byteChunk.length - 1];
             firstDataBitIndex = (byte)(lexical.getHeaderBitLength()%8);
+        }
+
+        void readHeader(boolean[][] cachedHeader){
+            lexical = new OHLCV_BinaryLexical(
+                cachedHeader[0],
+                cachedHeader[1],
+                cachedHeader[2],
+                cachedHeader[3],
+                cachedHeader[4],
+                cachedHeader[5],
+                cachedHeader[6],
+                cachedHeader[7],
+                cachedHeader[8],
+                cachedHeader[9],
+                cachedHeader[10],
+                cachedHeader[11],
+                cachedHeader[12],
+                cachedHeader[13]
+            );
+
+            BitByteTrack headerBytes = new BitByteTrack(lexical.getHeaderBitLength());
+            firstDataBitIndex = headerBytes.getBitIndex();
+
+            byte[] byteArr= new byte[1];
+
+            if(firstDataBitIndex != 0) reader.skip(headerBytes.getByteIndex());
+            else reader.skip(headerBytes.getByteIndex() - 1);
+
+            reader.readBytes(byteArr);
+            lastByteValue = byteArr[0];
         }
     }
 }
