@@ -4,12 +4,10 @@
  */
 package tradedatacorp.smelter.filesmelter;
 
-import tradedatacorp.smelter.SmelterStateful;
-import tradedatacorp.tools.stick.primitive.StickDouble;
-
+import java.nio.file.Path;
 import java.util.Collection;
 
-public interface FileUnsmelter<T>{
-    public Collection<T> unsmeltFileToCollection(String originalBinaryFile);
-    public T[] unsmeltFileToArray(String originalBinaryFile);
+public interface FileUnsmelter<RefinedT>{
+    public Collection<RefinedT> unsmeltFileToCollection(Path originalBinaryFile);
+    public RefinedT[] unsmeltFileToArray(Path originalBinaryFile);
 }

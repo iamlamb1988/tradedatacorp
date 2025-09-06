@@ -4,10 +4,10 @@
  */
 package tradedatacorp.smelter.filesmelter;
 
-import tradedatacorp.smelter.SmelterStateful;
 import java.nio.file.Path;
+import java.util.Collection;
 
-
-public interface FileUnsmelterCachedHeader{
-    public void unsmelt(String originalBinaryFile, boolean[][] binaryHeader);
+public interface FileUnsmelterCachedHeader<RefinedT>{
+    public Collection<RefinedT> unsmeltFileToCollection(Path originalBinaryFile, boolean[][] cachedHeader);
+    public RefinedT[] unsmeltFileToArray(Path originalBinaryFile, boolean[][] cachedHeader);
 }
