@@ -10,7 +10,6 @@ import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.tools.stick.primitive.StickDouble;
 
 import java.io.FileInputStream;
-import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.ArrayDeque;
@@ -21,8 +20,8 @@ import java.util.ArrayList;
  */
 public class OHLCV_BinaryLexicalFileUnsmelter implements
     FileUnsmelter<StickDouble>,
-    FileUnsmelterPartial<StickDouble>,
-    FileUnsmelterCachedHeader<StickDouble>
+    FileUnsmelterCachedHeader<StickDouble>,
+    FileUnsmelterPartial<StickDouble>
 {
     int fileReadByteChunkSize;
 
@@ -47,14 +46,29 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     //TODO
     @Override
     public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile){
-        StickCollectionListManager stickManager = (StickCollectionListManager)unsmelt(originalBinaryFile.toString(), true);
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmelt(originalBinaryFile, true, null);
         return stickManager.getListRef();
     }
 
     //TODO
     @Override
     public StickDouble[] unsmeltFileToArray(Path originalBinaryFile){
-        StickArrayListManager stickManager = (StickArrayListManager)unsmelt(originalBinaryFile.toString(), false);
+        StickArrayListManager stickManager = (StickArrayListManager)unsmelt(originalBinaryFile, false, null);
+        return stickManager.getListRef();
+    }
+
+    //FileUnsmelterCachedHeader<StickDouble> Overrides
+    //TODO
+    @Override
+    public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile, boolean[][] cachedHeader){
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmelt(originalBinaryFile, true, cachedHeader);
+        return stickManager.getListRef();
+    }
+
+    //TODO
+    @Override
+    public StickDouble[] unsmeltFileToArray(Path originalBinaryFile, boolean[][] cachedHeader){
+        StickArrayListManager stickManager = (StickArrayListManager)unsmelt(originalBinaryFile, false, cachedHeader);
         return stickManager.getListRef();
     }
 
@@ -87,20 +101,9 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
         return stickManager.getListRef();
     }
 
-    //FileUnsmelterCachedHeader<StickDouble> Overrides
-    //TODO
-    @Override
-    public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile, boolean[][] cachedHeader){
-        return null;
-    }
-
-    //TODO
-    @Override
-    public StickDouble[] unsmeltFileToArray(Path originalBinaryFile, boolean[][] cachedHeader){return null;}
-
     //Original methods
     //TODO
-    private StickDataListManager<? extends Object> unsmelt(String originalBinaryFile, boolean isCollection){
+    private StickDataListManager<? extends Object> unsmelt(Path originalBinaryFile, boolean isCollection, boolean[][] cachedHeader){
         //1. Construct and read header bytes into file
         FileReader dataReader = new FileReader(originalBinaryFile);
         HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
