@@ -317,7 +317,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
 
         StickArrayListManager(int size){
             stickList = new StickDouble[size];
-            int nextIndex = 0;
+            nextIndex = 0;
         }
 
         @Override
