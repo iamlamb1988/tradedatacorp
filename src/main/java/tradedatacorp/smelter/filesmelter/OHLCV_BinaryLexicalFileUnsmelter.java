@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 23 AUG 2025
+ * @since 06 SEP 2025
  */
 package tradedatacorp.smelter.filesmelter;
 
@@ -10,7 +10,6 @@ import tradedatacorp.tools.binarytools.BinaryTools;
 import tradedatacorp.tools.stick.primitive.StickDouble;
 
 import java.io.FileInputStream;
-import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.ArrayDeque;
@@ -19,8 +18,14 @@ import java.util.ArrayList;
 /**
  * Reads binary files encoded with {@link OHLCV_BinaryLexical} and reconstructs a collection of {@link StickDouble} objects from the binary files.
  */
-public class OHLCV_BinaryLexicalFileUnsmelter{
-    int fileReadByteChunkSize;
+public class OHLCV_BinaryLexicalFileUnsmelter implements
+    FileBinaryHeaderUnsmelter,
+    FileUnsmelter<StickDouble>,
+    FileUnsmelterCachedHeader<StickDouble>,
+    FileUnsmelterPartial<StickDouble>,
+    FileUnsmelterPartialCachedHeader<StickDouble>
+{
+    private int fileReadByteChunkSize;
 
     /**
      * Constructs an unsmelter with a specified byte chunk size for file reading.
@@ -39,23 +44,116 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         this(64);
     }
 
-    /**
-     * Returns a {@link Collection} of {@link StickDouble} objects read in by an encoded file by an {@link OHLCV_BinaryLexical}.
-     * @param originalBinaryFile The file pathname that will be decoded to construct return value. This file must be in the format provided by {@link OHLCV_BinaryLexical} instance.
-     * @return a {@link Collection} of {@link StickDouble} objects read in by {@code BinaryFile}.
-     */
-    public Collection<StickDouble> unsmelt(String originalBinaryFile){
-        //1. Construct and read header bytes into file
+    //FileBinaryHeaderUnsmelter Overrides
+    public boolean[][] unsmeltFileHeader(Path originalBinaryFile){
         FileReader dataReader = new FileReader(originalBinaryFile);
         HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
         headerReader.readHeader();
+        return headerReader.lexical.getBinaryHeader();
+    }
+
+    //FileSmelter<StickDouble> Overrides
+    //TODO
+    @Override
+    public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile){
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmelt(originalBinaryFile, true, null);
+        return stickManager.getListRef();
+    }
+
+    //TODO
+    @Override
+    public StickDouble[] unsmeltFileToArray(Path originalBinaryFile){
+        StickArrayListManager stickManager = (StickArrayListManager)unsmelt(originalBinaryFile, false, null);
+        return stickManager.getListRef();
+    }
+
+    //FileUnsmelterCachedHeader<StickDouble> Overrides
+    //TODO
+    @Override
+    public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile, boolean[][] cachedHeader){
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmelt(originalBinaryFile, true, cachedHeader);
+        return stickManager.getListRef();
+    }
+
+    //TODO
+    @Override
+    public StickDouble[] unsmeltFileToArray(Path originalBinaryFile, boolean[][] cachedHeader){
+        StickArrayListManager stickManager = (StickArrayListManager)unsmelt(originalBinaryFile, false, cachedHeader);
+        return stickManager.getListRef();
+    }
+
+    //FileUnsmelterPartial<StickDouble> Overrides
+    //TODO
+    @Override
+    public Collection<StickDouble> unsmeltFileToCollectionFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile){
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, true,  null);
+        return stickManager.getListRef();
+    }
+
+    //TODO
+    @Override
+    public Collection<StickDouble> unsmeltFileToCollectionFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile){
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, true, null);
+        return stickManager.getListRef();
+    }
+
+    //TODO
+    @Override
+    public StickDouble[] unsmeltFileToArrayFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile){
+        StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, false, null);
+        return stickManager.getListRef();
+    }
+
+    //TODO
+    @Override
+    public StickDouble[] unsmeltFileToArrayFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile){
+        StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, false, null);
+        return stickManager.getListRef();
+    }
+
+    //FileUnsmelterPartialCachedHeader<StickDouble> Overrides
+    @Override
+    public Collection<StickDouble> unsmeltFileToCollectionFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile, boolean[][] cachedHeader){
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, true, cachedHeader);
+        return stickManager.getListRef();
+    }
+
+    @Override
+    public Collection<StickDouble> unsmeltFileToCollectionFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile, boolean[][] cachedHeader){
+        StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, true, cachedHeader);
+        return stickManager.getListRef();
+    }
+
+    @Override
+    public StickDouble[] unsmeltFileToArrayFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile, boolean[][] cachedHeader){
+        StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, false, cachedHeader);
+        return stickManager.getListRef();
+    }
+
+    @Override
+    public StickDouble[] unsmeltFileToArrayFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile, boolean[][] cachedHeader){
+        StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, false, cachedHeader);
+        return stickManager.getListRef();
+    }
+
+    //Original methods
+    //TODO
+    private StickDataListManager<? extends Object> unsmelt(Path originalBinaryFile, boolean isCollection, boolean[][] cachedHeader){
+        //1. Construct and read header bytes into file
+        FileReader dataReader = new FileReader(originalBinaryFile);
+        HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
+        if(cachedHeader != null) headerReader.readHeader(cachedHeader);
+        else headerReader.readHeader();
+
         OHLCV_BinaryLexical lexical = headerReader.lexical;
 
         byte[] byteArray = new byte[fileReadByteChunkSize];
         boolean[] dataBinArray = new boolean[lexical.getDataBitLength()];
         int byteCount;
         ArrayDeque<Boolean> bitQueue = new ArrayDeque<Boolean>(fileReadByteChunkSize << 3);
-        ArrayList<StickDouble> stickList = new ArrayList<StickDouble>(lexical.getDataCount());
+        StickDataListManager<? extends Object> stickManager;
+        if(isCollection) stickManager = new StickCollectionListManager(lexical.getDataCount());
+        else stickManager = new StickArrayListManager(lexical.getDataCount());
 
         //2. Fill in excess bits into the bitQueue (if any)
         if(headerReader.firstDataBitIndex != 0){
@@ -82,7 +180,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 }
 
                 //4.2 Add data point to collection
-                stickList.add(lexical.getRefinedDataFlat(dataBinArray));
+                stickManager.addStick(lexical.getRefinedDataFlat(dataBinArray));
             }
 
             byteCount = dataReader.readBytes(byteArray);
@@ -91,28 +189,22 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         //5. Close file and return
         dataReader.finalizeData();
 
-        return stickList;
+        return stickManager;
     }
 
     //TODO
-    public Collection<StickDouble> unsmeltFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile){
-        return unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile);
-    }
-
-    //TODO
-    public Collection<StickDouble> unsmeltFromQuantity(String originalBinaryFilePathName, int fromIndex, int quantity, boolean isFile){
-        return unsmeltFromQuantity(Paths.get(originalBinaryFilePathName), fromIndex, quantity, isFile);
-    }
-
-    //TODO
-    public Collection<StickDouble> unsmeltFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile){
+    private StickDataListManager<? extends Object> unsmeltFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile, boolean isCollection, boolean[][] cachedHeader){
         if(fromIndex < 0 || quantity < 0) return null;
-        if(quantity == 0) return new ArrayList<StickDouble>(0);
+        if(quantity == 0){
+            if(isCollection) return new StickCollectionListManager(0);
+            else return new StickArrayListManager(0);
+        }
 
         //1. Construct and read header bytes into file
         DataReader dataReader = new FileReader(originalBinaryFile);
         HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
-        headerReader.readHeader();
+        if(cachedHeader != null) headerReader.readHeader(cachedHeader);
+        else headerReader.readHeader();
         OHLCV_BinaryLexical lexical = headerReader.lexical;
         byte[] byteArray = new byte[fileReadByteChunkSize];
         boolean[] dataBinArray = new boolean[lexical.getDataBitLength()];
@@ -125,7 +217,9 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         //Check valid quantity
         if(quantity + fromIndex > lexical.getDataCount()) quantity = lexical.getDataCount() - fromIndex;
 
-        ArrayList<StickDouble> stickList = new ArrayList<StickDouble>(quantity);
+        StickDataListManager<? extends Object> stickManager;
+        if(isCollection) stickManager = new StickCollectionListManager(lexical.getDataCount());
+        else stickManager = new StickArrayListManager(lexical.getDataCount());
 
         BitByteTrack multiplier = new BitByteTrack(lexical.getDataBitLength()); //used to jump to Byte and Bit of from index.
         //NOTE: For firstDataPoint byteIndex only, 0 index indicates current index, 1 indicates next index in file.
@@ -186,7 +280,7 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
         //5. Read remaining bytes and generate sticks
         tmpIndex = 1; // Index of byte array
-        while(stickList.size() < quantity){
+        while(stickManager.getSize() < quantity){
             while(tmpIndex < byteCount){
                 tmpByteValue=byteArray[tmpIndex];
                 for(int i=0; i<8; ++i){
@@ -195,11 +289,11 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
                 ++tmpIndex;
             }
 
-            while(stickList.size() < quantity && bitQueue.size() >= lexical.getDataBitLength()){
+            while(stickManager.getSize() < quantity && bitQueue.size() >= lexical.getDataBitLength()){
                 for(int i=0; i<lexical.getDataBitLength(); ++i){
                     dataBinArray[i] = bitQueue.remove().booleanValue();
                 }
-                stickList.add(lexical.getRefinedDataFlat(dataBinArray));
+                stickManager.addStick(lexical.getRefinedDataFlat(dataBinArray));
             }
             tmpIndex = 0;
             byteCount = dataReader.readBytes(byteArray);
@@ -208,7 +302,52 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
         //6. Clean and return
         dataReader.finalizeData();
 
-        return stickList;
+        return stickManager;
+    }
+
+    private abstract class StickDataListManager<ListT>{
+        abstract void addStick(StickDouble stick);
+        abstract int getSize();
+        abstract ListT getListRef();
+    }
+
+    private class StickArrayListManager extends StickDataListManager<StickDouble[]>{
+        StickDouble[] stickList;
+        int nextIndex;
+
+        StickArrayListManager(int size){
+            stickList = new StickDouble[size];
+            nextIndex = 0;
+        }
+
+        @Override
+        void addStick(StickDouble stick){
+            stickList[nextIndex] = stick;
+            ++nextIndex;
+        }
+
+        @Override
+        int getSize(){return nextIndex;}
+
+        @Override
+        StickDouble[] getListRef(){return stickList;}
+    }
+
+    private class StickCollectionListManager extends StickDataListManager<ArrayList<StickDouble>>{
+        ArrayList<StickDouble> stickList;
+
+        StickCollectionListManager(int size){
+            stickList = new ArrayList<StickDouble>(size);
+        }
+
+        @Override
+        void addStick(StickDouble stick){stickList.add(stick);}
+
+        @Override
+        int getSize(){return stickList.size();}
+
+        @Override
+        ArrayList<StickDouble> getListRef(){return stickList;}
     }
 
     private abstract class DataReader{
@@ -392,6 +531,36 @@ public class OHLCV_BinaryLexicalFileUnsmelter{
 
             lastByteValue = byteChunk[byteChunk.length - 1];
             firstDataBitIndex = (byte)(lexical.getHeaderBitLength()%8);
+        }
+
+        void readHeader(boolean[][] cachedHeader){
+            lexical = new OHLCV_BinaryLexical(
+                cachedHeader[0],
+                cachedHeader[1],
+                cachedHeader[2],
+                cachedHeader[3],
+                cachedHeader[4],
+                cachedHeader[5],
+                cachedHeader[6],
+                cachedHeader[7],
+                cachedHeader[8],
+                cachedHeader[9],
+                cachedHeader[10],
+                cachedHeader[11],
+                cachedHeader[12],
+                cachedHeader[13]
+            );
+
+            BitByteTrack headerBytes = new BitByteTrack(lexical.getHeaderBitLength());
+            firstDataBitIndex = headerBytes.getBitIndex();
+
+            byte[] byteArr= new byte[1];
+
+            if(firstDataBitIndex != 0) reader.skip(headerBytes.getByteIndex());
+            else reader.skip(headerBytes.getByteIndex() - 1);
+
+            reader.readBytes(byteArr);
+            lastByteValue = byteArr[0];
         }
     }
 }
