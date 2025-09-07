@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 01 JUL 2025
+ * @since 07 SEP 2025
  */
 
 package tradedatacorp.warehouse;
@@ -10,11 +10,19 @@ package tradedatacorp.warehouse;
  * This is agnostic of specific data storage such as SQL Database, NoSQL Database, FileSystem, API Site, etc.
  * This interface is intended to be used in conjuction with the helper Warehouse interfaces.
  */
-public interface Warehouse{
+public interface Warehouse<ResultT, CredsT>{
     /**
      * Attempts to establish a connection to a warehouse.
+     *
      * @param credentials credentials required for persistent connection to warehouse.
-     * @return a message regarding state of connection attempt
+     * @return a message regarding state of connection attempt.
      */
-    public String connect(String credentials);
+    public ResultT connect(CredsT credentials);
+
+    /**
+     * Returns the status of the warehouse connection.
+     *
+     * @return The status of the warehouse connection.
+     */
+    public ResultT connectionStatus();
 }
