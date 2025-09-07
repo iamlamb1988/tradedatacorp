@@ -46,11 +46,11 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
 
     //FileBinaryHeaderUnsmelter Overrides
     /**
-     * Returns the cached header from a valid {@link OHLCV_BinaryLexical} file.
-     * NOTE: This will check the file for validity.
+     * Reads and returns the parsed binary header from an {@link OHLCV_BinaryLexical} file.
+     * Use cases for this header include use for cache reading or manipulated to create a new {@link OHLCV_BinaryLexical}
      *
-     * @param originalBinaryFile The filepath containing the {@link OHLCV_BinaryLexical} file.
-     * @return The binary header.
+     * @param originalBinaryFile The path to the binary file.
+     * @return The parsed header as a two-dimensional boolean array.
      */
     @Override
     public boolean[][] unsmeltFileHeader(Path originalBinaryFile){
@@ -64,8 +64,8 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     /**
      * Extracts all candlestick data into a {@link Collection}.
      *
-     * @param originalBinaryFile The filepath containing the {@link OHLCV_BinaryLexical} file.
-     * @return a collection of {@link StickDouble} elements.
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @return All extracted candlestick data as a {@link Collection} of {@link StickDouble} objects.
      */
     @Override
     public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile){
@@ -76,9 +76,8 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     /**
      * Extracts all candlestick data into a primitive array.
      *
-     * @param originalBinaryFile The filepath containing the {@link OHLCV_BinaryLexical} file.
-     * @return a primitive array of {@link StickDouble} elements such that the length is the number of elements extracted
-     * in order from their placement in the file.
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @return an array of all {@link StickDouble} elements.
      */
     @Override
     public StickDouble[] unsmeltFileToArray(Path originalBinaryFile){
@@ -87,14 +86,27 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     }
 
     //FileUnsmelterCachedHeader<StickDouble> Overrides
-    //TODO
+    /**
+     * Reads all candlestick data from the file, using a cached header for efficiency.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param cachedHeader A pre-parsed header (as returned by unsmeltFileHeader).
+     *   This will not be checked for correctness. This must matched within the file.
+     * @return All extracted candlestick data as a {@link Collection} of {@link StickDouble} objects.
+     */
     @Override
     public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile, boolean[][] cachedHeader){
         StickCollectionListManager stickManager = (StickCollectionListManager)unsmelt(originalBinaryFile, true, cachedHeader);
         return stickManager.getListRef();
     }
 
-    //TODO
+    /**
+     * Reads all candlestick data from the file, using a cached header for efficiency.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param cachedHeader A pre-parsed header (as returned by unsmeltFileHeader).
+     * @return an array of all {@link StickDouble} elements.
+     */
     @Override
     public StickDouble[] unsmeltFileToArray(Path originalBinaryFile, boolean[][] cachedHeader){
         StickArrayListManager stickManager = (StickArrayListManager)unsmelt(originalBinaryFile, false, cachedHeader);
@@ -102,28 +114,61 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     }
 
     //FileUnsmelterPartial<StickDouble> Overrides
-    //TODO
+    /**
+     * Reads candlestick data from the file between two specified indices (inclusive).
+     * The indices specified represent a notianal index for the datasticks within the file.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index (inclusive).
+     * @param toIndex The ending data index (inclusive).
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @return A {@link Collection} of {@link StickDouble} objects from the specified range.
+     */
     @Override
     public Collection<StickDouble> unsmeltFileToCollectionFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile){
         StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, true,  null);
         return stickManager.getListRef();
     }
 
-    //TODO
+    /**
+     * Reads a specified quantity of candlestick data from the file, starting at a given index.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index (inclusive).
+     * @param quantity The number of data points to read.
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @return A {@link Collection} of {@link StickDouble} objects from the specified range.
+     */
     @Override
     public Collection<StickDouble> unsmeltFileToCollectionFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile){
         StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, true, null);
         return stickManager.getListRef();
     }
 
-    //TODO
+    /**
+     * Reads candlestick data from the file between two specified indices (inclusive) and returns an array.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index (inclusive).
+     * @param toIndex The ending data index (inclusive).
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @return An array of {@link StickDouble} elements from the specified range.
+     */
     @Override
     public StickDouble[] unsmeltFileToArrayFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile){
         StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, false, null);
         return stickManager.getListRef();
     }
 
-    //TODO
+    /**
+     * Reads a specified quantity of candlestick data from the file, starting at a given index, and returns an array.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index (inclusive).
+     * @param quantity The number of data points to read.
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @return An array of {@link StickDouble} elements from the specified range.
+     */
     @Override
     public StickDouble[] unsmeltFileToArrayFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile){
         StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, false, null);
@@ -131,24 +176,64 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     }
 
     //FileUnsmelterPartialCachedHeader<StickDouble> Overrides
+    /**
+     * Reads candlestick data between two indices (inclusive) using a cached header, and returns a {@link Collection}.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index (inclusive).
+     * @param toIndex The ending data index (inclusive).
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @param cachedHeader A pre-parsed header (as returned by unsmeltFileHeader).
+     * @return A {@link Collection} of {@link StickDouble} objects from the specified range.
+     */
     @Override
     public Collection<StickDouble> unsmeltFileToCollectionFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile, boolean[][] cachedHeader){
         StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, true, cachedHeader);
         return stickManager.getListRef();
     }
 
+    /**
+     * Reads a specified quantity of candlestick data, starting at a given index, using a cached header, and returns a collection.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index (inclusive).
+     * @param quantity The number of data points to read.
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @param cachedHeader A pre-parsed header (as returned by unsmeltFileHeader).
+     * @return A {@link Collection} of {@link StickDouble} objects for the specified range.
+     */
     @Override
     public Collection<StickDouble> unsmeltFileToCollectionFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile, boolean[][] cachedHeader){
         StickCollectionListManager stickManager = (StickCollectionListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, true, cachedHeader);
         return stickManager.getListRef();
     }
 
+    /**
+     * Reads candlestick data between two indices (inclusive) using a cached header, and returns an array.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index (inclusive).
+     * @param toIndex The ending data index (inclusive).
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @param cachedHeader A pre-parsed header (as returned by unsmeltFileHeader).
+     * @return An array of {@link StickDouble} objects from the specified range.
+     */
     @Override
     public StickDouble[] unsmeltFileToArrayFromTo(Path originalBinaryFile, int fromIndex, int toIndex, boolean isFile, boolean[][] cachedHeader){
         StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, toIndex-fromIndex+1, isFile, false, cachedHeader);
         return stickManager.getListRef();
     }
 
+    /**
+     * Reads a specified quantity of candlestick data, starting at a given index, using a cached header, and returns an array.
+     *
+     * @param originalBinaryFile The path to the {@link OHLCV_BinaryLexical} file.
+     * @param fromIndex The starting data index.
+     * @param quantity The number of data points to read.
+     * @param isFile True if reading from a file, false if from a string (future use).
+     * @param cachedHeader A pre-parsed header (as returned by unsmeltFileHeader).
+     * @return An array of {@link StickDouble} objects for the specified range.
+     */
     @Override
     public StickDouble[] unsmeltFileToArrayFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile, boolean[][] cachedHeader){
         StickArrayListManager stickManager = (StickArrayListManager)unsmeltFromQuantity(originalBinaryFile, fromIndex, quantity, isFile, false, cachedHeader);
