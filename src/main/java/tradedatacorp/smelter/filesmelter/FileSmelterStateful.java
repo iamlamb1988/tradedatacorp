@@ -4,8 +4,6 @@
  */
 package tradedatacorp.smelter.filesmelter;
 
-import tradedatacorp.smelter.SmelterStateful;
-
 import java.nio.file.Path;
 import java.util.Collection;
 
