@@ -241,7 +241,25 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     }
 
     //Original methods
-    //TODO
+    /**
+     * Core function to read all candlestick data from a binary OHLCV file.
+     *
+     * This method handles reading the header (optionally from cache) and then streams the candlestick data,
+     * reconstructing each record using the binary lexical specification. The result is stored in either a 
+     * collection or array manager, depending on the isCollection flag.
+     *
+     * @param originalBinaryFile The path to the binary file to read.
+     * @param isCollection If true, use a dynamic collection (ArrayList); if false, use a fixed-size array.
+     * @param cachedHeader Optional. If provided, uses this pre-parsed header instead of reading from the file. 
+     *                     Must match the file, or data will be misinterpreted.
+     * @return A StickDataListManager (either backed by a collection or array), containing all parsed StickDouble records.
+     *
+     * Implementation notes:
+     * - Reads the header and determines the data bit structure.
+     * - Buffers file input and processes a bit queue to reconstruct each stick.
+     * - Handles any bit misalignment after the header.
+     * - Closes the file upon completion.
+     */
     private StickDataListManager<? extends Object> unsmelt(Path originalBinaryFile, boolean isCollection, boolean[][] cachedHeader){
         //1. Construct and read header bytes into file
         FileReader dataReader = new FileReader(originalBinaryFile);
@@ -296,7 +314,26 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
         return stickManager;
     }
 
-    //TODO
+    /**
+     * Core function to read a partial range of candlestick data from a binary OHLCV file.
+     *
+     * This method allows reading a subset of the file, starting from a specific index and for a given quantity.
+     * It is used to support all partial and range-based extraction methods.
+     *
+     * @param originalBinaryFile The path to the binary file to read.
+     * @param fromIndex The zero-based index of the first data record to read (inclusive).
+     * @param quantity The number of records to extract. If the range exceeds available data, returns as many as possible.
+     * @param isFile True if reading from a file; false for string source (not implemented).
+     * @param isCollection If true, return as a collection manager; if false, as an array manager.
+     * @param cachedHeader Optional. If provided, uses this pre-parsed header instead of reading from the file.
+     * @return A StickDataListManager containing the requested StickDouble records as a collection or array.
+     *
+     * Implementation notes:
+     * - Carefully skips to the correct bit offset for the fromIndex using BitByteTrack.
+     * - Reads only as many bytes as required for the range.
+     * - Handles edge cases such as negative indices or quantity, and zero-length requests.
+     * - Closes the file upon completion.
+     */
     private StickDataListManager<? extends Object> unsmeltFromQuantity(Path originalBinaryFile, int fromIndex, int quantity, boolean isFile, boolean isCollection, boolean[][] cachedHeader){
         if(fromIndex < 0 || quantity < 0) return null;
         if(quantity == 0){
