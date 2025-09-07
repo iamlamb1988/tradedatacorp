@@ -16,7 +16,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 /**
- * Reads binary files encoded with {@link OHLCV_BinaryLexical} and reconstructs a collection of {@link StickDouble} objects from the binary files.
+ * Reads binary files encoded with {@link OHLCV_BinaryLexical}.
+ * Capable of returning the binary header IAW {@link OHLCV_BinaryLexical}
+ * Capable of returning a collection of data from the file.
  */
 public class OHLCV_BinaryLexicalFileUnsmelter implements
     FileBinaryHeaderUnsmelter,
@@ -40,11 +42,17 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     /**
      * Constructs an unsmelter with a default file read chunk size of 64 bytes.
      */
-    public OHLCV_BinaryLexicalFileUnsmelter(){
-        this(64);
-    }
+    public OHLCV_BinaryLexicalFileUnsmelter(){this(64);}
 
     //FileBinaryHeaderUnsmelter Overrides
+    /**
+     * Returns the cached header from a valid {@link OHLCV_BinaryLexical} file.
+     * NOTE: This will check the file for validity.
+     *
+     * @param originalBinaryFile The filepath containing the {@link OHLCV_BinaryLexical} file.
+     * @return The binary header.
+     */
+    @Override
     public boolean[][] unsmeltFileHeader(Path originalBinaryFile){
         FileReader dataReader = new FileReader(originalBinaryFile);
         HeaderReaderHelperBundle headerReader = new HeaderReaderHelperBundle(dataReader);
@@ -53,14 +61,25 @@ public class OHLCV_BinaryLexicalFileUnsmelter implements
     }
 
     //FileSmelter<StickDouble> Overrides
-    //TODO
+    /**
+     * Extracts all candlestick data into a {@link Collection}.
+     *
+     * @param originalBinaryFile The filepath containing the {@link OHLCV_BinaryLexical} file.
+     * @return a collection of {@link StickDouble} elements.
+     */
     @Override
     public Collection<StickDouble> unsmeltFileToCollection(Path originalBinaryFile){
         StickCollectionListManager stickManager = (StickCollectionListManager)unsmelt(originalBinaryFile, true, null);
         return stickManager.getListRef();
     }
 
-    //TODO
+    /**
+     * Extracts all candlestick data into a primitive array.
+     *
+     * @param originalBinaryFile The filepath containing the {@link OHLCV_BinaryLexical} file.
+     * @return a primitive array of {@link StickDouble} elements such that the length is the number of elements extracted
+     * in order from their placement in the file.
+     */
     @Override
     public StickDouble[] unsmeltFileToArray(Path originalBinaryFile){
         StickArrayListManager stickManager = (StickArrayListManager)unsmelt(originalBinaryFile, false, null);
