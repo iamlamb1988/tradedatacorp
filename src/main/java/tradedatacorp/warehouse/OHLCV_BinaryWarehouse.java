@@ -4,6 +4,7 @@
  */
 package tradedatacorp.warehouse;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.File;
 
@@ -17,10 +18,46 @@ import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
  * Elaboration coming soon upon completion of JUnit tests.
  */
 public class OHLCV_BinaryWarehouse implements
-    Warehouse<String, Path>,
-    WarehouseInitializer<String>
+    WarehouseInitializer<String, String[]>,
+    Warehouse<String, Path>
 {
     private File rootDataDir;
+
+    // WarehouseInitializer<String, String[]> Overrides
+    @Override
+    public String initialize(String[] initArgs){
+        StringBuilder strBldr = new StringBuilder();
+        String filePathName = initArgs[0];
+        String connectResult;
+
+        //Create directory structure if it does not exist
+        Path rootDataDirectory = Path.of(filePathName);
+        if(Files.isDirectory(rootDataDirectory)){
+            System.out.println("DEBUG: directory exists.");
+            strBldr.append("found existing directory "+filePathName);
+        }else if(Files.exists(rootDataDirectory)){
+            System.out.println("DEBUG: Not a directory... skipping.");
+            return "INITIALIZE FAILED: "+filePathName+" is a file.\n";
+        }
+        else{
+            try{
+                System.out.println("DEBUG: Creating Directory...");
+                Files.createDirectory(rootDataDirectory);
+                strBldr.append("created directory "+filePathName);
+            }catch(Exception err){}
+        }
+
+        //create finalized consoldiated directory
+        connectResult = connect(rootDataDirectory);
+        if(connectResult.startsWith("CONNECT SUCCESS:")){
+            return "INITIALIZE SUCCESS: Successfully "+strBldr.toString()+" and connected.\n";
+        }else{
+            return "INITIALIZE FAILED: Successfully "+strBldr.toString()+" but failed to connected.\n";
+        }
+
+        //create ingestion directory
+        //create validated directory
+    }
 
     //Warehouse<String, String> Overrides
     /**
@@ -35,9 +72,9 @@ public class OHLCV_BinaryWarehouse implements
             if(!f.exists()) return "FAILURE: "+f.toString()+" does not exit.";
             if(!f.isDirectory()) return "FAILURE: "+f.toString()+" not a directory.";
             rootDataDir = f;
-            return "SUCCESS: "+rootDataDir.toString();
+            return "CONNECT SUCCESS: "+rootDataDir.toString();
         }
-        return "FAILURE";
+        return "CONNECT FAILURE";
     }
 
     /**
@@ -48,13 +85,4 @@ public class OHLCV_BinaryWarehouse implements
      */
     @Override
     public String connectionStatus(){return null;}
-
-    // WarehouseInitializer<String> Overrides
-    public String initialize(){
-        //Create directory structure from successfully connected
-        //create finalized consoldiated directory
-        //create ingestion directory
-        //create validated directory
-        return null;
-    }
 }

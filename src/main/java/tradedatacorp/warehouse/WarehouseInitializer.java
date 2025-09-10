@@ -8,6 +8,6 @@ package tradedatacorp.warehouse;
 /**
  * This interface provides initialization setup for a warehouse.
  */
-public interface WarehouseInitializer<ResultT>{
-    public ResultT initialize();
+public interface WarehouseInitializer<ResultT, ConfigT>{
+    public ResultT initialize(ConfigT args);
 }
