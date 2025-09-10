@@ -2,7 +2,6 @@
  * @author Bruce Lamb
  * @since 07 SEP 2025
  */
-
 package tradedatacorp.warehouse;
 
 /**

@@ -1,14 +1,17 @@
 /**
  * @author Bruce Lamb
- * @since 07 SEP 2025
+ * @since 10 SEP 2025
  */
 package tradedatacorp.warehouse;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.io.File;
-
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
+import tradedatacorp.tools.stick.primitive.StickDouble;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.nio.file.Files;
+import java.io.File;
+import java.nio.file.Path;
 
 /**
  * A warehouse implementation for storing OHLCV candlestick data in a filesystem.
@@ -19,7 +22,9 @@ import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
  */
 public class OHLCV_BinaryWarehouse implements
     WarehouseInitializer<String, String[]>,
-    Warehouse<String, Path>
+    Warehouse<String, Path>,
+    WarehouseStorer<StickDouble, Boolean>,
+    WarehousePicker<StickDouble>
 {
     private File rootDataDir;
 
@@ -29,34 +34,50 @@ public class OHLCV_BinaryWarehouse implements
         StringBuilder strBldr = new StringBuilder();
         String filePathName = initArgs[0];
         String connectResult;
+        String returnMessage;
 
         //Create directory structure if it does not exist
         Path rootDataDirectory = Path.of(filePathName);
         if(Files.isDirectory(rootDataDirectory)){
-            System.out.println("DEBUG: directory exists.");
-            strBldr.append("found existing directory "+filePathName);
+            strBldr.append("found existing directory "+filePathName); //continuation sentence
         }else if(Files.exists(rootDataDirectory)){
-            System.out.println("DEBUG: Not a directory... skipping.");
             return "INITIALIZE FAILED: "+filePathName+" is a file.\n";
         }
         else{
             try{
-                System.out.println("DEBUG: Creating Directory...");
                 Files.createDirectory(rootDataDirectory);
-                strBldr.append("created directory "+filePathName);
+                strBldr.append("created directory "+filePathName); //continuation sentence
             }catch(Exception err){}
         }
 
         //create finalized consoldiated directory
         connectResult = connect(rootDataDirectory);
         if(connectResult.startsWith("CONNECT SUCCESS:")){
-            return "INITIALIZE SUCCESS: Successfully "+strBldr.toString()+" and connected.\n";
+            returnMessage = "Successfully "+strBldr.toString()+" and connected.\n";
+            strBldr.setLength(0);
+            strBldr.append(returnMessage);
         }else{
             return "INITIALIZE FAILED: Successfully "+strBldr.toString()+" but failed to connected.\n";
         }
 
         //create ingestion directory
-        //create validated directory
+        Path ingestSubdir = rootDataDirectory.resolve("ingest");
+        if(Files.isDirectory(ingestSubdir)){
+            strBldr.append(ingestSubdir.toString()+" successfully found.\n");
+            return "INITIALIZE SUCCESS: "+strBldr.toString();
+        }else if(Files.exists(ingestSubdir)){
+            strBldr.append("ingest is a file and cannot create directory.\n");
+            return "INITIALIZE FAILED: "+strBldr.toString();
+        }else{
+            try{
+                Files.createDirectory(ingestSubdir);
+                strBldr.append(ingestSubdir.toString()+" successfully created.\n");
+                return "INITIALIZE SUCCESS: "+strBldr.toString();
+            }catch(Exception err){}
+            return "INITIALIZE FAILED: ???";
+        }
+        //TODO create validated directory.
+        //IF data exists MUST validate structure and naming
     }
 
     //Warehouse<String, String> Overrides
@@ -85,4 +106,13 @@ public class OHLCV_BinaryWarehouse implements
      */
     @Override
     public String connectionStatus(){return null;}
+
+    // WarehouseStorer<StickDouble, Boolean> Overrides
+    public Boolean storeOne(StickDouble validData){return null;}
+    public Boolean store(StickDouble[] validDataCollection){return null;}
+    public Boolean store(Collection<StickDouble> validDataCollection){return null;}
+
+    //WarehousePicker<StickDouble> Overrides
+    public Collection<StickDouble> pickToCollection(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
+    public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
 }
