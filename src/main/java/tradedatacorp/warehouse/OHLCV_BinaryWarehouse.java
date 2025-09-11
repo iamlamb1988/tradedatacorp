@@ -5,7 +5,10 @@
 package tradedatacorp.warehouse;
 
 import tradedatacorp.smelter.lexical.binary.OHLCV_BinaryLexical;
+import tradedatacorp.tools.stick.primitive.CandleStickFixedDouble;
 import tradedatacorp.tools.stick.primitive.StickDouble;
+import tradedatacorp.tools.stick.info.StickHeader;
+import tradedatacorp.tools.stick.info.StickTimeFrame;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,4 +118,37 @@ public class OHLCV_BinaryWarehouse implements
     //WarehousePicker<StickDouble> Overrides
     public Collection<StickDouble> pickToCollection(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
     public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
+
+    //OHLCV_BinaryWarehouse methods
+    private class UncheckedDataStick extends CandleStickFixedDouble implements StickHeader, StickTimeFrame{
+        String symbolName;
+        int interval;
+        Path sourceFile; //Source file of data
+
+        public UncheckedDataStick(
+            String symbol,
+            Path sourceFilePath,
+            long utc_timestamp,
+            double open,
+            double high,
+            double low,
+            double close,
+            double volume
+        ){
+            super(utc_timestamp, open, high, low, close, volume);
+            symbolName = symbol;
+            sourceFile = sourceFilePath;
+        }
+
+        // StickHeader Overrides
+        @Override
+        public String getName(){return symbolName;}
+
+        @Override
+        public String getSymbol(){return symbolName;}
+
+        //StickTimeFrame Overrides
+        @Override
+        public int getInterval(){return interval;}
+    }
 }

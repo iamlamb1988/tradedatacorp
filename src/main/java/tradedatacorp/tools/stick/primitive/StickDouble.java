@@ -15,7 +15,7 @@ public interface StickDouble extends PrimitiveStick, Comparable<StickDouble> {
     /**
      * Returns the UTC timestamp (milliseconds) of closing value.
      * @return The UTC timestamp (milliseconds) of the closing value of this stick. The number millisieconds that has elapsed since 1 JAN 1970.
-     * Also indicates the Greenwich Mean Time (GMT) zone or Zulu time. 
+     * Also indicates the Greenwich Mean Time (GMT) zone or Zulu time.
      */
     public long getUTC();
 
