@@ -22,7 +22,7 @@ public class CandleStickDouble implements StickDouble, Modifydbl{
     private double V;
 
     //CandleStickDouble Constructors:
-	/**
+    /**
      * Constructs a new CandleStickDouble with the specified candlestick data.
      * @param utc_timestamp The UTC timestamp (milliseconds) of the closing value. Represents the number of milliseconds elapsed since January 1, 1970 (epoch time).
      * @param open The opening price of the candlestick.
@@ -51,7 +51,7 @@ public class CandleStickDouble implements StickDouble, Modifydbl{
     /**
      * Returns the UTC timestamp (milliseconds) of closing value.
      * @return The UTC timestamp (milliseconds) of the closing value of this stick. The number millisieconds that has elapsed since 1 JAN 1970.
-     * Also indicates the Greenwich Mean Time (GMT) zone or Zulu time. 
+     * Also indicates the Greenwich Mean Time (GMT) zone or Zulu time.
      */
     @Override
     public long getUTC(){return UTC;}
