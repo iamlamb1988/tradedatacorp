@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 10 SEP 2025
+ * @since 11 SEP 2025
  */
 package tradedatacorp.warehouse;
 
@@ -9,11 +9,12 @@ import tradedatacorp.tools.stick.primitive.CandleStickFixedDouble;
 import tradedatacorp.tools.stick.primitive.StickDouble;
 import tradedatacorp.tools.stick.info.StickHeader;
 import tradedatacorp.tools.stick.info.StickTimeFrame;
+import tradedatacorp.tools.time.TimeTier;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.nio.file.Files;
+import java.util.ArrayList;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -30,6 +31,7 @@ public class OHLCV_BinaryWarehouse implements
     WarehousePicker<StickDouble>
 {
     private File rootDataDir;
+    private ArrayList<TimeTier> fileFunnel;
 
     // WarehouseInitializer<String, String[]> Overrides
     @Override
@@ -151,4 +153,6 @@ public class OHLCV_BinaryWarehouse implements
         @Override
         public int getInterval(){return interval;}
     }
+
+    private class FileFunnelTier{}
 }
