@@ -20,7 +20,13 @@ public class QuarterInterval implements TimeRange{
     private String formattedStart;
     private String formattedEnd;
 
-    public QuarterInterval(String intervalName, TimeZone timezone, DateTimeFormatter format, long utcMillisecond){
+    public QuarterInterval(
+        String intervalName,
+        TimeZone timezone,
+        DateTimeFormatter format,
+        long utcMillisecond,
+        long deltaTimeMillisecond)
+    {
         name = intervalName;
         this.timezone = timezone;
         timeformat = format;
@@ -30,6 +36,8 @@ public class QuarterInterval implements TimeRange{
 
         int startYear = tmpTime.getYear();
         int startMonth = tmpTime.getMonthValue();
+        long deltaTime;
+        long quantity;
 
         if(startMonth < 4) startMonth = 1;
         else if(startMonth < 7) startMonth = 4; 
@@ -48,19 +56,33 @@ public class QuarterInterval implements TimeRange{
         );
         START_UTC = START.toInstant().toEpochMilli();
 
-        END = START.plusMonths(3).minusNanos(1_000_000L); //3 months minus 1 millisecond
-        END_UTC = END.toInstant().toEpochMilli();
+        tmpTime = START.plusMonths(3);
+        deltaTime = tmpTime.toInstant().toEpochMilli() - START_UTC;
+
+        if(deltaTime%deltaTimeMillisecond == 0) quantity = deltaTime/deltaTimeMillisecond - 1L;
+        else quantity = deltaTime/deltaTimeMillisecond;
+
+        END_UTC = START_UTC + quantity * deltaTimeMillisecond;
+        END = ZonedDateTime.ofInstant(Instant.ofEpochMilli(END_UTC), timezone.toZoneId());
 
         formattedStart = START.format(format);
         formattedEnd = END.format(format);
     }
 
+    public QuarterInterval(String intervalName, TimeZone timezone, long utcMillisecond, long deltaTimeMillisecond){
+        this(intervalName, timezone, DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond, deltaTimeMillisecond);
+    }
+
     public QuarterInterval(String intervalName, TimeZone timezone, long utcMillisecond){
-        this(intervalName, timezone, DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond);
+        this(intervalName, timezone, DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond, 1);
+    }
+
+    public QuarterInterval(String intervalName, long utcMillisecond, long deltaTimeMillisecond){
+        this(intervalName, TimeZone.getTimeZone("UTC"), DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond, deltaTimeMillisecond);
     }
 
     public QuarterInterval(String intervalName, long utcMillisecond){
-        this(intervalName, TimeZone.getTimeZone("UTC"), DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond);
+        this(intervalName, TimeZone.getTimeZone("UTC"), DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond, 1);
     }
 
     //TimeRange Overrides

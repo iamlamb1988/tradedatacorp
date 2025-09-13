@@ -20,13 +20,21 @@ public class MonthInterval implements TimeRange{
     private String formattedStart;
     private String formattedEnd;
 
-    public MonthInterval(String intervalName, TimeZone timezone, DateTimeFormatter format, long utcMillisecond){
+    public MonthInterval(
+        String intervalName,
+        TimeZone timezone,
+        DateTimeFormatter format,
+        long utcMillisecond,
+        long deltaTimeMillisecond)
+    {
         name = intervalName;
         this.timezone = timezone;
         timeformat = format;
 
         Instant tmpTimeInst = Instant.ofEpochMilli(utcMillisecond);
         ZonedDateTime tmpTime = ZonedDateTime.ofInstant(tmpTimeInst, timezone.toZoneId());
+        long deltaTime;
+        long quantity;
 
         START = ZonedDateTime.of(
             tmpTime.getYear(),
@@ -40,19 +48,30 @@ public class MonthInterval implements TimeRange{
         );
         START_UTC = START.toInstant().toEpochMilli();
 
-        END = START.plusMonths(1).minusNanos(1_000_000L); //1 month minus 1 millisecond
-        END_UTC = END.toInstant().toEpochMilli();
+        tmpTime = START.plusMonths(1);
+        tmpTimeInst = tmpTime.toInstant();
+        deltaTime = tmpTimeInst.toEpochMilli() - START_UTC;
+
+        if(deltaTime%deltaTimeMillisecond == 0) quantity = deltaTime/deltaTimeMillisecond - 1L;
+        else quantity = deltaTime/deltaTimeMillisecond;
+
+        END_UTC = START_UTC + quantity * deltaTimeMillisecond;
+        END = ZonedDateTime.ofInstant(Instant.ofEpochMilli(END_UTC), timezone.toZoneId());
 
         formattedStart = START.format(format);
         formattedEnd = END.format(format);
     }
 
+    public MonthInterval(String intervalName, TimeZone timezone, long utcMillisecond, long deltaTimeMillisecond){
+        this(intervalName, timezone, DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond, deltaTimeMillisecond);
+    }
+
     public MonthInterval(String intervalName, TimeZone timezone, long utcMillisecond){
-        this(intervalName, timezone, DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond);
+        this(intervalName, timezone, DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond, 1);
     }
 
     public MonthInterval(String intervalName, long utcMillisecond){
-        this(intervalName, TimeZone.getTimeZone("UTC"), DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond);
+        this(intervalName, TimeZone.getTimeZone("UTC"), DateTimeFormatter.ISO_ZONED_DATE_TIME, utcMillisecond, 1);
     }
 
     //MonthInterval Overrides
