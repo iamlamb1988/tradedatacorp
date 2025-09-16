@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 11 SEP 2025
+ * @since 16 SEP 2025
  */
 package tradedatacorp.warehouse;
 
@@ -12,6 +12,7 @@ import tradedatacorp.tools.stick.info.StickTimeFrame;
 import tradedatacorp.tools.time.TimeTier;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.io.File;
 import java.nio.file.Files;
@@ -31,7 +32,8 @@ public class OHLCV_BinaryWarehouse implements
     WarehousePicker<StickDouble>
 {
     private File rootDataDir;
-    private ArrayList<TimeTier> fileFunnel;
+    private HashSet uncheckedIngest;
+    private ArrayList<SymbolIntervalTracker> stickInventory;
 
     // WarehouseInitializer<String, String[]> Overrides
     @Override
@@ -122,12 +124,12 @@ public class OHLCV_BinaryWarehouse implements
     public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
 
     //OHLCV_BinaryWarehouse methods
-    private class UncheckedDataStick extends CandleStickFixedDouble implements StickHeader, StickTimeFrame{
+    private class UncheckedStick extends CandleStickFixedDouble implements StickHeader, StickTimeFrame{
         String symbolName;
         int interval;
         Path sourceFile; //Source file of data
 
-        public UncheckedDataStick(
+        public UncheckedStick(
             String symbol,
             Path sourceFilePath,
             long utc_timestamp,
@@ -153,6 +155,31 @@ public class OHLCV_BinaryWarehouse implements
         @Override
         public int getInterval(){return interval;}
     }
-
-    private class FileFunnelTier{}
+    private class CheckedCacheStick extends CandleStickFixedDouble{
+        HashSet<CacheReason> reasonList;
+        public CheckedCacheStick(
+            long utc_timestamp,
+            double open,
+            double high,
+            double low,
+            double close,
+            double volume
+        ){
+            super(utc_timestamp, open, high, low, close, volume);
+            reasonList = new HashSet<CacheReason>();
+        }
+    }
+    private class SymbolIntervalTracker{
+        String symbolName;
+        final int INTERVAL;
+        TimeTier[] fileFunnel;
+        ArrayList<CheckedCacheStick> localCache;
+        Path sourceFile;
+    }
+    private class TimeTierMeta{}
+    private abstract class CacheReason{
+        boolean isValid;
+    }
+    private class FileWriteReason extends CacheReason{}
+    private class TimedReason extends CacheReason{}
 }
