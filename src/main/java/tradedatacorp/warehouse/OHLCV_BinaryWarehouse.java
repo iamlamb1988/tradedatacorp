@@ -12,6 +12,7 @@ import tradedatacorp.tools.stick.info.StickTimeFrame;
 import tradedatacorp.tools.time.TimeTier;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.io.File;
@@ -27,13 +28,21 @@ import java.nio.file.Path;
  */
 public class OHLCV_BinaryWarehouse implements
     WarehouseInitializer<String, String[]>,
-    Warehouse<String, Path>,
+    WarehousePowerable<String, String[]>,
+    WarehouseDataStorage<String, Path>,
     WarehouseStorer<StickDouble, Boolean>,
     WarehousePicker<StickDouble>
 {
     private File rootDataDir;
-    private HashSet uncheckedIngest;
-    private ArrayList<SymbolIntervalTracker> stickInventory;
+    private boolean isPoweredOn;
+    private HashSet<InformationStick> uncheckedIngest;
+
+    private Thread t1Categorizer;
+
+    public OHLCV_BinaryWarehouse(){
+        isPoweredOn = false;
+        uncheckedIngest = new HashSet<InformationStick>();
+    }
 
     // WarehouseInitializer<String, String[]> Overrides
     @Override
@@ -114,9 +123,63 @@ public class OHLCV_BinaryWarehouse implements
     @Override
     public String connectionStatus(){return null;}
 
+    // WarehousePowerable<String, String[]> Overrides
+    /**
+     * Powers warehouse operations on or off IAW configuration passed in.
+     *
+     * @params configurations
+     * To power all functions on properly, {@code configurations[0] = "ALL_ON"}.
+     * To power all functions off properly, {@code configurations[0] = "ALL_OFF"}.
+     * More options to come for targeted functionality.
+     */
+    @Override
+    public String powerSwitch(String... configurations){
+        if(configurations == null) return null;
+        if(configurations.length == 0 || configurations[0].equals("ALL_ON")){
+            isPoweredOn = true;
+            t1Categorizer = new Thread(new T1_CategorizeUncheckedData(), "Categorizer");
+            t1Categorizer.start();
+            return "DEBUG TODO POWERON RESULT"; //TODO: Fix the output
+        }else if(configurations[0].equals("ALL_OFF")){
+            isPoweredOn = false;
+            return "DEBUG TODO POWEROFF RESULT"; //TODO: Fix the output
+        }
+
+        //TODO: special cases here
+        return "DEBUG TODO SPECIAL POWERING RESULT"; //TODO: Fix the output
+    }
+
     // WarehouseStorer<StickDouble, Boolean> Overrides
-    public Boolean storeOne(StickDouble validData){return null;}
-    public Boolean store(StickDouble[] validDataCollection){return null;}
+    @Override
+    public Boolean storeOne(StickDouble candidate){
+        if(candidate instanceof StickHeader && candidate instanceof StickTimeFrame){
+            StickHeader candidateHeader = (StickHeader)candidate;
+            StickTimeFrame candidateInterval = (StickTimeFrame)candidate;
+            synchronized(uncheckedIngest){
+                uncheckedIngest.add(
+                    new InformationStick(
+                        candidateHeader.getSymbol(),
+                        candidateInterval.getInterval(),
+                        candidate.getO(),
+                        candidate.getH(),
+                        candidate.getL(),
+                        candidate.getC(),
+                        candidate.getV()
+                    )
+                );
+            }
+            return Boolean.valueOf(true);
+        }
+        return Boolean.valueOf(false);
+    }
+
+    @Override
+    public Boolean store(StickDouble[] candidateArray){
+        Tu_Input_SaveDataArray tu = new Tu_Input_SaveDataArray(candidateArray);
+        new Thread(tu).start();
+        return Boolean.valueOf(tu.isAllTrue);
+    }
+
     public Boolean store(Collection<StickDouble> validDataCollection){return null;}
 
     //WarehousePicker<StickDouble> Overrides
@@ -124,14 +187,12 @@ public class OHLCV_BinaryWarehouse implements
     public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
 
     //OHLCV_BinaryWarehouse methods
-    private class UncheckedStick extends CandleStickFixedDouble implements StickHeader, StickTimeFrame{
+    private class InformationStick extends CandleStickFixedDouble implements StickHeader, StickTimeFrame{
         String symbolName;
         int interval;
-        Path sourceFile; //Source file of data
 
-        public UncheckedStick(
+        public InformationStick(
             String symbol,
-            Path sourceFilePath,
             long utc_timestamp,
             double open,
             double high,
@@ -141,7 +202,6 @@ public class OHLCV_BinaryWarehouse implements
         ){
             super(utc_timestamp, open, high, low, close, volume);
             symbolName = symbol;
-            sourceFile = sourceFilePath;
         }
 
         // StickHeader Overrides
@@ -171,7 +231,7 @@ public class OHLCV_BinaryWarehouse implements
     }
     private class SymbolIntervalTracker{
         String symbolName;
-        final int INTERVAL;
+        final int INTERVAL = -1; //TODO
         TimeTier[] fileFunnel;
         ArrayList<CheckedCacheStick> localCache;
         Path sourceFile;
@@ -182,4 +242,65 @@ public class OHLCV_BinaryWarehouse implements
     }
     private class FileWriteReason extends CacheReason{}
     private class TimedReason extends CacheReason{}
+
+    //Special Threads (See Resource Allocation Graph for details)
+    private abstract class TempAssemblyWorker{
+        protected volatile boolean isFinished;
+        private TempAssemblyWorker(){isFinished=false;}
+    }
+
+    //An instance responsible for moving a batch of data to T1. Many Threads may
+    /**
+     * Threaded User input. Each batch of user data will be on it's own thread.
+     * This is the entrypoint of new data
+     */
+    private class Tu_Input_SaveDataCollection extends TempAssemblyWorker implements Runnable{
+        Iterator<StickDouble> it;
+        boolean isAllTrue;
+
+        Tu_Input_SaveDataCollection(Collection<StickDouble> newDataCollection){
+            it = newDataCollection.iterator();
+            isAllTrue = true;
+        }
+
+        @Override
+        public void run(){
+            while(it.hasNext()){
+                if(!storeOne(it.next())) isAllTrue = false;
+                it.remove();
+            }
+            isFinished = true;
+        }
+    }
+
+    private class Tu_Input_SaveDataArray extends TempAssemblyWorker implements Runnable{
+        boolean isAllTrue;
+        StickDouble userInputArray[];
+
+        Tu_Input_SaveDataArray(StickDouble[] newDataArray){
+            userInputArray = newDataArray;
+            isAllTrue = true;
+        }
+
+        @Override
+        public void run(){
+            for(StickDouble candidateStick : userInputArray){if(!storeOne(candidateStick)) isAllTrue = false;}
+            isFinished = true;
+        }
+    }
+
+    //The only top level thread, may be a bottle neck.
+    private class T1_CategorizeUncheckedData extends TempAssemblyWorker implements Runnable{
+        @Override
+        public void run(){
+            System.out.println("Thread 1: Powered on. Begin listening for unchecked data to appropriate vetting collection.");
+            //WHILE: power is on
+            //   WHILE: unchecked collection had data
+            //      1. Remove data element
+            //      2. Check symbol, interval
+            //      3. Move to Sorted Entry ArrayList for full vetting.
+
+            isFinished = true;
+        }
+    }
 }

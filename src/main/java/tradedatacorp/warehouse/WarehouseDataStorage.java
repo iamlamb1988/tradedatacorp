@@ -6,11 +6,12 @@
 package tradedatacorp.warehouse;
 
 /**
- * This interface is a representation of a warehouse that stores large pools of CandleStick trading data.
+ * This interface represents the location of Data location.
  * This is agnostic of specific data storage such as SQL Database, NoSQL Database, FileSystem, API Site, etc.
- * This interface is intended to be used in conjuction with the helper Warehouse interfaces.
+ * This will determine if data is accessible and determines health and status of the connection.
+ * Will return specific results, ResultT, regarding information about successful connection to data or data corruption.
  */
-public interface Warehouse<ResultT, CredsT>{
+public interface WarehouseDataStorage<ResultT, CredsT>{
     /**
      * Attempts to establish a connection to a warehouse.
      *

@@ -15,17 +15,20 @@ public class TestMain{
         String result = warehouse.initialize(new String[]{"/root/test/mydb"});
         System.out.println(result);
 
+        result = warehouse.powerSwitch();
+        System.out.println(result);
+
         long utcRef = 1757621890000L;
         TimeZone CST = TimeZone.getTimeZone("US/Central");
         TimeZone EST = TimeZone.getTimeZone("US/Eastern");
 
-        printTimeRange(utcRef, CST, 1);
-        System.out.println("\n");
-        printTimeRange(utcRef, EST, 1);
-        System.out.println("\n");
-        printTimeRange(utcRef, CST, 60000);
-        System.out.println("\n");
-        printTimeRange(utcRef, EST, 60000);
+        // printTimeRange(utcRef, CST, 1);
+        // System.out.println("\n");
+        // printTimeRange(utcRef, EST, 1);
+        // System.out.println("\n");
+        // printTimeRange(utcRef, CST, 60000);
+        // System.out.println("\n");
+        // printTimeRange(utcRef, EST, 60000);
     }
 
     public static void printTimeRange(long utcRef, TimeZone tz, long deltaMillisecond){
