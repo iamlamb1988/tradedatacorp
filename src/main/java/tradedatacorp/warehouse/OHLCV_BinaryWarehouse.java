@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 16 SEP 2025
+ * @since 20 OCT 2025
  */
 package tradedatacorp.warehouse;
 
@@ -153,20 +153,29 @@ public class OHLCV_BinaryWarehouse implements
     @Override
     public Boolean storeOne(StickDouble candidate){
         if(candidate instanceof StickHeader && candidate instanceof StickTimeFrame){
-            StickHeader candidateHeader = (StickHeader)candidate;
-            StickTimeFrame candidateInterval = (StickTimeFrame)candidate;
             synchronized(uncheckedIngest){
-                uncheckedIngest.add(
-                    new InformationStick(
-                        candidateHeader.getSymbol(),
-                        candidateInterval.getInterval(),
-                        candidate.getO(),
-                        candidate.getH(),
-                        candidate.getL(),
-                        candidate.getC(),
-                        candidate.getV()
-                    )
-                );
+                if(candidate instanceof CandleStickFixedDouble){
+                    uncheckedIngest.add(
+                        new InformationWrapperStick(
+                            (CandleStickFixedDouble)candidate,
+                            ((StickHeader)candidate).getName(),
+                            ((StickTimeFrame)candidate).getInterval()
+                        )
+                    );
+                }else{
+                    uncheckedIngest.add(
+                        new InformationDirectStick(
+                            ((StickHeader)candidate).getName(),
+                            ((StickTimeFrame)candidate).getInterval(),
+                            candidate.getUTC(),
+                            candidate.getO(),
+                            candidate.getH(),
+                            candidate.getL(),
+                            candidate.getC(),
+                            candidate.getV()
+                        )
+                    );
+                }
             }
             return Boolean.valueOf(true);
         }
@@ -187,12 +196,18 @@ public class OHLCV_BinaryWarehouse implements
     public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
 
     //OHLCV_BinaryWarehouse methods
-    private class InformationStick extends CandleStickFixedDouble implements StickHeader, StickTimeFrame{
-        String symbolName;
+
+    //OHLCV_BinaryWarehouse private classes
+    //Marker Interface to ensure header and timeframe exist
+    private interface InformationStick extends StickDouble, StickHeader, StickTimeFrame{}
+
+    private class InformationDirectStick extends CandleStickFixedDouble implements InformationStick{
+        String symbol;
         int interval;
 
-        public InformationStick(
-            String symbol,
+        public InformationDirectStick(
+            String symbolName,
+            int intervalSeconds,
             long utc_timestamp,
             double open,
             double high,
@@ -201,20 +216,78 @@ public class OHLCV_BinaryWarehouse implements
             double volume
         ){
             super(utc_timestamp, open, high, low, close, volume);
-            symbolName = symbol;
+            symbol = symbolName;
+            interval = intervalSeconds;
+        }
+
+        public InformationDirectStick(
+            StickDouble stick,
+            String symbolName,
+            int intervalSeconds
+        ){
+            this(
+                symbolName,
+                intervalSeconds,
+                stick.getUTC(), stick.getO(), stick.getH(), stick.getL(), stick.getC(), stick.getV()
+            );
         }
 
         // StickHeader Overrides
         @Override
-        public String getName(){return symbolName;}
+        public String getName(){return symbol;}
 
         @Override
-        public String getSymbol(){return symbolName;}
+        public String getSymbol(){return symbol;}
 
         //StickTimeFrame Overrides
         @Override
         public int getInterval(){return interval;}
     }
+
+    private class InformationWrapperStick implements InformationStick{
+        CandleStickFixedDouble wrapperStickRef;
+        String symbol;
+        int interval;
+        InformationWrapperStick(CandleStickFixedDouble stick, String symbolName, int intervalSeconds){
+            wrapperStickRef = stick;
+            symbol = symbolName;
+            interval = intervalSeconds;
+        }
+
+        //StickDouble Overrides
+        @Override
+        public long getUTC(){return wrapperStickRef.UTC;}
+
+        @Override
+        public double getO(){return wrapperStickRef.O;}
+
+        @Override
+        public double getH(){return wrapperStickRef.H;}
+
+        @Override
+        public double getL(){return wrapperStickRef.L;}
+
+        @Override
+        public double getC(){return wrapperStickRef.C;}
+
+        @Override
+        public double getV(){return wrapperStickRef.V;}
+
+        @Override
+        public int compareTo(StickDouble otherStick){return Long.compare(wrapperStickRef.UTC, otherStick.getUTC());}
+
+        // StickHeader Overrides
+        @Override
+        public String getName(){return symbol;}
+
+        @Override
+        public String getSymbol(){return symbol;}
+
+        //StickTimeFrame Overrides
+        @Override
+        public int getInterval(){return interval;}
+    }
+
     private class CheckedCacheStick extends CandleStickFixedDouble{
         HashSet<CacheReason> reasonList;
         public CheckedCacheStick(
@@ -249,7 +322,6 @@ public class OHLCV_BinaryWarehouse implements
         private TempAssemblyWorker(){isFinished=false;}
     }
 
-    //An instance responsible for moving a batch of data to T1. Many Threads may
     /**
      * Threaded User input. Each batch of user data will be on it's own thread.
      * This is the entrypoint of new data
@@ -273,19 +345,24 @@ public class OHLCV_BinaryWarehouse implements
         }
     }
 
+    //from R(u, ?) -> R(1)
+    //R(u, ?) is the user input primitive array.
+    //R(1) is the collection of immutable data points.
+    //This thread is repsonsible for converting any OHLCV data into an immutable header object
     private class Tu_Input_SaveDataArray extends TempAssemblyWorker implements Runnable{
-        boolean isAllTrue;
         StickDouble userInputArray[];
+        boolean isAllTrue;
 
-        Tu_Input_SaveDataArray(StickDouble[] newDataArray){
-            userInputArray = newDataArray;
+        Tu_Input_SaveDataArray(StickDouble[] newUserInputArray){
+            userInputArray = newUserInputArray;
             isAllTrue = true;
         }
 
         @Override
         public void run(){
-            for(StickDouble candidateStick : userInputArray){if(!storeOne(candidateStick)) isAllTrue = false;}
-            isFinished = true;
+            for(StickDouble candidateStick : userInputArray){
+                if(!storeOne(candidateStick)) isAllTrue = false;
+            }
         }
     }
 
