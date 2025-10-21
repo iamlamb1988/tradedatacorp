@@ -152,6 +152,32 @@ public class OHLCV_BinaryWarehouse implements
     // WarehouseStorer<StickDouble, Boolean> Overrides
     @Override
     public Boolean storeOne(StickDouble candidate){
+        return Boolean.valueOf(storeOneStick(candidate));
+    }
+
+    @Override
+    public Boolean store(StickDouble[] candidateArray){
+        boolean isAllTrue = true;
+        for(StickDouble candidate : candidateArray){
+            if(!storeOneStick(candidate)) isAllTrue = false;
+        }
+        return Boolean.valueOf(isAllTrue);
+    }
+
+    public Boolean store(Collection<StickDouble> validDataCollection){
+        boolean isAllTrue = true;
+        for(StickDouble candidate : validDataCollection){
+            if(!storeOneStick(candidate)) isAllTrue = false;
+        }
+        return Boolean.valueOf(isAllTrue);
+    }
+
+    //WarehousePicker<StickDouble> Overrides
+    public Collection<StickDouble> pickToCollection(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
+    public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
+
+    //OHLCV_BinaryWarehouse methods
+    public boolean storeOneStick(StickDouble candidate){
         if(candidate instanceof StickHeader && candidate instanceof StickTimeFrame){
             synchronized(uncheckedIngest){
                 if(candidate instanceof CandleStickFixedDouble){
@@ -177,25 +203,10 @@ public class OHLCV_BinaryWarehouse implements
                     );
                 }
             }
-            return Boolean.valueOf(true);
+            return true;
         }
-        return Boolean.valueOf(false);
+        return false;
     }
-
-    @Override
-    public Boolean store(StickDouble[] candidateArray){
-        Tu_Input_SaveDataArray tu = new Tu_Input_SaveDataArray(candidateArray);
-        new Thread(tu).start();
-        return Boolean.valueOf(tu.isAllTrue);
-    }
-
-    public Boolean store(Collection<StickDouble> validDataCollection){return null;}
-
-    //WarehousePicker<StickDouble> Overrides
-    public Collection<StickDouble> pickToCollection(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
-    public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
-
-    //OHLCV_BinaryWarehouse methods
 
     //OHLCV_BinaryWarehouse private classes
     //Marker Interface to ensure header and timeframe exist
