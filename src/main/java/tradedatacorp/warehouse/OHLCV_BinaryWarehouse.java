@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 20 OCT 2025
+ * @since 18 APR 2026
  */
 package tradedatacorp.warehouse;
 
@@ -9,7 +9,8 @@ import tradedatacorp.tools.stick.primitive.CandleStickFixedDouble;
 import tradedatacorp.tools.stick.primitive.StickDouble;
 import tradedatacorp.tools.stick.info.StickHeader;
 import tradedatacorp.tools.stick.info.StickTimeFrame;
-import tradedatacorp.tools.time.TimeTier;
+import tradedatacorp.tools.time.FixedInterval;
+// import tradedatacorp.tools.time.TimeTier;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,6 +22,7 @@ import java.nio.file.Path;
 
 /**
  * A warehouse implementation for storing OHLCV candlestick data in a filesystem.
+ * Will contain a root data directory that will be modified. Will not reach outside of this directory and is expected to be left alone and only used by this class instnce.
  * This is a machine that is intended to constantly run but can be turned on or off without corruption.
  * This instance will make use of {@link OHLCV_BinaryLexical} to super compress files. Will be able to quickly fetch data from
  * files in it's compressed form utilizing unique super compressed format.
@@ -36,6 +38,7 @@ public class OHLCV_BinaryWarehouse implements
     private File rootDataDir;
     private boolean isPoweredOn;
     private HashSet<InformationStick> uncheckedIngest;
+    private FixedInterval microIntervalElement; //The smallest chucnk of time
 
     private Thread t1Categorizer;
 
@@ -45,6 +48,14 @@ public class OHLCV_BinaryWarehouse implements
     }
 
     // WarehouseInitializer<String, String[]> Overrides
+    /**
+     * Will attempt to initialize an existing or new direcotory for the data files to be stored.
+     * Will require the system to have permissions to create and modify directories and files.
+     * Will return a string resulting in the success or failure of initializing a warehouse setup.
+     *
+     * @param initArgs Specific arguments for the Warehouse to be initialized correctly
+     *  - initArgs[0] Absolute or relative directory of data.
+     */
     @Override
     public String initialize(String[] initArgs){
         StringBuilder strBldr = new StringBuilder();
@@ -177,6 +188,22 @@ public class OHLCV_BinaryWarehouse implements
     public StickDouble[] pickToArray(String TickerSymbol, long UTC_Start, long UTC_End){return null;}
 
     //OHLCV_BinaryWarehouse methods
+    /**
+     * This will set the interval to the smallest interval and offset to store buckets of data.
+     * This doesn't have to be the start or end bucket but must exist as a possibility on the list
+     */
+    public void setMicroInterval(FixedInterval microInterval){
+
+    }
+
+    /**
+     * This will set the interval to the smallest interval and offset to store buckets of data.
+     * The offset will default to the standard offset of time commonly used.
+     */
+    public void setMicroInterval(long microIntervalSec){
+
+    }
+
     public boolean storeOneStick(StickDouble candidate){
         if(candidate instanceof StickHeader && candidate instanceof StickTimeFrame){
             synchronized(uncheckedIngest){
@@ -316,7 +343,7 @@ public class OHLCV_BinaryWarehouse implements
     private class SymbolIntervalTracker{
         String symbolName;
         final int INTERVAL = -1; //TODO
-        TimeTier[] fileFunnel;
+        // TimeTier[] fileFunnel;
         ArrayList<CheckedCacheStick> localCache;
         Path sourceFile;
     }

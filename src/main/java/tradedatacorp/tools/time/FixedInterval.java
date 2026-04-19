@@ -1,62 +1,74 @@
 /**
  * @author Bruce Lamb
- * @since 12 SEP 2025
+ * @since 18 APR 2026
  */
 package tradedatacorp.tools.time;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.TimeZone;
+/**
+ * Represents a high-precision time interval on the UTC timeline using Unix epoch milliseconds.
+ * This accounts for the length of time and offsets.
+ */
+public class FixedInterval{
+    public final String name;
+    public final long START_UTC_MILLI;
+    public final long END_UTC_MILLI;
+    public final long durationMillis;
+    public final boolean inclusiveStart;
+    public final boolean inclusiveEnd;
 
-public class FixedInterval implements TimeRange{
-    private String name;
-    private TimeZone timezone;
-    private DateTimeFormatter timeformat;
-    private final long START_UTC;
-    private final long END_UTC;
-    private final ZonedDateTime START;
-    private final ZonedDateTime END;
-    private String formattedStart;
-    private String formattedEnd;
-
-    public FixedInterval(String intervalName, TimeZone timezone, DateTimeFormatter format, long utcStartMillisecond, long utcEndMillisecond){
+    public FixedInterval(
+        String intervalName,
+        long utcStartMilli,
+        long utcEndMilli,
+        boolean isInclusiveStart,
+        boolean isInclusiveEnd
+    ){
         name = intervalName;
-        this.timezone = timezone;
-        timeformat = format;
-        START_UTC = utcStartMillisecond;
-        END_UTC = utcEndMillisecond;
-        START = ZonedDateTime.ofInstant(Instant.ofEpochMilli(START_UTC), timezone.toZoneId());
-        END = ZonedDateTime.ofInstant(Instant.ofEpochMilli(END_UTC), timezone.toZoneId());
-        formattedStart = START.format(format);
-        formattedEnd = END.format(format);
+        if(utcStartMilli < utcEndMilli){
+            START_UTC_MILLI = utcStartMilli;
+            END_UTC_MILLI = utcEndMilli;
+            inclusiveStart = isInclusiveStart;
+            inclusiveEnd = isInclusiveEnd;
+        }else{ //invert
+            END_UTC_MILLI = utcStartMilli;
+            START_UTC_MILLI = utcEndMilli;
+            inclusiveStart = isInclusiveEnd;
+            inclusiveEnd = isInclusiveStart;
+        }
+
+        durationMillis = END_UTC_MILLI - START_UTC_MILLI;
     }
 
-    //TimeRange Overrides
-    @Override
+    public FixedInterval(
+        String intervalName,
+        long utcStartMilli,
+        long utcEndMilli
+    ){this(intervalName, utcStartMilli, utcEndMilli, true, false);}
+
     public String getName(){return name;}
 
-    @Override
-    public TimeZone getTimeZone(){return timezone;}
+    public long getStartUTC(){return START_UTC_MILLI;}
 
-    @Override
-    public DateTimeFormatter getTimeFormatter(){return timeformat;}
+    public long getEndUTC(){return END_UTC_MILLI;}
 
-    @Override
-    public long getStartUTC(){return START_UTC;}
+    public long getIntervalMilli(){return durationMillis;}
 
-    @Override
-    public long getEndUTC(){return END_UTC;}
+    public long getInvervalSec(){return durationMillis/1000;}
 
-    @Override
-    public ZonedDateTime getStartTime(){return START;}
+    public boolean isUTCmilliWithinInterval(long utcMilli, boolean isInclusiveStart, boolean isInclusiveEnd){
+        if(utcMilli > START_UTC_MILLI && utcMilli < END_UTC_MILLI) return true;
+        if(isInclusiveStart && utcMilli == START_UTC_MILLI) return true;
+        if(isInclusiveEnd && utcMilli == END_UTC_MILLI) return true;
+        return false;
+    }
 
-    @Override
-    public ZonedDateTime getEndTime(){return END;}
+    public boolean isUTCmilliWithinInterval(long utcMilli){return isUTCmilliWithinInterval(utcMilli, inclusiveStart, inclusiveEnd);}
 
-    @Override
-    public String getFormattedStartTime(){return formattedStart;}
+    public boolean isUTCsecWithinInterval(long utcSec, boolean isInclusiveStart, boolean isInclusiveEnd){
+        return isUTCmilliWithinInterval(utcSec * 1000, inclusiveStart, inclusiveEnd);
+    }
 
-    @Override
-    public String getFormattedEndTime(){return formattedEnd;}
+    public boolean isUTCsecWithinInterval(long utcSec){
+        return isUTCmilliWithinInterval(utcSec * 1000, inclusiveStart, inclusiveEnd);
+    }
 }
