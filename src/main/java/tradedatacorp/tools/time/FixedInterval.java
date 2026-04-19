@@ -24,7 +24,7 @@ public class FixedInterval{
         boolean isInclusiveEnd
     ){
         name = intervalName;
-        if(utcStartMilli < utcEndMilli){
+        if(utcStartMilli <= utcEndMilli){
             START_UTC_MILLI = utcStartMilli;
             END_UTC_MILLI = utcEndMilli;
             inclusiveStart = isInclusiveStart;
@@ -70,5 +70,13 @@ public class FixedInterval{
 
     public boolean isUTCsecWithinInterval(long utcSec){
         return isUTCmilliWithinInterval(utcSec * 1000, inclusiveStart, inclusiveEnd);
+    }
+
+    public static boolean isEqual(FixedInterval int1, FixedInterval int2){
+        return
+            int1.START_UTC_MILLI == int2.START_UTC_MILLI &&
+            int1.END_UTC_MILLI == int2.END_UTC_MILLI &&
+            int1.inclusiveStart == int2.inclusiveStart &&
+            int1.inclusiveEnd == int2.inclusiveEnd;
     }
 }
