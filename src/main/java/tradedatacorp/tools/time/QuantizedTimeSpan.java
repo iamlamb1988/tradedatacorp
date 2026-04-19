@@ -15,6 +15,7 @@ import java.util.ArrayList;
  */
 public class QuantizedTimeSpan{
     private static final String microRef = "UNIT";
+    private static final String quantizedName = "QUANTIZED";
     private FixedInterval microInterval;
     private long offsetMod; //the floor modulus to handle the offset of times
     private ArrayList<FixedInterval> timeSpan;
@@ -49,23 +50,35 @@ public class QuantizedTimeSpan{
         long newStart;
         long newEnd;
 
-        dist = newInterval.START_UTC_MILLI % offsetMod;
+        dist = Math.floorMod(newInterval.START_UTC_MILLI - offsetMod, newInterval.durationMillis);
         if(dist != 0){
-            if(expandLeft){
-                //expand left (reduce the start until the next snap)
-            }else{ //chop off (increase the start into the next snap)
-
+            if(expandLeft){ //Expand Left on the number line (subtract)
+                newStart = newInterval.START_UTC_MILLI - dist;
+            }else{ //Contract right on the number line (add)
+                newStart = newInterval.START_UTC_MILLI + (newInterval.durationMillis - offsetMod);
             }
-        }
+        } else newStart = newInterval.START_UTC_MILLI;
 
-        dist = newInterval.END_UTC_MILLI % offsetMod;
+        dist = Math.floorMod(newInterval.END_UTC_MILLI - offsetMod, newInterval.durationMillis);
         if(dist != 0){
-            if(expandRight){
-                //expand right (increase the start into the next snap)
-            }else{ //chop off (decrease the start into the next snap)
-
+            if(expandRight){ //Expand Right on the number line (add)
+                newEnd = newInterval.END_UTC_MILLI + (newInterval.durationMillis - offsetMod);
+            }else{ //Contract left on the number line (subtract)
+                newEnd = newInterval.END_UTC_MILLI - dist;
             }
-        }
+        } else newEnd = newInterval.END_UTC_MILLI;
+
+        if(newEnd <= newStart) return;
+
+        timeSpan.add(
+            new FixedInterval(
+                newInterval.name,
+                newStart,
+                newEnd,
+                newInterval.inclusiveStart,
+                newInterval.inclusiveEnd
+            )
+        );
         isMerged = false;
     }
 
