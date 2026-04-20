@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 19 APR 2026
+ */
 package tradedatacorp.tools.time;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -519,10 +523,10 @@ public class QuantizedTimeSpanTest{
         //                 [3, 3]
         //Snap offsets:    v    v    v    v    v    v    v    v    v    v
         //Time Line:  ...  -1 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8
-        //Current:         <(< [^i1----------i1^] >)>
-        //Snap:                [^S1----------S1^]
+        //Current:         <(< [^i1----------i1^) >)>
+        //Snap:                [^S1----------S1^)
         //                                <[< [^i2] >]>
-        //                                    [^S2)
+        //                                    [^S2]
         //Result:              [^R------------R^]
         //NOTE: inclusive flags will not change due to perfect snaps
 
@@ -549,5 +553,48 @@ public class QuantizedTimeSpanTest{
         assertEquals(3L, quantizedInt.END_UTC_MILLI);
         assertEquals(3L, quantizedInt.durationMillis);
         assertEquals(3L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedTwoIntervalTest6(){
+        //Adding interval: [0, 3)
+        //                 (3, 3)
+        //Snap offsets:    v    v    v    v    v    v    v    v    v    v
+        //Time Line:  ...  -1 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8
+        //Current:         <(< [^i1----------i1^) >)>
+        //Snap:                [^S1----------S1^)
+        //                                <[< (^i2) >]>
+        //                                    (^S2)
+        //Result:              [^R------------R^)
+        //NOTE: inclusive flags will not change due to perfect snaps
+
+        FixedInterval micro = new FixedInterval("micro", 0, 1);
+        assertEquals(1L, micro.durationMillis);
+        assertEquals(1L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval int1 = new FixedInterval("test1", 0, 3, true, false);
+        FixedInterval int2 = new FixedInterval("test2", 3, 3, false, false);
+
+        span.addInterval(int1, true, true, false, false);
+        span.addInterval(int2, true, true, true, true); //Empty and will be rejected upon addition
+
+        assertTrue(span.isMerged());
+
+        assertEquals(1, span.getIntervalSegmentCount());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+
+        assertTrue(quantizedInt.inclusiveStart);
+        assertFalse(quantizedInt.inclusiveEnd);
+        assertEquals(0L, quantizedInt.START_UTC_MILLI);
+        assertEquals(3L, quantizedInt.END_UTC_MILLI);
+        assertEquals(3L, quantizedInt.durationMillis);
+        assertEquals(3L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedTwoIntervalTest7(){
+        //preparing to add 2 intervals that leave a gap
     }
 }

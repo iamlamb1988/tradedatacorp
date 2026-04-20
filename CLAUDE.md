@@ -64,7 +64,7 @@ See `src/test/resources/smelter/filesmelter/README.md` for a complete bit-level 
 - `BinaryTools` — static utilities for boolean-array ↔ numeric conversions (used throughout the binary pipeline).
 - `BitByteTrack` — tracks bit/byte position during streaming reads.
 - `JSON_Parser` — custom lightweight JSON parser (no exponent or unicode escape support by design).
-- `tools/time/` — `TimeTier`, `FixedInterval`, `MonthInterval`, `QuarterInterval`, `TimeRange`, `TimeChunkTracker` for time-bucketing logic used by the warehouse.
+- `tools/time/` — `TimeTier`, `FixedInterval`, `MonthInterval`, `QuarterInterval`, `TimeRange`, `TimeChunkTracker`, `QuantizedTimeSpan` for time-bucketing logic used by the warehouse.
 - `tools/stick/info/` — `StickHeader`, `StickTimeFrame` metadata attached to collections of sticks.
 
 ### Miner Layer (`tradedatacorp.miner`)
