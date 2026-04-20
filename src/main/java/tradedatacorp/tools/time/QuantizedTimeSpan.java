@@ -41,6 +41,11 @@ public class QuantizedTimeSpan{
 
     public FixedInterval getMicroInterval(){return microInterval;}
 
+    public int getIntervalSegmentCount(){
+        if(!isMerged) mergeTimeSpan();
+        return timeSpan.size();
+    }
+
     public boolean isMerged(){return isMerged;}
 
     public long getMicroIntervalCount(){
@@ -71,7 +76,6 @@ public class QuantizedTimeSpan{
         boolean isLeftSnapInclusive,
         boolean isRightSnapInclusive
     ){
-        if(newInterval.durationMillis == 0) return;
         long dist; //distance from begin or endpoint to next snap
         long newStart;
         long newEnd;
@@ -151,21 +155,92 @@ public class QuantizedTimeSpan{
     }
 
     /**
-     * Will consolidate
+     * Consolidates {@code timeSpan} into a minimal, ordered list of non-overlapping {@link FixedInterval}s,
+     * merging any intervals that overlap or are adjacent on the number line.
+     * <p>
+     * After this call, {@code isMerged()} returns {@code true} and {@code microCount} is kept
+     * parallel to {@code timeSpan}: {@code microCount.get(i)} holds the number of micro-interval
+     * chunks contained in {@code timeSpan.get(i)}.
+     * <p>
+     * Algorithm: sort by start ascending (O(n log n), TimSort; fast on partially-sorted input),
+     * then a single linear sweep merges touching runs in place. A new {@link FixedInterval} is
+     * allocated only when a run actually merged; runs with no merges reuse the original reference.
+     * <p>
+     * When two intervals are merged, the resulting interval spans from the lesser start to the
+     * greater end. If both share the same boundary point, the merged boundary is inclusive if
+     * either original boundary was inclusive.
      */
     public void mergeTimeSpan(){
-        if(timeSpan.size() <= 1){
+        final int n = timeSpan.size();
+        microCount.clear();
+        final long microDur = microInterval.durationMillis;
+
+        if(n == 0){ isMerged = true; return; }
+        if(n == 1){
+            microCount.add(timeSpan.get(0).durationMillis / microDur);
             isMerged = true;
-            if(timeSpan.size() == 0) microCount.clear();
-            else if(timeSpan.size() == 1){
-                microCount.clear();
-                microCount.add(Long.valueOf(timeSpan.get(0).durationMillis/microInterval.durationMillis));
-            }
             return;
         }
-        //core implementation
-        //1. merge the timespan in an ordered fashion like a number line
-        //2. update the microCount to count the exact number of microInterval chunks within the timeline.
+
+        timeSpan.sort((x, y) -> Long.compare(x.START_UTC_MILLI, y.START_UTC_MILLI));
+
+        FixedInterval base = timeSpan.get(0);
+        long curStart = base.START_UTC_MILLI;
+        long curEnd = base.END_UTC_MILLI;
+        boolean curLeftInc = base.inclusiveStart;
+        boolean curRightInc = base.inclusiveEnd;
+        //zero-length interval: either inclusive brace means the point exists, so treat both as inclusive
+        if(curStart == curEnd && (curLeftInc || curRightInc)){ curLeftInc = true; curRightInc = true; }
+        boolean dirty = false;
+        int write = 0;
+
+        for(int read = 1; read < n; read++){
+            FixedInterval curr = timeSpan.get(read);
+            long cs = curr.START_UTC_MILLI;
+            long ce = curr.END_UTC_MILLI;
+            boolean cLeftInc = curr.inclusiveStart;
+            boolean cRightInc = curr.inclusiveEnd;
+            //zero-length interval: either inclusive brace means the point exists, so treat both as inclusive
+            if(cs == ce && (cLeftInc || cRightInc)){ cLeftInc = true; cRightInc = true; }
+
+            boolean touches =
+                cs < curEnd ||
+                (cs == curEnd && (cLeftInc || curRightInc));
+
+            if(touches){
+                if(cs == curStart && cLeftInc && !curLeftInc){
+                    curLeftInc = true;
+                    dirty = true;
+                }
+                if(ce > curEnd){
+                    curEnd = ce;
+                    curRightInc = cRightInc;
+                    dirty = true;
+                }else if(ce == curEnd && cRightInc && !curRightInc){
+                    curRightInc = true;
+                    dirty = true;
+                }
+            }else{
+                timeSpan.set(write++, dirty
+                    ? new FixedInterval(base.name, curStart, curEnd, curLeftInc, curRightInc)
+                    : base);
+                microCount.add((curEnd - curStart) / microDur);
+
+                base = curr;
+                curStart = cs;
+                curEnd = ce;
+                curLeftInc = cLeftInc;
+                curRightInc = cRightInc;
+                dirty = false;
+            }
+        }
+
+        timeSpan.set(write++, dirty
+            ? new FixedInterval(base.name, curStart, curEnd, curLeftInc, curRightInc)
+            : base);
+        microCount.add((curEnd - curStart) / microDur);
+
+        if(write < n) timeSpan.subList(write, n).clear();
         isMerged = true;
     }
 }

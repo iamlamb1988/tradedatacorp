@@ -329,7 +329,7 @@ public class QuantizedTimeSpanTest{
         //Adding interval: (-5, -1]
         //Snap offsets:         v         v         v          v
         //Time Line:  ...  -5 | -4 | -3 | -2 | -1 | 0  |  1 |  2
-        //Current:        [^-------------------^]
+        //Current:        (^-------------------^]
         //Result:              (S---------S)
         //NOTE: contract both sides exclusively
         FixedInterval micro = new FixedInterval("micro", 6, 8);
@@ -352,5 +352,202 @@ public class QuantizedTimeSpanTest{
         assertEquals(-2L, quantizedInt.END_UTC_MILLI);
         assertEquals(2L, quantizedInt.durationMillis);
         assertEquals(2L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedTwoIntervalTest1(){
+        //Adding interval: (-4, 0]
+        //                 (-2, 4)
+        //Snap offsets:         v         v         v         v         v
+        //Time Line:  ...  -5 | -4 | -3 | -2 | -1 | 0  | 1  | 2  | 3  | 4
+        //Current:              (^------------------^]
+        //                               (^-----------------------------^)
+        //Result:               (S--------------------------------------S)
+        //NOTE: merge perfect snaps
+
+        FixedInterval micro = new FixedInterval("micro", 6, 8);
+        assertEquals(2L, micro.durationMillis);
+        assertEquals(2L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval perfectSnap1 = new FixedInterval("test1", -4, 0, false, true);
+        FixedInterval perfectSnap2 = new FixedInterval("test1", -2, 4, false, false);
+
+        span.addInterval(perfectSnap1, true, true);
+        span.addInterval(perfectSnap2, true, true);
+
+        assertFalse(span.isMerged());
+        span.mergeTimeSpan();
+        assertTrue(span.isMerged());
+
+        //4 interval chunks: <-4, -2>, <-2, 0>, <0, 2>, <2, 4>
+        assertEquals(4, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+
+        assertFalse(quantizedInt.inclusiveStart);
+        assertFalse(quantizedInt.inclusiveEnd);
+        assertEquals(-4L, quantizedInt.START_UTC_MILLI);
+        assertEquals(4L, quantizedInt.END_UTC_MILLI);
+        assertEquals(8L, quantizedInt.durationMillis);
+        assertEquals(8L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedTwoIntervalTest2(){
+        //Adding interval: (0, 3]
+        //                 (1, 7)
+        //Snap offsets:    v               v              v              v
+        //Time Line:  ...  -1  | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8
+        //Current:          <(< (^i1----------i1^] >)>
+        //Snap:            (^S1-------------------------S1^)
+        //                       >[> (^i2-------------------------i2^) >]>
+        //                                (^S2-------------------------S2^]
+        //Result:          (^R------------------------------------------R^]
+        //NOTE: int1 expand left (exclude) expand right (exclude)
+        //      int2 contract left (include) expand right (include)
+
+        FixedInterval micro = new FixedInterval("micro", -1, 2);
+        assertEquals(3L, micro.durationMillis);
+        assertEquals(3L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval int1 = new FixedInterval("test1", 0, 3, false, true);
+        FixedInterval int2 = new FixedInterval("test2", 1, 7, false, false);
+
+        span.addInterval(int1, true, true, false, false);
+        span.addInterval(int2, false, true, true, true);
+
+        assertFalse(span.isMerged());
+        span.mergeTimeSpan();
+        assertTrue(span.isMerged());
+
+        //3 interval chunks: <-1, 2>, <2, 5>, <5, 8>
+        assertEquals(3, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+
+        assertFalse(quantizedInt.inclusiveStart);
+        assertTrue(quantizedInt.inclusiveEnd);
+        assertEquals(-1L, quantizedInt.START_UTC_MILLI);
+        assertEquals(8L, quantizedInt.END_UTC_MILLI);
+        assertEquals(9L, quantizedInt.durationMillis);
+        assertEquals(9L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedTwoIntervalTest3(){
+        //Adding interval: [0, 3)
+        //                 (3, 3]
+        //Snap offsets:    v    v    v    v    v    v    v    v    v    v
+        //Time Line:  ...  -1 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8
+        //Current:         <(< [^i1----------i1^] >)>
+        //Snap:                [^S1----------S1^]
+        //                                >[> (^i2] >]>
+        //                                    (^S2]
+        //Result:              [^R------------R^]
+        //NOTE: inclusive flags will not change due to perfect snaps
+
+        FixedInterval micro = new FixedInterval("micro", 0, 1);
+        assertEquals(1L, micro.durationMillis);
+        assertEquals(1L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval int1 = new FixedInterval("test1", 0, 3, true, false);
+        FixedInterval int2 = new FixedInterval("test2", 3, 3, false, true);
+
+        span.addInterval(int1, true, true, false, false);
+        span.addInterval(int2, false, true, true, true);
+
+        assertFalse(span.isMerged());
+        span.mergeTimeSpan();
+        assertTrue(span.isMerged());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+
+        assertTrue(quantizedInt.inclusiveStart);
+        assertTrue(quantizedInt.inclusiveEnd);
+        assertEquals(0L, quantizedInt.START_UTC_MILLI);
+        assertEquals(3L, quantizedInt.END_UTC_MILLI);
+        assertEquals(3L, quantizedInt.durationMillis);
+        assertEquals(3L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedTwoIntervalTest4(){
+        //Adding interval: [0, 3)
+        //                 [3, 3)
+        //Snap offsets:    v    v    v    v    v    v    v    v    v    v
+        //Time Line:  ...  -1 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8
+        //Current:         <(< [^i1----------i1^] >)>
+        //Snap:                [^S1----------S1^]
+        //                                <[< [^i2) >]>
+        //                                    [^S2)
+        //Result:              [^R------------R^]
+        //NOTE: inclusive flags will not change due to perfect snaps
+
+        FixedInterval micro = new FixedInterval("micro", 0, 1);
+        assertEquals(1L, micro.durationMillis);
+        assertEquals(1L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval int1 = new FixedInterval("test1", 0, 3, true, false);
+        FixedInterval int2 = new FixedInterval("test2", 3, 3, true, false);
+
+        span.addInterval(int1, true, true, false, false);
+        span.addInterval(int2, true, true, true, true);
+
+        assertFalse(span.isMerged());
+        span.mergeTimeSpan();
+        assertTrue(span.isMerged());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+
+        assertTrue(quantizedInt.inclusiveStart);
+        assertTrue(quantizedInt.inclusiveEnd);
+        assertEquals(0L, quantizedInt.START_UTC_MILLI);
+        assertEquals(3L, quantizedInt.END_UTC_MILLI);
+        assertEquals(3L, quantizedInt.durationMillis);
+        assertEquals(3L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedTwoIntervalTest5(){
+        //Adding interval: [0, 3)
+        //                 [3, 3]
+        //Snap offsets:    v    v    v    v    v    v    v    v    v    v
+        //Time Line:  ...  -1 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8
+        //Current:         <(< [^i1----------i1^] >)>
+        //Snap:                [^S1----------S1^]
+        //                                <[< [^i2] >]>
+        //                                    [^S2)
+        //Result:              [^R------------R^]
+        //NOTE: inclusive flags will not change due to perfect snaps
+
+        FixedInterval micro = new FixedInterval("micro", 0, 1);
+        assertEquals(1L, micro.durationMillis);
+        assertEquals(1L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval int1 = new FixedInterval("test1", 0, 3, true, false);
+        FixedInterval int2 = new FixedInterval("test2", 3, 3, true, true);
+
+        span.addInterval(int1, true, true, false, false);
+        span.addInterval(int2, true, true, true, true);
+
+        assertFalse(span.isMerged());
+        span.mergeTimeSpan();
+        assertTrue(span.isMerged());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+
+        assertTrue(quantizedInt.inclusiveStart);
+        assertTrue(quantizedInt.inclusiveEnd);
+        assertEquals(0L, quantizedInt.START_UTC_MILLI);
+        assertEquals(3L, quantizedInt.END_UTC_MILLI);
+        assertEquals(3L, quantizedInt.durationMillis);
+        assertEquals(3L, quantizedInt.getIntervalMilli());
     }
 }
