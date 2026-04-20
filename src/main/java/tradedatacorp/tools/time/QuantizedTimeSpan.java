@@ -51,7 +51,7 @@ public class QuantizedTimeSpan{
     public long getMicroIntervalCount(){
         if(!isMerged) mergeTimeSpan();
         long count = 0;
-        for(FixedInterval i : timeSpan) count += i.durationMillis/microInterval.durationMillis;
+        for(long mc : microCount) count += mc;  // Use cached values
         return count;
     }
 

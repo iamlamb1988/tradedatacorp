@@ -595,6 +595,89 @@ public class QuantizedTimeSpanTest{
 
     @Test
     public void simpleQuantizedTwoIntervalTest7(){
-        //preparing to add 2 intervals that leave a gap
+        //Adding interval: [0, 3)
+        //                 (6, 9)
+        //Snap offsets:         v              v              v              v
+        //Time Line:  ...  -1 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9
+        //Current:             [^S1----------S1^)
+        //                                                   (^S2----------S2^)
+        //Result:              [^R------------R^)            (^R------------R^)
+        //NOTE: Merged and gap. 2 intervals will remain merged
+
+        FixedInterval micro = new FixedInterval("micro", 0, -3);
+        assertEquals(3L, micro.durationMillis);
+        assertEquals(3L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval int1 = new FixedInterval("test1", 0, 3, true, false);
+        FixedInterval int2 = new FixedInterval("test2", 6, 9, false, false);
+
+        span.addInterval(int1, true, true, false, false); //Snapped, expansions and inclusions not relevant
+        span.addInterval(int2, true, true, true, true);   //Snapped, expansions and inclusions not relevant
+
+        assertFalse(span.isMerged());
+        span.mergeTimeSpan();
+        assertTrue(span.isMerged());
+
+        assertEquals(2, span.getIntervalSegmentCount());
+        assertEquals(2, span.getMicroIntervalCount());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+        assertTrue(quantizedInt.inclusiveStart);
+        assertFalse(quantizedInt.inclusiveEnd);
+        assertEquals(0L, quantizedInt.START_UTC_MILLI);
+        assertEquals(3L, quantizedInt.END_UTC_MILLI);
+        assertEquals(3L, quantizedInt.durationMillis);
+        assertEquals(3L, quantizedInt.getIntervalMilli());
+
+        quantizedInt = span.getTimeSpanInterval(1);
+        assertFalse(quantizedInt.inclusiveStart);
+        assertFalse(quantizedInt.inclusiveEnd);
+        assertEquals(6L, quantizedInt.START_UTC_MILLI);
+        assertEquals(9L, quantizedInt.END_UTC_MILLI);
+        assertEquals(3L, quantizedInt.durationMillis);
+        assertEquals(3L, quantizedInt.getIntervalMilli());
+    }
+
+    @Test
+    public void simpleQuantizedThreeIntervalTest1(){
+        //Adding interval: [0, 3)
+        //                 (6, 9)
+        //                 [2, 7]
+        //Snap offsets:         v              v              v              v
+        //Time Line:  ...  -1 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9
+        //Current:             [^S1----------S1^)
+        //                                                   (^S2----------S2^)
+        //                           >[> [^i3--------------------i3^] >)>
+        //Result:              [^R------------------------------------------R^)
+        //NOTE: Merged and gap. 2 intervals will remain merged
+
+        FixedInterval micro = new FixedInterval("micro", 0, -3);
+        assertEquals(3L, micro.durationMillis);
+        assertEquals(3L, micro.getIntervalMilli());
+
+        QuantizedTimeSpan span = new QuantizedTimeSpan(micro);
+        FixedInterval int1 = new FixedInterval("test1", 0, 3, true, false);
+        FixedInterval int2 = new FixedInterval("test2", 6, 9, false, false);
+        FixedInterval int3 = new FixedInterval("test3", 2, 7, true, true);
+
+        span.addInterval(int1, true, true, false, false); //Snapped, expansions and inclusions not relevant
+        span.addInterval(int2, true, true, true, true);   //Snapped, expansions and inclusions not relevant
+        span.addInterval(int3, false, true, true, false);   // will snap to [3, 9)
+
+        assertFalse(span.isMerged());
+        span.mergeTimeSpan();
+        assertTrue(span.isMerged());
+
+        assertEquals(1, span.getIntervalSegmentCount());
+        assertEquals(3, span.getMicroIntervalCount());
+
+        FixedInterval quantizedInt = span.getTimeSpanInterval(0);
+        assertTrue(quantizedInt.inclusiveStart);
+        assertFalse(quantizedInt.inclusiveEnd);
+        assertEquals(0L, quantizedInt.START_UTC_MILLI);
+        assertEquals(9L, quantizedInt.END_UTC_MILLI);
+        assertEquals(9L, quantizedInt.durationMillis);
+        assertEquals(9L, quantizedInt.getIntervalMilli());
     }
 }

@@ -53,7 +53,7 @@ public class FixedInterval{
 
     public long getIntervalMilli(){return durationMillis;}
 
-    public long getInvervalSec(){return durationMillis/1000;}
+    public long getIntervalSec(){return durationMillis/1000;}
 
     public boolean isUTCmilliWithinInterval(long utcMilli, boolean isInclusiveStart, boolean isInclusiveEnd){
         if(utcMilli > START_UTC_MILLI && utcMilli < END_UTC_MILLI) return true;
@@ -65,7 +65,7 @@ public class FixedInterval{
     public boolean isUTCmilliWithinInterval(long utcMilli){return isUTCmilliWithinInterval(utcMilli, inclusiveStart, inclusiveEnd);}
 
     public boolean isUTCsecWithinInterval(long utcSec, boolean isInclusiveStart, boolean isInclusiveEnd){
-        return isUTCmilliWithinInterval(utcSec * 1000, inclusiveStart, inclusiveEnd);
+        return isUTCmilliWithinInterval(utcSec * 1000, isInclusiveStart, isInclusiveEnd);
     }
 
     public boolean isUTCsecWithinInterval(long utcSec){
