@@ -1,28 +1,52 @@
 /**
  * @author Bruce Lamb
- * @since 18 APR 2026
+ * @since 20 APR 2026
  */
 package tradedatacorp.tools.time;
-
-
 
 import java.util.ArrayList;
 
 /**
- * A class that tracks time buckets of micro interval time lengths.
- * Each timeframe within this class is a mutiple of the microInterval and accounts for the time offset as well.
- * The microInterval does not have to exist within the actual data.
+ * Accumulates time intervals and merges them into the minimal set of non-overlapping
+ * {@link FixedInterval}s, where every boundary is snapped to a fixed micro-interval grid.
+ *
+ * <p>Each interval added via {@link #addInterval} is first quantized: its start and end are
+ * shifted to the nearest grid point (either expanded outward or contracted inward, per caller
+ * choice). Intervals that miss the grid entirely after contraction are silently dropped.
+ *
+ * <p>The grid is defined by {@code microInterval}: a {@link FixedInterval} whose duration is
+ * the grid step and whose start anchors the phase via {@code START_UTC_MILLI mod duration}.
+ * The micro-interval does not need to fall inside any of the added data — it acts purely as
+ * a phase reference extending infinitely in both directions.
+ *
+ * <p>Merging is lazy: it is deferred until the first read of {@link #getIntervalSegmentCount()}
+ * or {@link #getMicroIntervalCount()}, or until an explicit call to {@link #mergeTimeSpan()}.
+ * After merging, {@code microCount} is kept parallel to {@code timeSpan}: index {@code i} of
+ * {@code microCount} holds the number of micro-interval grid steps spanning {@code timeSpan.get(i)}.
  */
 public class QuantizedTimeSpan{
-    private static final String microRef = "UNIT";
-    private static final String quantizedName = "QUANTIZED";
-
+    /** The unit grid interval; its duration is the snap step and its start sets the grid phase. */
     private FixedInterval microInterval;
-    private long offsetMod; //the floor modulus to handle the offset of times
+
+    /** {@code floorMod(microInterval.START_UTC_MILLI, microInterval.durationMillis)} — the phase offset applied when computing snap points. */
+    private long offsetMod;
+
+    /** Accumulated (possibly overlapping, possibly unsorted) intervals after quantization. */
     private ArrayList<FixedInterval> timeSpan;
+
+    /** Parallel to {@code timeSpan} after a merge: micro-interval grid-step count per segment. */
     private ArrayList<Long> microCount;
+
+    /** {@code true} when {@code timeSpan} and {@code microCount} are in merged, sorted form. */
     private boolean isMerged;
 
+    /**
+     * Constructs a {@code QuantizedTimeSpan} with the given micro-interval as the snap grid.
+     *
+     * @param microInterval the grid unit; its {@code START_UTC_MILLI} sets the phase and its
+     *                      {@code durationMillis} sets the step size. Must have duration {@code > 0}.
+     * @throws IllegalArgumentException if {@code microInterval.durationMillis == 0}.
+     */
     public QuantizedTimeSpan(FixedInterval microInterval){
         if(microInterval.durationMillis == 0)
             throw new IllegalArgumentException("QuantizedTimeSpan requires a micro interval with a duration > 0.");
@@ -39,35 +63,83 @@ public class QuantizedTimeSpan{
         isMerged = true;
     }
 
+    /** Returns the micro-interval that defines the snap grid. */
     public FixedInterval getMicroInterval(){return microInterval;}
 
+    /**
+     * Returns the number of disjoint merged segments. Triggers a merge if one is pending.
+     *
+     * @return count of non-overlapping intervals after merging.
+     */
     public int getIntervalSegmentCount(){
         if(!isMerged) mergeTimeSpan();
         return timeSpan.size();
     }
 
+    /** Returns {@code true} if the internal interval list is already in merged, sorted form. */
     public boolean isMerged(){return isMerged;}
 
+    /**
+     * Returns the total number of micro-interval grid steps covered across all merged segments.
+     * Triggers a merge if one is pending.
+     *
+     * @return sum of micro-interval counts over all segments.
+     */
     public long getMicroIntervalCount(){
         if(!isMerged) mergeTimeSpan();
         long count = 0;
-        for(long mc : microCount) count += mc;  // Use cached values
+        for(long mc : microCount) count += mc;
         return count;
     }
 
+    /**
+     * Returns a shallow copy of the internal interval list in its current state.
+     * Does NOT trigger a merge; call {@link #mergeTimeSpan()} first if a merged view is needed.
+     *
+     * @return new {@code ArrayList} containing the same {@link FixedInterval} references.
+     */
     public ArrayList<FixedInterval> getTimeSpanIntervalList(){
         ArrayList<FixedInterval> list = new ArrayList<>(timeSpan.size());
         for(FixedInterval e : timeSpan){list.add(e);}
         return list;
     }
 
+    /**
+     * Returns the interval at {@code index} without triggering a merge.
+     *
+     * @param index position in the internal list.
+     * @return the {@link FixedInterval} at that position.
+     */
     public FixedInterval getTimeSpanInterval(int index){
         return timeSpan.get(index);
     }
 
     /**
-     * Adds to the timespan. This does NOT merge the span
-     * If newInterval is does not synchronize with the microInterval, it will be expanded or cut to synchronize with microInterval chunks
+     * Quantizes {@code newInterval} to the micro-interval grid and appends it to the span.
+     * Does not merge; sets {@link #isMerged} to {@code false} when more than one interval is present.
+     *
+     * <p>Snap behavior per endpoint:
+     * <ul>
+     *   <li>If the endpoint already falls on a grid point it is kept as-is, preserving its
+     *       original inclusivity.</li>
+     *   <li>If {@code expandLeft} is {@code true}, the start is snapped to the grid point
+     *       immediately to the left (earlier); otherwise it is snapped right (later).</li>
+     *   <li>If {@code expandRight} is {@code true}, the end is snapped to the grid point
+     *       immediately to the right (later); otherwise it is snapped left (earlier).</li>
+     *   <li>The inclusivity of snapped endpoints is set by {@code isLeftSnapInclusive} /
+     *       {@code isRightSnapInclusive}.</li>
+     * </ul>
+     *
+     * <p>If the resulting interval collapses to an empty set (end {@code <} start, or end
+     * {@code ==} start with both endpoints exclusive), the interval is silently dropped.
+     *
+     * @param newInterval          the interval to quantize and add.
+     * @param expandLeft           {@code true} to snap the start outward (earlier);
+     *                             {@code false} to snap inward (later).
+     * @param expandRight          {@code true} to snap the end outward (later);
+     *                             {@code false} to snap inward (earlier).
+     * @param isLeftSnapInclusive  inclusivity assigned to the start when it is snapped.
+     * @param isRightSnapInclusive inclusivity assigned to the end when it is snapped.
      */
     public void addInterval(
         FixedInterval newInterval,
@@ -113,7 +185,6 @@ public class QuantizedTimeSpan{
         if(newEnd < newStart || (newEnd == newStart && !newLeftInclusive && !newRightInclusive)) return;
 
         FixedInterval newQuantizedInterval = new FixedInterval(
-            newInterval.name,
             newStart,
             newEnd,
             newLeftInclusive,
@@ -141,8 +212,12 @@ public class QuantizedTimeSpan{
     }
 
     /**
-     * Adds to the timespan. This does NOT merge the span
-     * If newInterval is does not synchronize with the microInterval, it will be expanded or cut to synchronize with microInterval chunks
+     * Convenience overload of {@link #addInterval(FixedInterval, boolean, boolean, boolean, boolean)}
+     * that preserves the original inclusivity of {@code newInterval} for any snapped endpoints.
+     *
+     * @param newInterval  the interval to quantize and add.
+     * @param expandLeft   {@code true} to snap the start outward (earlier); {@code false} inward.
+     * @param expandRight  {@code true} to snap the end outward (later); {@code false} inward.
      */
     public void addInterval(FixedInterval newInterval, boolean expandLeft, boolean expandRight){
         addInterval(
@@ -222,7 +297,7 @@ public class QuantizedTimeSpan{
                 }
             }else{
                 timeSpan.set(write++, dirty
-                    ? new FixedInterval(base.name, curStart, curEnd, curLeftInc, curRightInc)
+                    ? new FixedInterval(curStart, curEnd, curLeftInc, curRightInc)
                     : base);
                 microCount.add((curEnd - curStart) / microDur);
 
@@ -236,7 +311,7 @@ public class QuantizedTimeSpan{
         }
 
         timeSpan.set(write++, dirty
-            ? new FixedInterval(base.name, curStart, curEnd, curLeftInc, curRightInc)
+            ? new FixedInterval(curStart, curEnd, curLeftInc, curRightInc)
             : base);
         microCount.add((curEnd - curStart) / microDur);
 

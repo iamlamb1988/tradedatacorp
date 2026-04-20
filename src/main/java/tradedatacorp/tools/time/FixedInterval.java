@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 18 APR 2026
+ * @since 20 APR 2026
  */
 package tradedatacorp.tools.time;
 
@@ -9,21 +9,18 @@ package tradedatacorp.tools.time;
  * This accounts for the length of time and offsets.
  */
 public class FixedInterval{
-    public final String name;
     public final long START_UTC_MILLI;
     public final long END_UTC_MILLI;
     public final long durationMillis;
-    public final boolean inclusiveStart;
-    public final boolean inclusiveEnd;
+    public final boolean inclusiveStart; //default inclusion
+    public final boolean inclusiveEnd;   //default inclusion
 
     public FixedInterval(
-        String intervalName,
         long utcStartMilli,
         long utcEndMilli,
         boolean isInclusiveStart,
         boolean isInclusiveEnd
     ){
-        name = intervalName;
         if(utcStartMilli <= utcEndMilli){
             START_UTC_MILLI = utcStartMilli;
             END_UTC_MILLI = utcEndMilli;
@@ -40,12 +37,9 @@ public class FixedInterval{
     }
 
     public FixedInterval(
-        String intervalName,
         long utcStartMilli,
         long utcEndMilli
-    ){this(intervalName, utcStartMilli, utcEndMilli, true, false);}
-
-    public String getName(){return name;}
+    ){this(utcStartMilli, utcEndMilli, true, false);}
 
     public long getStartUTC(){return START_UTC_MILLI;}
 

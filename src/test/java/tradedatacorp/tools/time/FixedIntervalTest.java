@@ -1,3 +1,7 @@
+/**
+ * @author Bruce Lamb
+ * @since 20 APR 2026
+ */
 package tradedatacorp.tools.time;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,9 +13,7 @@ import org.junit.jupiter.api.Test;
 public final class FixedIntervalTest{
     @Test
     public void smallIntervalDefaultTest(){
-        FixedInterval smallInterval = new FixedInterval("test", 2, 5);
-        assertEquals("test", smallInterval.getName());
-        assertEquals("test", smallInterval.name);
+        FixedInterval smallInterval = new FixedInterval(2, 5);
         assertTrue(smallInterval.inclusiveStart);
         assertFalse(smallInterval.inclusiveEnd);
 
@@ -28,9 +30,7 @@ public final class FixedIntervalTest{
 
     @Test
     public void smallIntervalInclusiveTest(){
-        FixedInterval smallInterval = new FixedInterval("test", 2, 5, true, true);
-        assertEquals("test", smallInterval.getName());
-        assertEquals("test", smallInterval.name);
+        FixedInterval smallInterval = new FixedInterval(2, 5, true, true);
         assertTrue(smallInterval.inclusiveStart);
         assertTrue(smallInterval.inclusiveEnd);
 
@@ -44,9 +44,7 @@ public final class FixedIntervalTest{
 
     @Test
     public void smallIntervalExclusiveTest(){
-        FixedInterval smallInterval = new FixedInterval("test", 2, 5, false, false);
-        assertEquals("test", smallInterval.getName());
-        assertEquals("test", smallInterval.name);
+        FixedInterval smallInterval = new FixedInterval(2, 5, false, false);
         assertFalse(smallInterval.inclusiveStart);
         assertFalse(smallInterval.inclusiveEnd);
 
