@@ -7,15 +7,15 @@ package tradedatacorp.tools.interval;
 import java.util.ArrayList;
 
 /**
- * Represents a mathematical set of where each {@link FixedLongInterval} is snapped and aligned to a fixed micro-intervalgrid.
- * Merging is lazy. Merging can be called immediatel or automatically if any information requiring a merge is required.
+ * Represents a mathematical set where each {@link FixedLongInterval} is snapped and aligned to a fixed micro-interval grid.
+ * Merging is lazy. Merging can be called immediately or automatically if any information requiring a merge is required.
  *
  * <p>Each interval added via {@link #addInterval} is first quantized: its start and end are
  * shifted to the nearest grid point (either expanded outward or contracted inward, per caller
  * choice). Intervals that miss the grid entirely after contraction are silently dropped.
  *
- * <p>The grid is defined by {@code microInterval}: a {@link FixedLongInterval} whose duration is
- * the grid step and whose start anchors the phase via {@code start mod duration}.
+ * <p>The grid is defined by {@code microInterval}: a {@link FixedLongInterval} whose width is
+ * the grid step and whose start anchors the phase via {@code start mod width}.
  * The micro-interval does not need to fall inside any of the added data — it acts purely as
  * a phase reference extending infinitely in both directions.
  *
@@ -25,7 +25,7 @@ import java.util.ArrayList;
  * {@code microCount} holds the number of micro-interval grid steps spanning {@code mergeList.get(i)}.
  */
 public class AlignedLongSet{
-    /** The unit grid interval; its duration is the snap step and its start sets the grid phase. */
+    /** The unit grid interval; its width is the snap step and its start sets the grid phase. */
     private FixedLongInterval microInterval;
 
     /** {@code floorMod(microInterval.start, microInterval.width)} — the phase offset applied when computing snap points. */
@@ -138,9 +138,9 @@ public class AlignedLongSet{
      *   <li>If the endpoint already falls on a grid point it is kept as-is, preserving its
      *       original inclusivity.</li>
      *   <li>If {@code expandLeft} is {@code true}, the start is snapped to the grid point
-     *       immediately to the left (earlier); otherwise it is snapped right (later).</li>
+     *       immediately to the left (lesser); otherwise it is snapped right (greater).</li>
      *   <li>If {@code expandRight} is {@code true}, the end is snapped to the grid point
-     *       immediately to the right (later); otherwise it is snapped left (earlier).</li>
+     *       immediately to the right (greater); otherwise it is snapped left (lesser).</li>
      *   <li>The inclusivity of snapped endpoints is set by {@code isLeftSnapInclusive} /
      *       {@code isRightSnapInclusive}.</li>
      * </ul>
@@ -149,10 +149,10 @@ public class AlignedLongSet{
      * {@code ==} start with both endpoints exclusive), the interval is silently dropped.
      *
      * @param newInterval          the interval to quantize and add.
-     * @param expandLeft           {@code true} to snap the start outward (earlier);
-     *                             {@code false} to snap inward (later).
-     * @param expandRight          {@code true} to snap the end outward (later);
-     *                             {@code false} to snap inward (earlier).
+     * @param expandLeft           {@code true} to snap the start outward (lesser);
+     *                             {@code false} to snap inward (greater).
+     * @param expandRight          {@code true} to snap the end outward (greater);
+     *                             {@code false} to snap inward (lesser).
      * @param isLeftSnapInclusive  inclusivity assigned to the start when it is snapped.
      * @param isRightSnapInclusive inclusivity assigned to the end when it is snapped.
      */
@@ -231,8 +231,8 @@ public class AlignedLongSet{
      * that preserves the original inclusivity of {@code newInterval} for any snapped endpoints.
      *
      * @param newInterval  the interval to quantize and add.
-     * @param expandLeft   {@code true} to snap the start outward (earlier); {@code false} inward.
-     * @param expandRight  {@code true} to snap the end outward (later); {@code false} inward.
+     * @param expandLeft   {@code true} to snap the start outward (lesser); {@code false} inward.
+     * @param expandRight  {@code true} to snap the end outward (greater); {@code false} inward.
      */
     public void addInterval(FixedLongInterval newInterval, boolean expandLeft, boolean expandRight){
         addInterval(
