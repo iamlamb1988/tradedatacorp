@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 18 APR 2026
+ * @since 21 APR 2026
  */
 package tradedatacorp.warehouse;
 
@@ -9,8 +9,7 @@ import tradedatacorp.tools.stick.primitive.CandleStickFixedDouble;
 import tradedatacorp.tools.stick.primitive.StickDouble;
 import tradedatacorp.tools.stick.info.StickHeader;
 import tradedatacorp.tools.stick.info.StickTimeFrame;
-import tradedatacorp.tools.time.FixedInterval;
-// import tradedatacorp.tools.time.TimeTier;
+import tradedatacorp.tools.interval.FixedLongInterval;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -38,7 +37,7 @@ public class OHLCV_BinaryWarehouse implements
     private File rootDataDir;
     private boolean isPoweredOn;
     private HashSet<InformationStick> uncheckedIngest;
-    private FixedInterval microIntervalElement; //The smallest chucnk of time
+    private FixedLongInterval microIntervalElement; //The smallest chucnk of time
 
     private Thread t1Categorizer;
 
@@ -192,7 +191,7 @@ public class OHLCV_BinaryWarehouse implements
      * This will set the interval to the smallest interval and offset to store buckets of data.
      * This doesn't have to be the start or end bucket but must exist as a possibility on the list
      */
-    public void setMicroInterval(FixedInterval microInterval){
+    public void setMicroInterval(FixedLongInterval microInterval){
 
     }
 
@@ -343,7 +342,6 @@ public class OHLCV_BinaryWarehouse implements
     private class SymbolIntervalTracker{
         String symbolName;
         final int INTERVAL = -1; //TODO
-        // TimeTier[] fileFunnel;
         ArrayList<CheckedCacheStick> localCache;
         Path sourceFile;
     }

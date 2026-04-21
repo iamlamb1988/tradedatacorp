@@ -1,70 +1,70 @@
 /**
  * @author Bruce Lamb
- * @since 20 APR 2026
+ * @since 21 APR 2026
  */
-package tradedatacorp.tools.time;
+package tradedatacorp.tools.interval;
 
 import java.util.ArrayList;
 
 /**
- * Accumulates time intervals and merges them into the minimal set of non-overlapping
- * {@link FixedInterval}s, where every boundary is snapped to a fixed micro-interval grid.
+ * Represents a mathematical set of where each {@link FixedLongInterval} is snapped and aligned to a fixed micro-intervalgrid.
+ * Merging is lazy. Merging can be called immediatel or automatically if any information requiring a merge is required.
  *
  * <p>Each interval added via {@link #addInterval} is first quantized: its start and end are
  * shifted to the nearest grid point (either expanded outward or contracted inward, per caller
  * choice). Intervals that miss the grid entirely after contraction are silently dropped.
  *
- * <p>The grid is defined by {@code microInterval}: a {@link FixedInterval} whose duration is
- * the grid step and whose start anchors the phase via {@code START_UTC_MILLI mod duration}.
+ * <p>The grid is defined by {@code microInterval}: a {@link FixedLongInterval} whose duration is
+ * the grid step and whose start anchors the phase via {@code start mod duration}.
  * The micro-interval does not need to fall inside any of the added data — it acts purely as
  * a phase reference extending infinitely in both directions.
  *
  * <p>Merging is lazy: it is deferred until the first read of {@link #getIntervalSegmentCount()}
- * or {@link #getMicroIntervalCount()}, or until an explicit call to {@link #mergeTimeSpan()}.
- * After merging, {@code microCount} is kept parallel to {@code timeSpan}: index {@code i} of
- * {@code microCount} holds the number of micro-interval grid steps spanning {@code timeSpan.get(i)}.
+ * or {@link #getMicroIntervalCount()}, or until an explicit call to {@link #merge()}.
+ * After merging, {@code microCount} is kept parallel to {@code mergeList}: index {@code i} of
+ * {@code microCount} holds the number of micro-interval grid steps spanning {@code mergeList.get(i)}.
  */
-public class QuantizedTimeSpan{
+public class AlignedLongSet{
     /** The unit grid interval; its duration is the snap step and its start sets the grid phase. */
-    private FixedInterval microInterval;
+    private FixedLongInterval microInterval;
 
-    /** {@code floorMod(microInterval.START_UTC_MILLI, microInterval.durationMillis)} — the phase offset applied when computing snap points. */
+    /** {@code floorMod(microInterval.start, microInterval.width)} — the phase offset applied when computing snap points. */
     private long offsetMod;
 
     /** Accumulated (possibly overlapping, possibly unsorted) intervals after quantization. */
-    private ArrayList<FixedInterval> timeSpan;
+    private ArrayList<FixedLongInterval> mergeList;
 
-    /** Parallel to {@code timeSpan} after a merge: micro-interval grid-step count per segment. */
+    /** Parallel to {@code mergeList} after a merge: micro-interval grid-step count per segment. */
     private ArrayList<Long> microCount;
 
-    /** {@code true} when {@code timeSpan} and {@code microCount} are in merged, sorted form. */
+    /** {@code true} when {@code mergeList} and {@code microCount} are in merged, sorted form. */
     private boolean isMerged;
 
     /**
-     * Constructs a {@code QuantizedTimeSpan} with the given micro-interval as the snap grid.
+     * Constructs a {@code AlignedLongSet} with the given micro-interval as the snap grid.
      *
-     * @param microInterval the grid unit; its {@code START_UTC_MILLI} sets the phase and its
-     *                      {@code durationMillis} sets the step size. Must have duration {@code > 0}.
-     * @throws IllegalArgumentException if {@code microInterval.durationMillis == 0}.
+     * @param microInterval the grid unit; its {@code start} sets the phase and its
+     *                      {@code width} sets the step size. Must have width {@code > 0}.
+     * @throws IllegalArgumentException if {@code microInterval.width == 0}.
      */
-    public QuantizedTimeSpan(FixedInterval microInterval){
-        if(microInterval.durationMillis == 0)
-            throw new IllegalArgumentException("QuantizedTimeSpan requires a micro interval with a duration > 0.");
+    public AlignedLongSet(FixedLongInterval microInterval){
+        if(microInterval.width == 0)
+            throw new IllegalArgumentException("AlignedLongSet requires a micro interval with a width > 0.");
 
         this.microInterval = microInterval;
 
         offsetMod = Math.floorMod(
-            microInterval.START_UTC_MILLI,
-            microInterval.durationMillis
+            microInterval.start,
+            microInterval.width
         );
 
-        timeSpan = new ArrayList<>();
+        mergeList = new ArrayList<>();
         microCount = new ArrayList<>();
         isMerged = true;
     }
 
     /** Returns the micro-interval that defines the snap grid. */
-    public FixedInterval getMicroInterval(){return microInterval;}
+    public FixedLongInterval getMicroInterval(){return microInterval;}
 
     /**
      * Returns the number of disjoint merged segments. Triggers a merge if one is pending.
@@ -72,21 +72,25 @@ public class QuantizedTimeSpan{
      * @return count of non-overlapping intervals after merging.
      */
     public int getIntervalSegmentCount(){
-        if(!isMerged) mergeTimeSpan();
-        return timeSpan.size();
+        if(!isMerged) merge();
+        return mergeList.size();
     }
 
-    /** Returns {@code true} if the internal interval list is already in merged, sorted form. */
+    /**
+     * Returns {@code true} if the internal interval list is already in merged, sorted form.
+     * 
+     * @return if the internal interval list is already in merged, sorted form, otherwise false */
     public boolean isMerged(){return isMerged;}
 
     /**
      * Returns the total number of micro-interval grid steps covered across all merged segments.
      * Triggers a merge if one is pending.
+     * A return value that is greater than 1 indicates a gap. For every N intervals, there are N-1 gaps except for when N is 0.
      *
      * @return sum of micro-interval counts over all segments.
      */
     public long getMicroIntervalCount(){
-        if(!isMerged) mergeTimeSpan();
+        if(!isMerged) merge();
         long count = 0;
         for(long mc : microCount) count += mc;
         return count;
@@ -94,24 +98,35 @@ public class QuantizedTimeSpan{
 
     /**
      * Returns a shallow copy of the internal interval list in its current state.
-     * Does NOT trigger a merge; call {@link #mergeTimeSpan()} first if a merged view is needed.
+     * Does NOT trigger a merge; call {@link #merge()} first if a merged view is needed.
      *
-     * @return new {@code ArrayList} containing the same {@link FixedInterval} references.
+     * @return new {@code ArrayList} containing the same {@link FixedLongInterval} references.
      */
-    public ArrayList<FixedInterval> getTimeSpanIntervalList(){
-        ArrayList<FixedInterval> list = new ArrayList<>(timeSpan.size());
-        for(FixedInterval e : timeSpan){list.add(e);}
+    public ArrayList<FixedLongInterval> getUnmergedIntervals(){
+        ArrayList<FixedLongInterval> list = new ArrayList<>(mergeList.size());
+        for(FixedLongInterval e : mergeList){list.add(e);}
         return list;
+    }
+
+    /**
+     * Returns a shallow copy of the internal interval list in its current state.
+     * Does NOT trigger a merge; call {@link #merge()} first if a merged view is needed.
+     *
+     * @return new {@code ArrayList} containing the same {@link FixedLongInterval} references.
+     */
+    public ArrayList<FixedLongInterval> getIntervals(){
+        merge();
+        return getUnmergedIntervals();
     }
 
     /**
      * Returns the interval at {@code index} without triggering a merge.
      *
      * @param index position in the internal list.
-     * @return the {@link FixedInterval} at that position.
+     * @return the {@link FixedLongInterval} at that position.
      */
-    public FixedInterval getTimeSpanInterval(int index){
-        return timeSpan.get(index);
+    public FixedLongInterval getInterval(int index){
+        return mergeList.get(index);
     }
 
     /**
@@ -142,7 +157,7 @@ public class QuantizedTimeSpan{
      * @param isRightSnapInclusive inclusivity assigned to the end when it is snapped.
      */
     public void addInterval(
-        FixedInterval newInterval,
+        FixedLongInterval newInterval,
         boolean expandLeft,
         boolean expandRight,
         boolean isLeftSnapInclusive,
@@ -154,55 +169,55 @@ public class QuantizedTimeSpan{
         boolean newLeftInclusive;
         boolean newRightInclusive;
 
-        dist = Math.floorMod(newInterval.START_UTC_MILLI - offsetMod, microInterval.durationMillis);
+        dist = Math.floorMod(newInterval.start - offsetMod, microInterval.width);
         if(dist != 0){
             if(expandLeft){ //Expand Left on the number line (subtract)
-                newStart = newInterval.START_UTC_MILLI - dist;
+                newStart = newInterval.start - dist;
                 newLeftInclusive = isLeftSnapInclusive;
             }else{ //Contract right on the number line (add)
-                newStart = newInterval.START_UTC_MILLI + (microInterval.durationMillis - dist);
+                newStart = newInterval.start + (microInterval.width - dist);
                 newLeftInclusive = isLeftSnapInclusive;
             }
         } else{
-            newStart = newInterval.START_UTC_MILLI;
+            newStart = newInterval.start;
             newLeftInclusive = newInterval.inclusiveStart; //unchanged inclusion
         }
 
-        dist = Math.floorMod(newInterval.END_UTC_MILLI - offsetMod, microInterval.durationMillis);
+        dist = Math.floorMod(newInterval.end - offsetMod, microInterval.width);
         if(dist != 0){
             if(expandRight){ //Expand Right on the number line (add)
-                newEnd = newInterval.END_UTC_MILLI + (microInterval.durationMillis - dist);
+                newEnd = newInterval.end + (microInterval.width - dist);
                 newRightInclusive = isRightSnapInclusive;
             }else{ //Contract left on the number line (subtract)
-                newEnd = newInterval.END_UTC_MILLI - dist;
+                newEnd = newInterval.end - dist;
                 newRightInclusive = isRightSnapInclusive;
             }
         } else{
-            newEnd = newInterval.END_UTC_MILLI;
+            newEnd = newInterval.end;
             newRightInclusive = newInterval.inclusiveEnd; //unchanged inclusion
         }
 
         if(newEnd < newStart || (newEnd == newStart && !newLeftInclusive && !newRightInclusive)) return;
 
-        FixedInterval newQuantizedInterval = new FixedInterval(
+        FixedLongInterval newQuantizedInterval = new FixedLongInterval(
             newStart,
             newEnd,
             newLeftInclusive,
             newRightInclusive
         );
 
-        timeSpan.add(newQuantizedInterval);
+        mergeList.add(newQuantizedInterval);
 
         //post tasks
-        if(timeSpan.isEmpty()){
+        if(mergeList.isEmpty()){
             microCount.clear();
             isMerged = true;
             return;
         }
 
-        if(timeSpan.size() == 1){
+        if(mergeList.size() == 1){
             microCount.add(Long.valueOf(
-                (newQuantizedInterval.END_UTC_MILLI - newQuantizedInterval.START_UTC_MILLI)/microInterval.durationMillis)
+                (newQuantizedInterval.end - newQuantizedInterval.start)/microInterval.width)
             );
             isMerged = true;
             return;
@@ -212,14 +227,14 @@ public class QuantizedTimeSpan{
     }
 
     /**
-     * Convenience overload of {@link #addInterval(FixedInterval, boolean, boolean, boolean, boolean)}
+     * Convenience overload of {@link #addInterval(FixedLongInterval, boolean, boolean, boolean, boolean)}
      * that preserves the original inclusivity of {@code newInterval} for any snapped endpoints.
      *
      * @param newInterval  the interval to quantize and add.
      * @param expandLeft   {@code true} to snap the start outward (earlier); {@code false} inward.
      * @param expandRight  {@code true} to snap the end outward (later); {@code false} inward.
      */
-    public void addInterval(FixedInterval newInterval, boolean expandLeft, boolean expandRight){
+    public void addInterval(FixedLongInterval newInterval, boolean expandLeft, boolean expandRight){
         addInterval(
             newInterval,
             expandLeft,
@@ -230,38 +245,38 @@ public class QuantizedTimeSpan{
     }
 
     /**
-     * Consolidates {@code timeSpan} into a minimal, ordered list of non-overlapping {@link FixedInterval}s,
+     * Consolidates {@code mergeList} into a minimal, ordered list of non-overlapping {@link FixedLongInterval}s,
      * merging any intervals that overlap or are adjacent on the number line.
      * <p>
      * After this call, {@code isMerged()} returns {@code true} and {@code microCount} is kept
-     * parallel to {@code timeSpan}: {@code microCount.get(i)} holds the number of micro-interval
-     * chunks contained in {@code timeSpan.get(i)}.
+     * parallel to {@code mergeList}: {@code microCount.get(i)} holds the number of micro-interval
+     * chunks contained in {@code mergeList.get(i)}.
      * <p>
      * Algorithm: sort by start ascending (O(n log n), TimSort; fast on partially-sorted input),
-     * then a single linear sweep merges touching runs in place. A new {@link FixedInterval} is
+     * then a single linear sweep merges touching runs in place. A new {@link FixedLongInterval} is
      * allocated only when a run actually merged; runs with no merges reuse the original reference.
      * <p>
      * When two intervals are merged, the resulting interval spans from the lesser start to the
      * greater end. If both share the same boundary point, the merged boundary is inclusive if
      * either original boundary was inclusive.
      */
-    public void mergeTimeSpan(){
-        final int n = timeSpan.size();
+    public void merge(){
+        final int n = mergeList.size();
         microCount.clear();
-        final long microDur = microInterval.durationMillis;
+        final long microDur = microInterval.width;
 
         if(n == 0){ isMerged = true; return; }
         if(n == 1){
-            microCount.add(timeSpan.get(0).durationMillis / microDur);
+            microCount.add(mergeList.get(0).width / microDur);
             isMerged = true;
             return;
         }
 
-        timeSpan.sort((x, y) -> Long.compare(x.START_UTC_MILLI, y.START_UTC_MILLI));
+        mergeList.sort((x, y) -> Long.compare(x.start, y.start));
 
-        FixedInterval base = timeSpan.get(0);
-        long curStart = base.START_UTC_MILLI;
-        long curEnd = base.END_UTC_MILLI;
+        FixedLongInterval base = mergeList.get(0);
+        long curStart = base.start;
+        long curEnd = base.end;
         boolean curLeftInc = base.inclusiveStart;
         boolean curRightInc = base.inclusiveEnd;
         //zero-length interval: either inclusive brace means the point exists, so treat both as inclusive
@@ -270,52 +285,49 @@ public class QuantizedTimeSpan{
         int write = 0;
 
         for(int read = 1; read < n; read++){
-            FixedInterval curr = timeSpan.get(read);
-            long cs = curr.START_UTC_MILLI;
-            long ce = curr.END_UTC_MILLI;
+            FixedLongInterval curr = mergeList.get(read);
             boolean cLeftInc = curr.inclusiveStart;
             boolean cRightInc = curr.inclusiveEnd;
             //zero-length interval: either inclusive brace means the point exists, so treat both as inclusive
-            if(cs == ce && (cLeftInc || cRightInc)){ cLeftInc = true; cRightInc = true; }
+            if(curr.start == curr.end && (cLeftInc || cRightInc)){ cLeftInc = true; cRightInc = true; }
 
-            boolean touches =
-                cs < curEnd ||
-                (cs == curEnd && (cLeftInc || curRightInc));
-
-            if(touches){
-                if(cs == curStart && cLeftInc && !curLeftInc){
+            if( //if touches an endpoint
+                curr.start < curEnd ||
+                (curr.start == curEnd && (cLeftInc || curRightInc))
+            ){
+                if(curr.start == curStart && cLeftInc && !curLeftInc){
                     curLeftInc = true;
                     dirty = true;
                 }
-                if(ce > curEnd){
-                    curEnd = ce;
+                if(curr.end > curEnd){
+                    curEnd = curr.end;
                     curRightInc = cRightInc;
                     dirty = true;
-                }else if(ce == curEnd && cRightInc && !curRightInc){
+                }else if(curr.end == curEnd && cRightInc && !curRightInc){
                     curRightInc = true;
                     dirty = true;
                 }
             }else{
-                timeSpan.set(write++, dirty
-                    ? new FixedInterval(curStart, curEnd, curLeftInc, curRightInc)
+                mergeList.set(write++, dirty
+                    ? new FixedLongInterval(curStart, curEnd, curLeftInc, curRightInc)
                     : base);
                 microCount.add((curEnd - curStart) / microDur);
 
                 base = curr;
-                curStart = cs;
-                curEnd = ce;
+                curStart = curr.start;
+                curEnd = curr.end;
                 curLeftInc = cLeftInc;
                 curRightInc = cRightInc;
                 dirty = false;
             }
         }
 
-        timeSpan.set(write++, dirty
-            ? new FixedInterval(curStart, curEnd, curLeftInc, curRightInc)
+        mergeList.set(write++, dirty
+            ? new FixedLongInterval(curStart, curEnd, curLeftInc, curRightInc)
             : base);
         microCount.add((curEnd - curStart) / microDur);
 
-        if(write < n) timeSpan.subList(write, n).clear();
+        if(write < n) mergeList.subList(write, n).clear();
         isMerged = true;
     }
 }
