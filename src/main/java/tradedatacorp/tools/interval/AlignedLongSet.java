@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 21 APR 2026
+ * @since 22 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -224,6 +224,24 @@ public class AlignedLongSet{
         }
 
         isMerged = false;
+    }
+
+    //TODO
+    public void subtractInterval(
+        FixedLongInterval newInterval,
+        boolean expandLeft,
+        boolean expandRight,
+        boolean isLeftSnapInclusive,
+        boolean isRightSnapInclusive
+    ){
+        //TODO: implement
+    }
+
+    public void subtractInterval(long point){
+        subtractInterval(
+            new FixedLongInterval(point, point, true, true),
+            true, true, true, true
+        );
     }
 
     /**

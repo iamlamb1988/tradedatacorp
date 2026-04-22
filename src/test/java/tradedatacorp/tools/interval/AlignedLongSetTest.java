@@ -234,7 +234,7 @@ public class AlignedLongSetTest{
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
         //Current:                 >(> (^-----------------------------^) <]<
         //Result:                                     (S]
-        //NOTE: Result (6, 6] will because at least 1 side is inclusive
+        //NOTE: Result (6, 6] will be added because at least 1 side is inclusive
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
@@ -274,7 +274,7 @@ public class AlignedLongSetTest{
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
         //Current:                 >[> (^-----------------------------^] <)<
         //Result:                                     [S)
-        //NOTE: Result [6, 6) will because at least 1 side is inclusive
+        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
@@ -315,7 +315,7 @@ public class AlignedLongSetTest{
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
         //Current:                     [^-----------------------------^)
         //Result:                                     [S]
-        //NOTE: Result [6, 6] will because at least 1 side is inclusive
+        //NOTE: Result [6, 6] will be added because at least 1 side is inclusive
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
@@ -413,7 +413,7 @@ public class AlignedLongSetTest{
             false, //from left endpoint: Contract rightward to snap
             false  //from right endpoint: Contract leftward to snap
             //default true: //inclusive left endpoint at next snap
-            //default true: //inclusive left endpoint at next snap
+            //default true: //inclusive right endpoint at next snap
         );
 
         assertEquals(0, span.getMicroIntervalCount());
@@ -780,5 +780,104 @@ public class AlignedLongSetTest{
         assertEquals(9L, quantizedInt.end);
         assertEquals(9L, quantizedInt.width);
         assertEquals(9L, quantizedInt.getWidth());
+    }
+
+    @Test
+    public void subtractIntervalTest1(){
+        //TODO
+        //Micro interval: (2, 11)
+        //Subtract interval: [6] // will be treated as [6, 6] which is just a point on the line
+        //Snap offsets:        v              v              v              v
+        //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
+        //Current:            (^M------------------------------------------M^]
+        //Unsnapped sub:                          [P]
+        //Snapped sub:                       [^P------------P^]
+        //Result:             (^M------------M^)            (^M------------M^]
+        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
+
+        //TODO The resultant merge should now be gapped with (2, 5) U (8, 11]
+        //step 1: Expand interval to snaps (if necessary)
+        //step 2: Subtract the interval from current state
+    }
+
+    @Test
+    public void subtractIntervalTest2(){
+        //TODO
+        //Micro interval: (2, 11)
+        //Subtract interval: (6] // will be treated as (6, 6] which is just a point on the line
+        //Snap offsets:        v              v              v              v
+        //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
+        //Current:            (^M------------------------------------------M^]
+        //Unsnapped sub:                          (P]
+        //Snapped sub:                       (^P------------P^]
+        //Result:             (^M------------M^]            (^M------------M^]
+        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
+
+        //TODO The resultant merge should now be gapped with (2, 5] U (8, 11]
+        //step 1: Expand interval to snaps (if necessary)
+        //step 2: Subtract the interval from current state
+
+        //Notice the inclusinon changed from the previous example making the result inclusing different
+    }
+
+    @Test
+    public void subtractIntervalTest3(){
+        //TODO
+        //Micro interval: (2, 11)
+        //Subtract interval: [5] // exactly snapped
+        //Snap offsets:        v              v              v              v
+        //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
+        //Current:            (^M------------------------------------------M^]
+        //Unsnapped sub:                     [P]
+        //Snapped sub:                       [P]
+        //Result:             (^M------------M^)(M------------M^]
+        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
+
+        //TODO The resultant merge should now be gapped with (2, 5) U (5, 11]
+        //step 1: Expand interval to snaps (if necessary)
+        //step 2: Subtract the interval from current state
+
+        //Notice no expansion due to point exactly snapped. There is a "hole" in the interval at 5
+        //BOTH subtraction points must be inclusive to truly subtract a single point.
+    }
+
+    @Test
+    public void subtractIntervalTest4(){
+        //TODO
+        //Micro interval: (2, 11)
+        //Subtract interval: (5] // exactly snapped
+        //Snap offsets:        v              v              v              v
+        //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
+        //Current:            (^M------------------------------------------M^]
+        //Unsnapped sub:                     (P]
+        //Snapped sub:                       (P]
+        //Result:             (^M------------------------------------------M^] //NO CHANGE
+        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
+
+        //TODO The resultant merge should remain (2, 11]
+        //step 1: Expand interval to snaps (if necessary)
+        //step 2: Subtract the interval from current state
+
+        //BOTH subtraction points must be inclusive to truly subtract a single point.
+    }
+
+    @Test
+    public void subtractIntervalTest5(){
+        //TODO
+        //Micro interval: (2, 11)
+        //Subtract interval: (7, 10) // exactly snapped
+        //Snap offsets:        v              v              v              v
+        //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
+        //Current:            (^M---------------------------M^)
+        //Unsnapped sub:                               (^P------------P^)
+        //Snapped sub:                       (^P----------------------P^)
+        //Result:             (^M------------M^]
+        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
+
+        //TODO The resultant merge should remain (2, 11]
+        //step 1: Expand interval to snaps (if necessary)
+        //step 2: Subtract the interval from current state
+
+        //Result will leave (2, 5]
     }
 }
