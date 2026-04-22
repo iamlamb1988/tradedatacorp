@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 21 APR 2026
+ * @since 22 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 public class AlignedLongSetTest{
     @Test
     public void constructorExceptionTest(){
-        FixedLongInterval zeroLengthInterval = new FixedLongInterval(50, 50);
+        FixedLongInterval zeroLengthInterval = new FixedLongInterval(50, 50); //default [incl, excl) endpoints
         assertEquals(0, zeroLengthInterval.width);
         assertEquals(0, zeroLengthInterval.getWidth());
 
@@ -25,7 +25,7 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedEmptyTest(){
-        FixedLongInterval micro = new FixedLongInterval(1, 6);
+        FixedLongInterval micro = new FixedLongInterval(1, 6); //default [incl, excl) endpoints
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
 
@@ -38,24 +38,35 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest1(){
+        //Micro interval:  [1, 6)
         //Adding interval: [1, 6)
         //Snap offsets:       v                        v                        v
-        //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:           [^------------------------^)
-        //Result:            [S------------------------S)
-        FixedLongInterval micro = new FixedLongInterval(1, 6);
+        //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 ...
+        //Current:       <[< [^------------------------^) >)>
+        //Result:            [^S----------------------S^)
+        //Note: perfectly snapped, no changes required
+        FixedLongInterval micro = new FixedLongInterval(1, 6); //default [incl, excl) endpoints
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
 
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval perfectRange = new FixedLongInterval(1, 6);
-        span.addInterval(perfectRange, true, true);
+        //Keypoint: because this original range has both endpoints snapped, the addInterval boolean parameters are irrelevant.
+        FixedLongInterval perfectRange = new FixedLongInterval(1, 6); //default [incl, excl) endpoints
+        span.addInterval(
+            perfectRange,
+            true, //from left endpoint: Expand leftward to snap IGNORED because already snapped
+            true  //from right endpoint: Expand rightward to snap IGNORED because already snapped
+            //default true  //inclusive left endpoint at next snap (match original inclusive val) IGNORED because already snapped
+            //default false //exclusive right endpoint at next snap (match original inclusive val) IGNORED because already snapped
+        );
 
         assertTrue(span.isMerged()); //1 span element IS merged by default.
         assertEquals(1, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
 
         FixedLongInterval quantizedInt = span.getInterval(0);
         assertTrue(quantizedInt.inclusiveStart);
@@ -68,11 +79,13 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest2(){
+        //Micro interval:  [1, 6)
         //Adding interval: [3, 9]
         //Snap offsets:       v                        v                        v
-        //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                     [^-----------------------------^)
-        //Result:            [S-------------------------------------------------S)
+        //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 ...
+        //Current:                 <[< [^-----------------------------^] >]>
+        //Result:            [^S-----------------------------------------------S^)
+        //Note: interval is set to expand IF not already snapped.
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
@@ -80,10 +93,18 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(3, 9); //should expand to 1, 11
-        span.addInterval(range, true, true);
+        FixedLongInterval range = new FixedLongInterval(3, 9, true, true); //[incl, incl] endpoints
+        span.addInterval( //Default: snap endpoints default to original interval
+            range,
+            true, //from left endpoint: Expand leftward to snap
+            true, //from right endpoint: Expand rightward to snap
+            true, //inclusive left endpoint at next snap
+            false //exclusive right endpoint at next snap
+        );
         assertEquals(2, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
 
         FixedLongInterval quantizedInt = span.getInterval(0);
         assertTrue(quantizedInt.inclusiveStart);
@@ -96,12 +117,13 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest3(){
-        //Adding interval: (3, 9)
+        //Micro interval:  [1, 6)
+        //Adding interval: (3, 9]
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                     (^-----------------------------^)
-        //Result:                                     (S------------------------S]
-        //NOTE: contract left exclusive but expand Right inclusive
+        //Current:                 >(> (^-----------------------------^] >]>
+        //Result:                                     (^S----------------------S^]
+        //NOTE: contract left exclusive, expand Right inclusive
 
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
@@ -110,11 +132,19 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(3, 9, false, true);
-        span.addInterval(range, false, true);
+        FixedLongInterval range = new FixedLongInterval(3, 9, false, true); //(excl, incl]
+        span.addInterval( //Default: snap endpoints default to original interval (in this case (excl, incl])
+            range,
+            false, //from left endpoint: Contract rightward to snap
+            true   //from right endpoint: Expand rightward to snap
+            //default false //exclusive left endpoint at next snap (match original inclusive val)
+            //default true  //inclusive right endpoint at next snap (match original inclusive val)
+        );
 
         assertEquals(1, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
 
         FixedLongInterval quantizedInt = span.getInterval(0);
 
@@ -128,11 +158,12 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest4(){
+        //Micro interval:  [1, 6)
         //Adding interval: (3, 9)
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                     (^-----------------------------^)
-        //Result:            [S------------------------S]
+        //Current:                 <[< (^-----------------------------^) <]<
+        //Result:            [^S----------------------S^]
         //NOTE: expand left and contract Right both inclusive
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
@@ -141,11 +172,18 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(3, 9, false, false);
-        span.addInterval(range, true, false, true, true);
+        FixedLongInterval range = new FixedLongInterval(3, 9, false, false); //(excl, excl)
+        span.addInterval(range,
+            true,  //from left endpoint: Expand leftward to snap
+            false, //from right endpoint: Contract leftward to snap
+            true,  //inclusive left endpoint at next snap
+            true   //inclusive right endpoint at next snap
+        );
 
         assertEquals(1, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
 
         FixedLongInterval quantizedInt = span.getInterval(0);
 
@@ -159,11 +197,12 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest5(){
+        //Micro interval:  [1, 6)
         //Adding interval: (3, 9)
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                     (^-----------------------------^)
-        //Result:                                     (S)
+        //Current:                 >(> (^-----------------------------^) <)<
+        //Result:                                     (S) //will not add empty exclusive value
         //NOTE: Result (6, 6) is fully empty and will be dropped. Will not be added to the mergable list.
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
@@ -172,19 +211,28 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(3, 9, false, false); //should expand to 1, 11
-        span.addInterval(range, false, false);
+        FixedLongInterval range = new FixedLongInterval(3, 9, false, false); //(excl, excl)
+        span.addInterval(
+            range,
+            false, //from left endpoint: Contract rightward to snap
+            false  //from right endpoint: Contract leftward to snap
+            //default false //exclusive left endpoint at next snap (match original inclusive val)
+            //default false //exclusive right endpoint at next snap (match original inclusive val)
+        );
 
         assertEquals(0, span.getMicroIntervalCount()); //none are added so size is still 0 given the (6, 6) drop
+        assertEquals(0, span.getIntervalSegmentCount());
     }
 
     @Test
     public void simpleQuantizedOneIntervalTest6(){
+        //Micro interval:  [1, 6)
         //Adding interval: (3, 9)
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                     (^-----------------------------^)
+        //Current:                 >(> (^-----------------------------^) <]<
         //Result:                                     (S]
         //NOTE: Result (6, 6] will because at least 1 side is inclusive
         FixedLongInterval micro = new FixedLongInterval(1, 6);
@@ -194,12 +242,20 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(3, 9, false, false);
-        span.addInterval(range, false, false, false, true);
+        FixedLongInterval range = new FixedLongInterval(3, 9, false, false); //(excl, excl)
+        span.addInterval(
+            range,
+            false, //from left endpoint: Contract rightward to snap
+            false, //from right endpoint: Contract leftward to snap
+            false, //exclusive left endpoint at next snap
+            true   //inclusive right endpoint at next snap
+        );
 
         assertEquals(0, span.getMicroIntervalCount()); //NOTE: There are 0 chunked micro intervals in a 0 lenghed time segment.
                                                        //      BUT there is still 1 element in the merge queue
+        assertEquals(1, span.getIntervalSegmentCount()); //1 segment of 0 width
         FixedLongInterval quantizedInt = span.getInterval(0);
 
         assertFalse(quantizedInt.inclusiveStart);
@@ -212,12 +268,13 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest7(){
+        //Micro interval:  [1, 6)
         //Adding interval: (3, 9]
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                     (^-----------------------------^]
+        //Current:                 >[> (^-----------------------------^] <)<
         //Result:                                     [S)
-        //NOTE: Result (6, 6] will because at least 1 side is inclusive
+        //NOTE: Result [6, 6) will because at least 1 side is inclusive
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
@@ -225,12 +282,21 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(3, 9, false, true);
-        span.addInterval(range, false, false, true, false);
+        FixedLongInterval range = new FixedLongInterval(3, 9, false, true); //(excl, incl]
+        span.addInterval(
+            range,
+            false, //from left endpoint: Contract rightward to snap
+            false, //from right endpoint: Contract leftward to snap
+            true,  //inclusive left endpoint at next snap
+            false  //exclusive left endpoint at next snap
+        );
 
         assertEquals(0, span.getMicroIntervalCount()); //NOTE: There are 0 chunked micro intervals in a 0 lenghed time segment.
                                                        //      BUT there is still 1 element in the merge queue
+        assertEquals(1, span.getIntervalSegmentCount()); //1 segment of 0 width
+
         FixedLongInterval quantizedInt = span.getInterval(0);
 
         assertTrue(quantizedInt.inclusiveStart);
@@ -243,12 +309,13 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest8(){
+        //Micro interval:  [1, 6)
         //Adding interval: [3, 9)
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                     (^-----------------------------^]
+        //Current:                     [^-----------------------------^)
         //Result:                                     [S]
-        //NOTE: Result (6, 6] will because at least 1 side is inclusive
+        //NOTE: Result [6, 6] will because at least 1 side is inclusive
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
@@ -256,12 +323,20 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(3, 9);
-        span.addInterval(range, false, false, true, true);
+        FixedLongInterval range = new FixedLongInterval(3, 9); //[incl, excl)
+        span.addInterval(
+            range,
+            false, //from left endpoint: Contract rightward to snap
+            false, //from right endpoint: Contract leftward to snap
+            true,  //inclusive left endpoint at next snap
+            true   //inclusive right endpoint at next snap
+        );
 
         assertEquals(0, span.getMicroIntervalCount()); //NOTE: There are 0 chunked micro intervals in a 0 lenghed time segment.
                                                        //      BUT there is still 1 element in the merge queue
+        assertEquals(1, span.getIntervalSegmentCount()); //1 segment of 0 width
         FixedLongInterval quantizedInt = span.getInterval(0);
 
         assertTrue(quantizedInt.inclusiveStart);
@@ -274,11 +349,12 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest9(){
+        //Micro interval:  [1, 6)
         //Adding interval: [1, 6]
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:           [^------------------------^]
-        //Result:            [S------------------------S]
+        //Current:       >(> [^------------------------^] <)<
+        //Result:            [^S----------------------S^]
         //NOTE: Despite setting snaps to inclusive, because new range is aligned to snaps, the inclusion state remain unchanged.
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
@@ -287,11 +363,20 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(1, 6, true, true);
-        span.addInterval(range, false, false);
+        //Key takeaway: when adding and requesting snap inclusive changes, they are ignored and irrelevant because range is already snapped.
+        FixedLongInterval range = new FixedLongInterval(1, 6, true, true);//[incl, incl]
+        span.addInterval(
+            range,
+            false, //from left endpoint: Contract rightward to snap IGNORED because already snapped
+            false, //from right endpoint: Contract leftward to snap IGNORED because already snapped
+            false, //exclusive left endpoint at next snap IGNORED because already snapped
+            false  //exclusive right endpoint at next snap IGNORED because already snapped
+        );
 
         assertEquals(1, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
 
         FixedLongInterval quantizedInt = span.getInterval(0);
 
@@ -305,12 +390,14 @@ public class AlignedLongSetTest{
 
     @Test
     public void simpleQuantizedOneIntervalTest10(){
+        //Micro interval:  [1, 6)
         //Adding interval: [8, 9]
         //Snap offsets:       v                        v                        v
         //Time Line:  ... 0 | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
-        //Current:                                              [^----^]
+        //Current:                                          >[> [^----^] <]<
         //Result: NONE
-        //NOTE: will have a criss cross star and end and will be rejected.
+        //NOTE: will have a criss cross start and end. Will be rejected.
+        // start: 8 -> 11 and 9 -> 6. start cannot be greater than end -> reject
         FixedLongInterval micro = new FixedLongInterval(1, 6);
         assertEquals(5L, micro.width);
         assertEquals(5L, micro.getWidth());
@@ -318,20 +405,29 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(8, 9, true, true);
-        span.addInterval(range, false, false);
+        FixedLongInterval range = new FixedLongInterval(8, 9, true, true);//[incl, incl]
+        span.addInterval(
+            range,
+            false, //from left endpoint: Contract rightward to snap
+            false  //from right endpoint: Contract leftward to snap
+            //default true: //inclusive left endpoint at next snap
+            //default true: //inclusive left endpoint at next snap
+        );
 
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
     }
 
     @Test
     public void simpleQuantizedOneIntervalTest11(){
+        //Micro interval:  [6, 8)
         //Adding interval: (-5, -1]
         //Snap offsets:         v         v         v          v
         //Time Line:  ...  -5 | -4 | -3 | -2 | -1 | 0  |  1 |  2
-        //Current:        (^-------------------^]
-        //Result:              (S---------S)
+        //Current:       >(> (^-------------------^] <)<
+        //Result:              (^S-------S^)
         //NOTE: contract both sides exclusively
         FixedLongInterval micro = new FixedLongInterval(6, 8);
         assertEquals(2L, micro.width);
@@ -340,10 +436,18 @@ public class AlignedLongSetTest{
         AlignedLongSet span = new AlignedLongSet(micro);
         assertEquals(micro, span.getMicroInterval());
         assertEquals(0, span.getMicroIntervalCount());
+        assertEquals(0, span.getIntervalSegmentCount());
 
-        FixedLongInterval range = new FixedLongInterval(-5, -1, false, true);
-        span.addInterval(range, false, false, false, false);
+        FixedLongInterval range = new FixedLongInterval(-5, -1, false, true);//(excl, incl]
+        span.addInterval(
+            range,
+            false, //from left endpoint: Contract rightward to snap
+            false, //from right endpoint: Contract leftward to snap
+            false, //exclusive left endpoint at next snap
+            false  //exclusive right endpoint at next snap
+        );
         assertEquals(1, span.getMicroIntervalCount());
+        assertEquals(1, span.getIntervalSegmentCount());
 
         FixedLongInterval quantizedInt = span.getInterval(0);
 
