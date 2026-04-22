@@ -226,7 +226,36 @@ public class AlignedLongSet{
         isMerged = false;
     }
 
-    //TODO
+    /**
+     * Quantizes {@code newInterval} to the micro-interval grid and removes its coverage from this set.
+     * Triggers a merge first if one is pending, so subtraction operates on a canonical disjoint form.
+     *
+     * <p>Snap behavior per endpoint mirrors {@link #addInterval}:
+     * <ul>
+     *   <li>Grid-aligned endpoints keep their original inclusivity; snap-inclusivity flags are ignored.</li>
+     *   <li>Off-grid endpoints snap outward when {@code expand*=true} or inward when {@code expand*=false},
+     *       with inclusivity set by {@code isLeftSnapInclusive} / {@code isRightSnapInclusive}.</li>
+     * </ul>
+     *
+     * <p>The quantized subtract interval is treated strictly as a set: a zero-width interval only
+     * removes anything when <em>both</em> endpoints are inclusive (a real single point). Forms like
+     * {@code (x, x]}, {@code [x, x)}, and {@code (x, x)} are empty and the call is a no-op. This is
+     * intentionally asymmetric with {@link #addInterval}'s merge rule, which promotes any one-sided
+     * inclusive zero-width interval to a point; subtract is strict to avoid accidental holes.
+     *
+     * <p>For each affected segment, surviving remnants keep the segment's original outer inclusivity
+     * and receive the complement of the subtract's inclusivity at each cut boundary.
+     *
+     * <p>Complexity: {@code O(log n + k)} for the search and walk, where {@code n} is the segment
+     * count and {@code k} is the number of segments touched; the splice into the backing
+     * {@link ArrayList} adds at most one contiguous shift.
+     *
+     * @param newInterval          the interval to quantize and subtract.
+     * @param expandLeft           {@code true} to snap the start outward (lesser); {@code false} inward.
+     * @param expandRight          {@code true} to snap the end outward (greater); {@code false} inward.
+     * @param isLeftSnapInclusive  inclusivity assigned to the start when it is snapped.
+     * @param isRightSnapInclusive inclusivity assigned to the end when it is snapped.
+     */
     public void subtractInterval(
         FixedLongInterval newInterval,
         boolean expandLeft,
@@ -234,7 +263,112 @@ public class AlignedLongSet{
         boolean isLeftSnapInclusive,
         boolean isRightSnapInclusive
     ){
-        //TODO: implement
+        if(!isMerged) merge();
+        final int n = mergeList.size();
+        if(n == 0) return;
+
+        //Quantize endpoints to the grid (same rules as addInterval).
+        long sStart;
+        long sEnd;
+        boolean sLeftInc;
+        boolean sRightInc;
+
+        long dist = Math.floorMod(newInterval.start - offsetMod, microInterval.width);
+        if(dist != 0){
+            sStart = expandLeft
+                ? newInterval.start - dist
+                : newInterval.start + (microInterval.width - dist);
+            sLeftInc = isLeftSnapInclusive;
+        }else{
+            sStart = newInterval.start;
+            sLeftInc = newInterval.inclusiveStart;
+        }
+
+        dist = Math.floorMod(newInterval.end - offsetMod, microInterval.width);
+        if(dist != 0){
+            sEnd = expandRight
+                ? newInterval.end + (microInterval.width - dist)
+                : newInterval.end - dist;
+            sRightInc = isRightSnapInclusive;
+        }else{
+            sEnd = newInterval.end;
+            sRightInc = newInterval.inclusiveEnd;
+        }
+
+        //Strict empty check: zero-width only acts when both sides inclusive (a real point).
+        if(sEnd < sStart) return;
+        if(sEnd == sStart && !(sLeftInc && sRightInc)) return;
+
+        //Binary search for first segment whose end is not strictly left of S.
+        int lo = 0;
+        int hi = n;
+        while(lo < hi){
+            int mid = (lo + hi) >>> 1;
+            FixedLongInterval seg = mergeList.get(mid);
+            if(seg.end < sStart ||
+               (seg.end == sStart && !(seg.inclusiveEnd && sLeftInc))){
+                lo = mid + 1;
+            }else{
+                hi = mid;
+            }
+        }
+        final int firstIdx = lo;
+        if(firstIdx >= n) return;
+
+        final long microDur = microInterval.width;
+
+        //Walk the affected contiguous run, building 0/1/2 remnants per segment.
+        ArrayList<FixedLongInterval> buffered = new ArrayList<>();
+        ArrayList<Long> bufferedCounts = new ArrayList<>();
+        int lastAffected = firstIdx - 1;
+        for(int i = firstIdx; i < n; i++){
+            FixedLongInterval seg = mergeList.get(i);
+            if(seg.start > sEnd ||
+               (seg.start == sEnd && !(seg.inclusiveStart && sRightInc))){
+                break;
+            }
+            lastAffected = i;
+
+            //Left remnant: portion of seg strictly before S.
+            if(seg.start < sStart ||
+               (seg.start == sStart && seg.inclusiveStart && !sLeftInc)){
+                FixedLongInterval lr = new FixedLongInterval(
+                    seg.start, sStart, seg.inclusiveStart, !sLeftInc
+                );
+                buffered.add(lr);
+                bufferedCounts.add(lr.width / microDur);
+            }
+
+            //Right remnant: portion of seg strictly after S.
+            if(seg.end > sEnd ||
+               (seg.end == sEnd && seg.inclusiveEnd && !sRightInc)){
+                FixedLongInterval rr = new FixedLongInterval(
+                    sEnd, seg.end, !sRightInc, seg.inclusiveEnd
+                );
+                buffered.add(rr);
+                bufferedCounts.add(rr.width / microDur);
+            }
+        }
+
+        //Splice buffered into mergeList[firstIdx..lastAffected] and microCount likewise.
+        final int affectedCount = lastAffected - firstIdx + 1;
+        final int newCount = buffered.size();
+        final int overwrite = Math.min(affectedCount, newCount);
+
+        for(int i = 0; i < overwrite; i++){
+            mergeList.set(firstIdx + i, buffered.get(i));
+            microCount.set(firstIdx + i, bufferedCounts.get(i));
+        }
+        if(newCount < affectedCount){
+            mergeList.subList(firstIdx + newCount, lastAffected + 1).clear();
+            microCount.subList(firstIdx + newCount, lastAffected + 1).clear();
+        }else if(newCount > affectedCount){
+            for(int i = affectedCount; i < newCount; i++){
+                mergeList.add(firstIdx + i, buffered.get(i));
+                microCount.add(firstIdx + i, bufferedCounts.get(i));
+            }
+        }
+        //mergeList stays sorted and disjoint; isMerged stays true.
     }
 
     public void subtractInterval(long point){

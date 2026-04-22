@@ -785,7 +785,8 @@ public class AlignedLongSetTest{
     @Test
     public void subtractIntervalTest1(){
         //TODO
-        //Micro interval: (2, 11)
+        //Micro interval: [2, 5]
+        //Current Set: (2, 11]
         //Subtract interval: [6] // will be treated as [6, 6] which is just a point on the line
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
@@ -793,7 +794,6 @@ public class AlignedLongSetTest{
         //Unsnapped sub:                          [P]
         //Snapped sub:                       [^P------------P^]
         //Result:             (^M------------M^)            (^M------------M^]
-        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
 
         //TODO The resultant merge should now be gapped with (2, 5) U (8, 11]
         //step 1: Expand interval to snaps (if necessary)
@@ -803,7 +803,8 @@ public class AlignedLongSetTest{
     @Test
     public void subtractIntervalTest2(){
         //TODO
-        //Micro interval: (2, 11)
+        //Micro interval: [2, 5]
+        //Current Set: (2, 11]
         //Subtract interval: (6] // will be treated as (6, 6] which is just a point on the line
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
@@ -811,7 +812,6 @@ public class AlignedLongSetTest{
         //Unsnapped sub:                          (P]
         //Snapped sub:                       (^P------------P^]
         //Result:             (^M------------M^]            (^M------------M^]
-        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
 
         //TODO The resultant merge should now be gapped with (2, 5] U (8, 11]
         //step 1: Expand interval to snaps (if necessary)
@@ -823,7 +823,8 @@ public class AlignedLongSetTest{
     @Test
     public void subtractIntervalTest3(){
         //TODO
-        //Micro interval: (2, 11)
+        //Micro interval: [2, 5]
+        //Current Set: (2, 11]
         //Subtract interval: [5] // exactly snapped
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
@@ -831,7 +832,6 @@ public class AlignedLongSetTest{
         //Unsnapped sub:                     [P]
         //Snapped sub:                       [P]
         //Result:             (^M------------M^)(M------------M^]
-        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
 
         //TODO The resultant merge should now be gapped with (2, 5) U (5, 11]
         //step 1: Expand interval to snaps (if necessary)
@@ -844,7 +844,8 @@ public class AlignedLongSetTest{
     @Test
     public void subtractIntervalTest4(){
         //TODO
-        //Micro interval: (2, 11)
+        //Micro interval: [2, 5]
+        //Current Set: (2, 11]
         //Subtract interval: (5] // exactly snapped
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
@@ -852,7 +853,6 @@ public class AlignedLongSetTest{
         //Unsnapped sub:                     (P]
         //Snapped sub:                       (P]
         //Result:             (^M------------------------------------------M^] //NO CHANGE
-        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
 
         //TODO The resultant merge should remain (2, 11]
         //step 1: Expand interval to snaps (if necessary)
@@ -864,15 +864,15 @@ public class AlignedLongSetTest{
     @Test
     public void subtractIntervalTest5(){
         //TODO
-        //Micro interval: (2, 11)
+        //Micro interval: [2, 5]
+        //Current Set: (2, 8)
         //Subtract interval: (7, 10) // exactly snapped
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
         //Current:            (^M---------------------------M^)
         //Unsnapped sub:                               (^P------------P^)
-        //Snapped sub:                       (^P----------------------P^)
+        //Snapped sub:                       (^P---------------------------P^)
         //Result:             (^M------------M^]
-        //NOTE: Result [6, 6) will be added because at least 1 side is inclusive
 
         //TODO The resultant merge should remain (2, 11]
         //step 1: Expand interval to snaps (if necessary)
