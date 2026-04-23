@@ -1,11 +1,19 @@
 /**
  * @author Bruce Lamb
- * @since 21 APR 2026
+ * @since 23 APR 2026
  */
 package tradedatacorp.tools.interval;
 
 /**
- * Represents a integer based mathematical set interval with open or closed endpoints
+ * Represents a integer based mathematical set interval with open or closed endpoints.
+ *
+ * Note: Empty sets
+ * 0 width 1 point cases where both ends are not inclusive will be considered {}
+ * Examples: [3, 3), (3, 3], and (3, 3) result to {}
+ * 
+ * Point cases:
+ * 0 width cases where both points are inclusive will represented as {P}, not [P, P]
+ * Example: [3, 3] result to {3}
  */
 public class FixedLongInterval{
     public final long start;
@@ -13,6 +21,7 @@ public class FixedLongInterval{
     public final long width;
     public final boolean inclusiveStart; //default inclusion
     public final boolean inclusiveEnd;   //default inclusion
+    public final boolean isEmpty;
 
     public FixedLongInterval(
         long startPoint,
@@ -20,16 +29,23 @@ public class FixedLongInterval{
         boolean isInclusiveStart,
         boolean isInclusiveEnd
     ){
-        if(startPoint <= endPoint){
+        if(startPoint == endPoint){
+            start = end = endPoint;
+            inclusiveStart = isInclusiveStart;
+            inclusiveEnd = isInclusiveEnd;
+            isEmpty = !inclusiveStart || !inclusiveEnd;
+        }else if(startPoint < endPoint){
             start = startPoint;
             end = endPoint;
             inclusiveStart = isInclusiveStart;
             inclusiveEnd = isInclusiveEnd;
+            isEmpty = false;
         }else{ //invert
             end = startPoint;
             start = endPoint;
             inclusiveStart = isInclusiveEnd;
             inclusiveEnd = isInclusiveStart;
+            isEmpty = false;
         }
 
         width = end - start;
@@ -61,5 +77,15 @@ public class FixedLongInterval{
             int1.end == int2.end &&
             int1.inclusiveStart == int2.inclusiveStart &&
             int1.inclusiveEnd == int2.inclusiveEnd;
+    }
+
+    @Override
+    public String toString(){
+        if(isEmpty) return "{}";
+        if(width == 0) return "{"+start+"}";
+        return 
+            (inclusiveStart ? "[" : "(")
+            +start + "," +
+            end + (inclusiveEnd ? "]" : ")");
     }
 }

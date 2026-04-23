@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 22 APR 2026
+ * @since 23 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -47,7 +47,9 @@ public class AlignedLongSet{
      *                      {@code width} sets the step size. Must have width {@code > 0}.
      * @throws IllegalArgumentException if {@code microInterval.width == 0}.
      */
-    public AlignedLongSet(FixedLongInterval microInterval){
+    public AlignedLongSet(FixedLongInterval microInterval){this(microInterval, 16);}
+
+    private AlignedLongSet(FixedLongInterval microInterval, int defaultArraySize){
         if(microInterval.width == 0)
             throw new IllegalArgumentException("AlignedLongSet requires a micro interval with a width > 0.");
 
@@ -58,9 +60,22 @@ public class AlignedLongSet{
             microInterval.width
         );
 
-        mergeList = new ArrayList<>();
-        microCount = new ArrayList<>();
+        mergeList = new ArrayList<>(defaultArraySize);
+        microCount = new ArrayList<>(defaultArraySize);
         isMerged = true;
+    }
+
+    public AlignedLongSet(FixedLongInterval microInterval, FixedLongInterval... intervalList){
+        this(microInterval, intervalList.length);
+        for(FixedLongInterval i : intervalList){mergeList.add(i);}
+        this.merge();
+    }
+
+    public AlignedLongSet(FixedLongInterval microInterval, AlignedLongSet set){
+        this(microInterval, set.getIntervalSegmentCount());
+        ArrayList<FixedLongInterval> list = set.getIntervals();
+        for(FixedLongInterval i : list){mergeList.add(i);}
+        this.merge();
     }
 
     /** Returns the micro-interval that defines the snap grid. */
@@ -115,17 +130,18 @@ public class AlignedLongSet{
      * @return new {@code ArrayList} containing the same {@link FixedLongInterval} references.
      */
     public ArrayList<FixedLongInterval> getIntervals(){
-        merge();
+        if(!isMerged) merge();
         return getUnmergedIntervals();
     }
 
     /**
-     * Returns the interval at {@code index} without triggering a merge.
+     * Returns the interval at {@code index}
      *
      * @param index position in the internal list.
      * @return the {@link FixedLongInterval} at that position.
      */
     public FixedLongInterval getInterval(int index){
+        if(!isMerged) merge();
         return mergeList.get(index);
     }
 
@@ -224,6 +240,44 @@ public class AlignedLongSet{
         }
 
         isMerged = false;
+    }
+
+    /**
+     * Convenience overload of {@link #addInterval(FixedLongInterval, boolean, boolean, boolean, boolean)}
+     * that preserves the original inclusivity of {@code newInterval} for any snapped endpoints.
+     *
+     * @param newInterval  the interval to quantize and add.
+     * @param expandLeft   {@code true} to snap the start outward (lesser); {@code false} inward.
+     * @param expandRight  {@code true} to snap the end outward (greater); {@code false} inward.
+     */
+    public void addInterval(FixedLongInterval newInterval, boolean expandLeft, boolean expandRight){
+        addInterval(
+            newInterval,
+            expandLeft,
+            expandRight,
+            newInterval.inclusiveStart,
+            newInterval.inclusiveEnd
+        );
+    }
+
+    public void addInterval(FixedLongInterval newInterval){
+        addInterval(
+            newInterval,
+            true,
+            true,
+            newInterval.inclusiveStart,
+            newInterval.inclusiveEnd
+        );
+    }
+
+    public void addInterval(long point){
+        addInterval(
+            new FixedLongInterval(point, point),
+            true,
+            true,
+            true,
+            true
+        );
     }
 
     /**
@@ -371,28 +425,24 @@ public class AlignedLongSet{
         //mergeList stays sorted and disjoint; isMerged stays true.
     }
 
+    public void subtractInterval(FixedLongInterval newInterval, boolean expandLeft, boolean expandRight){
+        subtractInterval(
+            newInterval,
+            expandLeft,
+            expandLeft,
+            newInterval.inclusiveStart,
+            newInterval.inclusiveEnd
+        );
+    }
+
+    public void subtractInterval(FixedLongInterval newInterval){
+        subtractInterval(newInterval, true, true, false, false);
+    }
+
     public void subtractInterval(long point){
         subtractInterval(
             new FixedLongInterval(point, point, true, true),
             true, true, true, true
-        );
-    }
-
-    /**
-     * Convenience overload of {@link #addInterval(FixedLongInterval, boolean, boolean, boolean, boolean)}
-     * that preserves the original inclusivity of {@code newInterval} for any snapped endpoints.
-     *
-     * @param newInterval  the interval to quantize and add.
-     * @param expandLeft   {@code true} to snap the start outward (lesser); {@code false} inward.
-     * @param expandRight  {@code true} to snap the end outward (greater); {@code false} inward.
-     */
-    public void addInterval(FixedLongInterval newInterval, boolean expandLeft, boolean expandRight){
-        addInterval(
-            newInterval,
-            expandLeft,
-            expandRight,
-            newInterval.inclusiveStart,
-            newInterval.inclusiveEnd
         );
     }
 
@@ -481,5 +531,28 @@ public class AlignedLongSet{
 
         if(write < n) mergeList.subList(write, n).clear();
         isMerged = true;
+    }
+
+    public static boolean equals(AlignedLongSet set1, AlignedLongSet set2){
+        ArrayList<FixedLongInterval> intL1 = set1.getIntervals();
+        ArrayList<FixedLongInterval> intL2 = set2.getIntervals();
+
+        if(intL1.size() != intL2.size()) return false;
+        for(int i = 0; i<intL1.size(); ++i){
+            if(!FixedLongInterval.equals(intL1.get(i), intL2.get(i))) return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public String toString(){
+        if(mergeList.size() == 0) return "{}";
+        if(!isMerged) merge();
+
+        StringBuilder bldr = new StringBuilder();
+        bldr.append(mergeList.get(0).toString());
+        for(int i=1; i<mergeList.size(); ++i){bldr.append("U"+mergeList.get(i).toString());}
+        return bldr.toString();
     }
 }

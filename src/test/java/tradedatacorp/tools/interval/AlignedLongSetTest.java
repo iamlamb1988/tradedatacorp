@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 22 APR 2026
+ * @since 23 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -784,10 +784,9 @@ public class AlignedLongSetTest{
 
     @Test
     public void subtractIntervalTest1(){
-        //TODO
-        //Micro interval: [2, 5]
         //Current Set: (2, 11]
-        //Subtract interval: [6] // will be treated as [6, 6] which is just a point on the line
+        //Subtract Set: [5, 8]
+        //Result Set: (2, 5) U (8, 11]
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
         //Current:            (^M------------------------------------------M^]
@@ -795,17 +794,49 @@ public class AlignedLongSetTest{
         //Snapped sub:                       [^P------------P^]
         //Result:             (^M------------M^)            (^M------------M^]
 
-        //TODO The resultant merge should now be gapped with (2, 5) U (8, 11]
-        //step 1: Expand interval to snaps (if necessary)
-        //step 2: Subtract the interval from current state
+        FixedLongInterval micro = new FixedLongInterval(2, 5, true, true);
+        assertEquals(3L, micro.width);
+        assertEquals(3L, micro.getWidth());
+        assertEquals("[2,5]", micro.toString());
+
+        //1. Setup current/original
+        AlignedLongSet span = new AlignedLongSet(micro);
+        FixedLongInterval original = new FixedLongInterval(2, 11, false, true); //(2, 11]
+        span.addInterval(original);
+        assertEquals("(2,11]", original.toString());
+
+        FixedLongInterval subtract = new FixedLongInterval(5, 8, true, true); //[5, 8]
+        assertEquals("[5,8]", subtract.toString());
+
+        FixedLongInterval expectedLeftSet = new FixedLongInterval(2, 5, false, false); //(2, 5)
+        FixedLongInterval expectedRightSet = new FixedLongInterval(8, 11, false, true);//(8, 11]
+
+        AlignedLongSet expectedSpan = new AlignedLongSet(
+            micro,
+            expectedLeftSet,
+            expectedRightSet
+        );
+        assertEquals("(2,5)U(8,11]", expectedSpan.toString());
+
+        //2. Execution
+        span.subtractInterval(subtract);
+
+        //3. Check expectations
+        assertEquals(2, span.getIntervalSegmentCount());
+        assertEquals(2, span.getMicroIntervalCount());
+
+        assertTrue(FixedLongInterval.equals(expectedLeftSet, span.getInterval(0)));
+        assertTrue(FixedLongInterval.equals(expectedRightSet, span.getInterval(1)));
+
+        //Primary check
+        assertTrue(AlignedLongSet.equals(expectedSpan, span));
+        assertEquals("(2,5)U(8,11]", span.toString());
     }
 
     @Test
     public void subtractIntervalTest2(){
-        //TODO
-        //Micro interval: [2, 5]
         //Current Set: (2, 11]
-        //Subtract interval: (6] // will be treated as (6, 6] which is just a point on the line
+        //Subtract interval: {6} -> snaps -> [5, 8]
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
         //Current:            (^M------------------------------------------M^]
@@ -813,19 +844,48 @@ public class AlignedLongSetTest{
         //Snapped sub:                       (^P------------P^]
         //Result:             (^M------------M^]            (^M------------M^]
 
-        //TODO The resultant merge should now be gapped with (2, 5] U (8, 11]
-        //step 1: Expand interval to snaps (if necessary)
-        //step 2: Subtract the interval from current state
+        FixedLongInterval micro = new FixedLongInterval(2, 5, true, true);
+        assertEquals(3L, micro.width);
+        assertEquals(3L, micro.getWidth());
+        assertEquals("[2,5]", micro.toString());
 
-        //Notice the inclusinon changed from the previous example making the result inclusing different
+        //1. Setup current/original
+        AlignedLongSet span = new AlignedLongSet(micro);
+        FixedLongInterval original = new FixedLongInterval(2, 11, false, true); //(2, 11]
+        span.addInterval(original);
+        assertEquals("(2,11]", original.toString());
+
+        FixedLongInterval subtract = new FixedLongInterval(6, 6, true, true); //[5, 8]
+        assertEquals("{6}", subtract.toString());
+        span.subtractInterval(subtract, true, true, false ,true); //expands to (5, 8] prior to subtraction
+
+        FixedLongInterval expectedLeftSet = new FixedLongInterval(2, 5, false, true); //(2, 5]
+        FixedLongInterval expectedRightSet = new FixedLongInterval(8, 11, false, true);//(8, 11]
+
+        AlignedLongSet expectedSpan = new AlignedLongSet(
+            micro,
+            expectedLeftSet,
+            expectedRightSet
+        );
+        assertEquals("(2,5]U(8,11]", expectedSpan.toString());
+
+        //2. Execution
+        span.subtractInterval(subtract);
+
+        //3. Check expectations
+        assertEquals(2, span.getIntervalSegmentCount());
+        assertEquals(2, span.getMicroIntervalCount());
+
+        assertTrue(FixedLongInterval.equals(expectedLeftSet, span.getInterval(0)));
+        assertTrue(FixedLongInterval.equals(expectedRightSet, span.getInterval(1)));
+
+        assertTrue(AlignedLongSet.equals(expectedSpan, span));
     }
 
     @Test
     public void subtractIntervalTest3(){
-        //TODO
-        //Micro interval: [2, 5]
         //Current Set: (2, 11]
-        //Subtract interval: [5] // exactly snapped
+        //Subtract interval: {5} // exactly snapped
         //Snap offsets:        v              v              v              v
         //Time Line:  ... 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12
         //Current:            (^M------------------------------------------M^]
@@ -833,12 +893,43 @@ public class AlignedLongSetTest{
         //Snapped sub:                       [P]
         //Result:             (^M------------M^)(M------------M^]
 
-        //TODO The resultant merge should now be gapped with (2, 5) U (5, 11]
-        //step 1: Expand interval to snaps (if necessary)
-        //step 2: Subtract the interval from current state
+        FixedLongInterval micro = new FixedLongInterval(2, 5, true, true);
+        assertEquals(3L, micro.width);
+        assertEquals(3L, micro.getWidth());
+        assertEquals("[2,5]", micro.toString());
 
-        //Notice no expansion due to point exactly snapped. There is a "hole" in the interval at 5
-        //BOTH subtraction points must be inclusive to truly subtract a single point.
+        //1. Setup current/original
+        AlignedLongSet span = new AlignedLongSet(micro);
+        FixedLongInterval original = new FixedLongInterval(2, 11, false, true); //(2, 11]
+        span.addInterval(original);
+        assertEquals("(2,11]", original.toString());
+
+        FixedLongInterval subtract = new FixedLongInterval(5, 5, true, true); //{5}
+        assertEquals("{5}", subtract.toString());
+        span.subtractInterval(subtract, true, true, false ,true); //No change, booleans irrelevant, remains {5}
+
+        FixedLongInterval expectedLeftSet = new FixedLongInterval(2, 5, false, false); //(2, 5)
+        FixedLongInterval expectedRightSet = new FixedLongInterval(5, 11, false, true);//(8, 11]
+
+        AlignedLongSet expectedSpan = new AlignedLongSet(
+            micro,
+            expectedLeftSet,
+            expectedRightSet
+        );
+        assertEquals("(2,5)U(5,11]", expectedSpan.toString());
+
+        //2. Execution
+        span.subtractInterval(subtract);
+
+        //3. Check expectations
+        assertEquals(2, span.getIntervalSegmentCount());
+        assertEquals(2, span.getMicroIntervalCount());
+
+        assertTrue(FixedLongInterval.equals(expectedLeftSet, span.getInterval(0)));
+        assertTrue(FixedLongInterval.equals(expectedRightSet, span.getInterval(1)));
+
+        assertTrue(AlignedLongSet.equals(expectedSpan, span));
+        assertEquals("(2,5)U(5,11]", span.toString());
     }
 
     @Test
