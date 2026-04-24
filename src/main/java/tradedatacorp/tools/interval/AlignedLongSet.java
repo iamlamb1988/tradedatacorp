@@ -42,7 +42,7 @@ public class AlignedLongSet{
 
     public AlignedLongSet(AlignedLongSet set){
         microInterval = set.getMicroInterval();
-        
+
     }
 
     /**
@@ -148,6 +148,68 @@ public class AlignedLongSet{
     public FixedLongInterval getInterval(int index){
         if(!isMerged) merge();
         return mergeList.get(index);
+    }
+
+    public boolean contains(long point){
+        if(!isMerged) merge();
+        for(FixedLongInterval i : mergeList){
+            if(i.contains(point)) return true;
+        }
+        return false;
+    }
+
+    public boolean overlaps(FixedLongInterval interval){
+        if(!isMerged) merge();
+        for(FixedLongInterval i : mergeList){
+            if(i.overlaps(interval)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if any segment in this set overlaps any segment in {@code set}.
+     * Triggers a merge on either side if pending, so the scan runs over sorted, disjoint segments.
+     *
+     * <p>Complexity: {@code O(m + n)} two-pointer sweep with an {@code O(1)} bounding-box reject.
+     * Each step advances the pointer whose segment ends first — that segment cannot touch anything
+     * further along in the other list, since both lists are sorted and disjoint.
+     *
+     * <p>Inclusivity at touching boundaries is delegated to {@link FixedLongInterval#overlaps},
+     * which is the authority on whether {@code [a, b)} and {@code (b, c]} count as overlapping.
+     */
+    public boolean overlaps(AlignedLongSet set){
+        if(!isMerged) merge();
+        if(!set.isMerged) set.merge();
+
+        final int m = mergeList.size();
+        final int n = set.mergeList.size();
+        if(m == 0 || n == 0) return false;
+
+        //O(1) bounding-box reject: if one set ends strictly before the other begins, no overlap possible.
+        FixedLongInterval thisLast = mergeList.get(m - 1);
+        FixedLongInterval thatFirst = set.mergeList.get(0);
+        if(thisLast.end < thatFirst.start) return false;
+        FixedLongInterval thisFirst = mergeList.get(0);
+        FixedLongInterval thatLast = set.mergeList.get(n - 1);
+        if(thatLast.end < thisFirst.start) return false;
+
+        int i = 0;
+        int j = 0;
+        while(i < m && j < n){
+            FixedLongInterval a = mergeList.get(i);
+            FixedLongInterval b = set.mergeList.get(j);
+
+            //Strict disjoint cases: skip without calling overlaps().
+            if(a.end < b.start){ ++i; continue; }
+            if(b.end < a.start){ ++j; continue; }
+
+            if(a.overlaps(b)) return true;
+
+            //Touching-but-not-overlapping (exclusive boundaries); advance the one that ends first.
+            if(a.end <= b.end) ++i;
+            else ++j;
+        }
+        return false;
     }
 
     /**
