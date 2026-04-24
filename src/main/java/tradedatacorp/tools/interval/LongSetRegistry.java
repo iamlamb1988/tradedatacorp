@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 22 APR 2026
+ * @since 24 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -33,10 +33,6 @@ import java.util.ArrayList;
 public class LongSetRegistry{
     public static final FixedLongInterval EMPTY_INTERVAL = new FixedLongInterval(0, 0, false, false);
 
-    // static {
-    //     EMPTY_INTERVAL = new FixedLongInterval(0, 0, false, false);
-    // }
-
     private final FixedLongInterval microInterval;
 
     //"merged" status fields
@@ -65,7 +61,12 @@ public class LongSetRegistry{
      *      - Should it drop, ignore, or throw exception?
      */
     public void addSlot(FixedLongInterval domain){
+        if(domain.width == 0)
+            throw new IllegalArgumentException("A slot within a registry requires a micro interval with a width > 0.");
+        if(domain.width < microInterval.width)
+            throw new IllegalArgumentException("domain width cannot be less than the micro interval width.");
 
+        //Slot will be added to set list once determining it does not overlap with another set
     }
 
     /**
