@@ -31,10 +31,20 @@ import java.util.ArrayList;
  * Class still in development and documentation may change.
  */
 public class LongSetRegistry{
+    public static final FixedLongInterval EMPTY_INTERVAL = new FixedLongInterval(0, 0, false, false);
+
+    // static {
+    //     EMPTY_INTERVAL = new FixedLongInterval(0, 0, false, false);
+    // }
+
     private final FixedLongInterval microInterval;
+
+    //"merged" status fields
+    private boolean isMerged;
     private AlignedLongSet totalBoundry;  //the boundry across all slots
     private AlignedLongSet totalCoverage; //the "truthy" done coverage across all slots
-    private ArrayList<Slot> slotList;        // ordered list of slots
+
+    private ArrayList<Slot> slotList;     // ordered list of slots
 
     public LongSetRegistry(FixedLongInterval microInterval){
         if(microInterval.width == 0)
@@ -45,6 +55,17 @@ public class LongSetRegistry{
         totalBoundry = new AlignedLongSet(microInterval);
         totalCoverage = new AlignedLongSet(microInterval);
         slotList = new ArrayList<>();
+        isMerged = true;
+    }
+
+    /**
+     * Adds an interval slot to the registry.
+     * TODO:
+     *   What happens if domain overlaps with an existing Slot domain?
+     *      - Should it drop, ignore, or throw exception?
+     */
+    public void addSlot(FixedLongInterval domain){
+
     }
 
     /**

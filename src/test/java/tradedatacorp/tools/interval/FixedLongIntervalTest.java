@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested;
 
 public final class FixedLongIntervalTest{
     @Test
@@ -143,5 +144,116 @@ public final class FixedLongIntervalTest{
         assertEquals("{}", int1.toString());
         assertEquals("{}", int2.toString());
         assertEquals("{}", int3.toString());
+    }
+
+    @Nested
+    public class TestsForOverlap{
+        @Test
+        public void engulfsTargetTest(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 10, true, true);
+            FixedLongInterval int2 = new FixedLongInterval(4, 7, false, false);
+
+            assertTrue(int1.overlaps(int2));
+            assertTrue(int2.overlaps(int1));
+        }
+
+        @Test
+        public void partialOverlapTargetTest(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 10, false, false);
+            FixedLongInterval int2 = new FixedLongInterval(5, 15, false, false);
+
+            assertTrue(int1.overlaps(int2));
+            assertTrue(int2.overlaps(int1));
+        }
+
+        @Test
+        public void endpointTouchTest(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 5, false, true);
+            FixedLongInterval int2 = new FixedLongInterval(5, 15, true, false);
+
+            assertTrue(int1.overlaps(int2));
+            assertTrue(int2.overlaps(int1));
+        }
+
+        @Test
+        public void noOverlapTest(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 5, true, true);
+            FixedLongInterval int2 = new FixedLongInterval(10, 15, true, true);
+
+            assertFalse(int1.overlaps(int2));
+            assertFalse(int2.overlaps(int1));
+        }
+
+        @Test
+        public void TouchOverlapTest(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 5, false, true);
+            FixedLongInterval int2 = new FixedLongInterval(5, 10, true, false);
+
+            assertTrue(int1.overlaps(int2));
+            assertTrue(int2.overlaps(int1));
+        }
+
+        @Test
+        public void TouchPointOverlapTest(){
+            FixedLongInterval int1 = new FixedLongInterval(5, 5, true, true);
+            FixedLongInterval int2 = new FixedLongInterval(5, 10, true, false);
+
+            assertTrue(int1.overlaps(int2));
+            assertTrue(int2.overlaps(int1));
+        }
+
+        @Test
+        public void PointToPointOverlapTest(){
+            FixedLongInterval int1 = new FixedLongInterval(7, 7, true, true);
+            FixedLongInterval int2 = new FixedLongInterval(7, 7, true, true);
+
+            assertTrue(int1.overlaps(int2));
+            assertTrue(int2.overlaps(int1));
+        }
+
+        @Test
+        public void NoTouchOverlapTest(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 5, false, false);
+            FixedLongInterval int2 = new FixedLongInterval(5, 10, false, false);
+
+            assertFalse(int1.overlaps(int2));
+            assertFalse(int2.overlaps(int1));
+        }
+
+        @Test
+        public void NoTouchAdjacentTest(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 5, false, false);
+            FixedLongInterval int2 = new FixedLongInterval(5, 10, true, false);
+
+            assertFalse(int1.overlaps(int2));
+            assertFalse(int2.overlaps(int1));
+        }
+
+        @Test
+        public void emptySetOverlapTest1(){
+            FixedLongInterval int1 = new FixedLongInterval(7, 7, false, true); //emptyset
+            FixedLongInterval int2 = new FixedLongInterval(7, 7, true, true);
+
+            assertFalse(int1.overlaps(int2));
+            assertFalse(int2.overlaps(int1));
+        }
+
+        @Test
+        public void emptySetOverlapTest2(){
+            FixedLongInterval int1 = new FixedLongInterval(7, 7, false, true); //emptyset
+            FixedLongInterval int2 = new FixedLongInterval(7, 7, false, false);//emptyset
+
+            assertFalse(int1.overlaps(int2));
+            assertFalse(int2.overlaps(int1));
+        }
+
+        @Test
+        public void emptySetOverlapTest3(){
+            FixedLongInterval int1 = new FixedLongInterval(1, 10, false, true);
+            FixedLongInterval int2 = new FixedLongInterval(7, 7, false, false); //emptyset
+
+            assertFalse(int1.overlaps(int2));
+            assertFalse(int2.overlaps(int1));
+        }
     }
 }

@@ -71,6 +71,32 @@ public class FixedLongInterval{
 
     public boolean contains(long point){return contains(point, inclusiveStart, inclusiveEnd);}
 
+    /**
+     * Checks for any overlap between this and interval
+     */
+    public boolean overlaps(FixedLongInterval interval){
+        if(isEmpty || interval.isEmpty) return false;
+
+        if(start > interval.start){
+            if(start < interval.end) return true;
+            else if(start > interval.end) return false;
+            return start == interval.end && inclusiveStart && interval.inclusiveEnd;
+
+        }
+
+        if(end < interval.end){
+            if(end > interval.start) return true;
+            else if(end < interval.start) return false; //this is less than interval
+            return end == interval.start && inclusiveEnd && interval.inclusiveStart;
+        }
+
+        return true;
+    }
+
+    // return
+    //                 end > interval.start ||
+    //                 end == interval.start && inclusiveEnd && interval.inclusiveStart;
+
     public static boolean equals(FixedLongInterval int1, FixedLongInterval int2){
         return
             int1.start == int2.start &&

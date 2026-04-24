@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 23 APR 2026
+ * @since 24 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -39,6 +39,11 @@ public class AlignedLongSet{
 
     /** {@code true} when {@code mergeList} and {@code microCount} are in merged, sorted form. */
     private boolean isMerged;
+
+    public AlignedLongSet(AlignedLongSet set){
+        microInterval = set.getMicroInterval();
+        
+    }
 
     /**
      * Constructs a {@code AlignedLongSet} with the given micro-interval as the snap grid.
@@ -465,11 +470,10 @@ public class AlignedLongSet{
     public void merge(){
         final int n = mergeList.size();
         microCount.clear();
-        final long microDur = microInterval.width;
 
         if(n == 0){ isMerged = true; return; }
         if(n == 1){
-            microCount.add(mergeList.get(0).width / microDur);
+            microCount.add(mergeList.get(0).width / microInterval.width);
             isMerged = true;
             return;
         }
@@ -513,7 +517,7 @@ public class AlignedLongSet{
                 mergeList.set(write++, dirty
                     ? new FixedLongInterval(curStart, curEnd, curLeftInc, curRightInc)
                     : base);
-                microCount.add((curEnd - curStart) / microDur);
+                microCount.add((curEnd - curStart) / microInterval.width);
 
                 base = curr;
                 curStart = curr.start;
@@ -527,7 +531,7 @@ public class AlignedLongSet{
         mergeList.set(write++, dirty
             ? new FixedLongInterval(curStart, curEnd, curLeftInc, curRightInc)
             : base);
-        microCount.add((curEnd - curStart) / microDur);
+        microCount.add((curEnd - curStart) / microInterval.width);
 
         if(write < n) mergeList.subList(write, n).clear();
         isMerged = true;
