@@ -213,7 +213,7 @@ public class AlignedLongSet{
             newRightInclusive = newInterval.inclusiveEnd; //unchanged inclusion
         }
 
-        if(newEnd < newStart || (newEnd == newStart && !newLeftInclusive && !newRightInclusive)) return;
+        if(newEnd < newStart || (newEnd == newStart && !(newLeftInclusive && newRightInclusive))) return;
 
         FixedLongInterval newQuantizedInterval = new FixedLongInterval(
             newStart,
@@ -429,7 +429,7 @@ public class AlignedLongSet{
         subtractInterval(
             newInterval,
             expandLeft,
-            expandLeft,
+            expandRight,
             newInterval.inclusiveStart,
             newInterval.inclusiveEnd
         );
