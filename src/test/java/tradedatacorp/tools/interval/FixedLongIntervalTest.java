@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 23 APR 2026
+ * @since 25 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -92,7 +92,9 @@ public final class FixedLongIntervalTest{
 
         assertEquals("[2,5]", int1.toString());
         assertEquals("[2,5]", int2.toString());
+
         assertTrue(FixedLongInterval.equals(int1, int2));
+        assertTrue(FixedLongInterval.equalsStructural(int1, int2));
     }
 
     @Test
@@ -103,6 +105,7 @@ public final class FixedLongIntervalTest{
         assertEquals("[2,5]", int1.toString());
         assertEquals("(2,5]", int2.toString());
         assertFalse(FixedLongInterval.equals(int1, int2));
+        assertFalse(FixedLongInterval.equalsStructural(int1, int2));
     }
 
     @Test
@@ -113,6 +116,7 @@ public final class FixedLongIntervalTest{
         assertEquals("[2,5]", int1.toString());
         assertEquals("(5,99]", int2.toString()); //NOTE: this is the SWAP in constructor enforcing proper ordering.
         assertFalse(FixedLongInterval.equals(int1, int2));
+        assertFalse(FixedLongInterval.equalsStructural(int1, int2));
     }
 
     @Test
@@ -123,6 +127,7 @@ public final class FixedLongIntervalTest{
         assertEquals("[2,555]", int1.toString());
         assertEquals("[2,5)", int2.toString());
         assertFalse(FixedLongInterval.equals(int1, int2));
+        assertFalse(FixedLongInterval.equalsStructural(int1, int2));
     }
 
     @Test
@@ -133,6 +138,7 @@ public final class FixedLongIntervalTest{
         assertEquals("{}", int1.toString());
         assertEquals("{}", int2.toString());
         assertTrue(FixedLongInterval.equals(int1, int2));
+        assertTrue(FixedLongInterval.equalsStructural(int1, int2));
     }
 
     @Test
@@ -144,6 +150,14 @@ public final class FixedLongIntervalTest{
         assertEquals("{}", int1.toString());
         assertEquals("{}", int2.toString());
         assertEquals("{}", int3.toString());
+
+        assertTrue(FixedLongInterval.equals(int1, int2));
+        assertTrue(FixedLongInterval.equals(int1, int3));
+        assertTrue(FixedLongInterval.equals(int2, int3));
+
+        assertFalse(FixedLongInterval.equalsStructural(int1, int2));
+        assertFalse(FixedLongInterval.equalsStructural(int1, int3));
+        assertFalse(FixedLongInterval.equalsStructural(int2, int3));
     }
 
     @Nested
