@@ -20,7 +20,7 @@ import java.util.ArrayList;
  *
  * <p>Merging is lazy: it is deferred until the first read of {@link #getIntervalSegmentCount()},
  * {@link #getMicroIntervalCount()}, {@link #getIntervals()}, {@link #getInterval(int)},
- * {@link #contains(long)}, or {@link #overlaps(FixedLongInterval)},
+ * {@link #contains(long)}, {@link #overlaps(FixedLongInterval)}, or {@link #overlaps(AlignedLongSet)},
  * or until an explicit call to {@link #merge()}.
  * After merging, {@code microCount} is kept parallel to {@code mergeList}: index {@code i} of
  * {@code microCount} holds the number of micro-interval grid steps spanning {@code mergeList.get(i)}.
@@ -57,7 +57,7 @@ public class AlignedLongSet{
         );
         int segmentCount = set.getIntervalSegmentCount();
         mergeList = new ArrayList<>(segmentCount);
-        microCount = new ArrayList<>(mergeList.size());
+        microCount = new ArrayList<>(segmentCount);
 
         for(int i=0; i<segmentCount; ++i){
             FixedLongInterval interval = set.getInterval(i);

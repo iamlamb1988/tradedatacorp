@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 24 APR 2026
+ * @since 26 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * This class is a general-purpose utility with no dependencies on any other layer of the
  * project. It can be used independently for any coverage tracking need.
  *
- * Class still in development and documentation may change.
+ * //TODO: Class still in development and documentation may change.
  */
 public class LongSetRegistry{
     public static final FixedLongInterval EMPTY_INTERVAL = new FixedLongInterval(0, 0, false, false);
@@ -37,6 +37,7 @@ public class LongSetRegistry{
 
     //"merged" status fields
     private boolean isMerged;
+    private boolean isBoundContinuos; //No gaps are created between to Slots -> true, otherwise false
     private AlignedLongSet totalBoundry;  //the boundry across all slots
     private AlignedLongSet totalCoverage; //the "truthy" done coverage across all slots
 
@@ -53,6 +54,8 @@ public class LongSetRegistry{
         slotList = new ArrayList<>();
         isMerged = true;
     }
+
+    public boolean isMerged(){return isMerged;}
 
     /**
      * Adds an interval slot to the registry.
@@ -73,12 +76,20 @@ public class LongSetRegistry{
      * Will add a slot to the registry if available. Will flex appropriately boundries to fit and touch adjacent slots
      */
     public void addSlot(
-        long start,
-        long end,
+        long startSlotBound,
+        long endSlotBound,
         boolean expandIfGap,
         boolean contractIfoverlap
     ){
-        if(start == end) return;
+        if(startSlotBound == endSlotBound)
+            throw new IllegalArgumentException("LongSetRegistry cannot add a slot into registry of 0 width");
+
+        if(slotList.size() == 0){//No possibility of gapping or overlapping slot
+            slotList.add(new Slot(startSlotBound, endSlotBound));
+            isMerged = true;
+            return;
+        }
+
         Slot leftSlot = null;
         Slot rightSlot = null;
 
@@ -104,10 +115,10 @@ public class LongSetRegistry{
         long end
     ){addSlot(start, end, true, true);}
 
-    public void addSlotToBeginning(long value){}
-
-    public void addSlotToEnd(long value){}
-
+    public void merge(){
+        
+        isMerged = true;
+    }
     // public FixedInterval removeSlot(int index){}
 
     //markIntervalDone(FixedInterval interval){...}
@@ -119,7 +130,7 @@ public class LongSetRegistry{
         private FixedLongInterval boundedInterval; //The domain, no value can exist outside the bounds of the interval.
         private AlignedLongSet doneCoverage;       //a "truthy" interval. Will never go out of bounded interval.
         private Slot(long start, long end){
-            boundedInterval = new FixedLongInterval(start, end);
+            boundedInterval = new FixedLongInterval(start, end); //[start, end) inclusive start, exclusive end by default
             doneCoverage = new AlignedLongSet(microInterval);
         }
 
