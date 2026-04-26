@@ -1009,7 +1009,7 @@ public class AlignedLongSetTest{
             assertEquals("(2,6]", span.toString());
         }
 
-                @Test
+        @Test
         public void subtractIntervalTest8(){
             //Micro interval: [0, 2)
             //Current Set: (2, 6] U [8, 10]
@@ -1123,6 +1123,42 @@ public class AlignedLongSetTest{
             assertFalse(int1 == int2);
             assertTrue(FixedLongInterval.equals(int1, int2)); //empty set is equal to empty set
             assertFalse(FixedLongInterval.equalsStructural(int1, int2)); //primitive internal values are not the same
+        }
+    }
+
+    @Nested
+    public class MergeBoundaryTouchTests{
+        @Test
+        public void emptyIntervalMergedWithSingletonTest(){
+            // Bug: merge() promotes the base interval's tracking variables (curLeftInc/curRightInc)
+            // to true/true for a zero-width one-sided interval like [5,5), but never sets dirty=true
+            // because that promotion happens before the sweep loop. When {5} is then consumed as
+            // curr, both update conditions are already satisfied (both sides already true), so dirty
+            // stays false and the write emits the original base [5,5) instead of {5}.
+            //
+            // Micro: 
+            // Snap offsets:    v                        v
+            // Time Line:  ...  0  | 1  | 2  | 3  | 4  | 5  | 6
+            //                                          [B) {C}
+            // Merge should give: {5}
+            // Bug gives:         [5,5)  (isEmpty=true, wrong result)
+
+            FixedLongInterval micro = new FixedLongInterval(0, 5);
+
+            FixedLongInterval base = new FixedLongInterval(5, 5, true, false);   // [5,5) empty
+            FixedLongInterval curr = new FixedLongInterval(5, 5, true, true);    // {5} singleton
+
+            assertTrue(base.isEmpty);
+            assertFalse(curr.isEmpty);
+
+            AlignedLongSet span = new AlignedLongSet(micro, base, curr);
+
+            assertEquals(1, span.getIntervalSegmentCount());
+
+            FixedLongInterval result = span.getInterval(0);
+            assertFalse(result.isEmpty);         // FAILS: result is [5,5) which has isEmpty=true
+            assertTrue(result.inclusiveStart);
+            assertTrue(result.inclusiveEnd);     // FAILS: result.inclusiveEnd is false
         }
     }
 
