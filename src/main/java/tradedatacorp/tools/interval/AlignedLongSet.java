@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 24 APR 2026
+ * @since 26 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -42,7 +42,20 @@ public class AlignedLongSet{
 
     public AlignedLongSet(AlignedLongSet set){
         microInterval = set.getMicroInterval();
+        offsetMod = Math.floorMod(
+            microInterval.start,
+            microInterval.width
+        );
+        int segmentCount = set.getIntervalSegmentCount();
+        mergeList = new ArrayList<>(segmentCount);
+        microCount = new ArrayList<>(mergeList.size());
 
+        for(int i=0; i<segmentCount; ++i){
+            FixedLongInterval interval = set.getInterval(i);
+            mergeList.add(interval);
+            microCount.add(Long.valueOf(mergeList.get(i).width / microInterval.width));
+        }
+        isMerged = true;
     }
 
     /**
@@ -606,6 +619,18 @@ public class AlignedLongSet{
         if(intL1.size() != intL2.size()) return false;
         for(int i = 0; i<intL1.size(); ++i){
             if(!FixedLongInterval.equals(intL1.get(i), intL2.get(i))) return false;
+        }
+
+        return true;
+    }
+
+    public static boolean equalsStructural(AlignedLongSet set1, AlignedLongSet set2){
+        ArrayList<FixedLongInterval> intL1 = set1.getIntervals();
+        ArrayList<FixedLongInterval> intL2 = set2.getIntervals();
+
+        if(intL1.size() != intL2.size()) return false;
+        for(int i = 0; i<intL1.size(); ++i){
+            if(!FixedLongInterval.equalsStructural(intL1.get(i), intL2.get(i))) return false;
         }
 
         return true;
