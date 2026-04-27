@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 26 APR 2026
+ * @since 27 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -37,7 +37,6 @@ public class LongSetRegistry{
 
     //"merged" status fields
     private boolean isMerged;
-    private boolean isBoundContinuos; //No gaps are created between to Slots -> true, otherwise false
     private AlignedLongSet totalBoundry;  //the boundry across all slots
     private AlignedLongSet totalCoverage; //the "truthy" done coverage across all slots
 
@@ -58,65 +57,96 @@ public class LongSetRegistry{
     public boolean isMerged(){return isMerged;}
 
     /**
-     * Adds an interval slot to the registry.
+     * Return true if each Slot boundry is connected with no gaps.
+     */
+    public boolean isBoundContinuous(){
+        if(slotList.size() <= 1) return true;
+
+        Slot current = slotList.get(0);
+        for(int i=1; i<slotList.size(); ++i){
+            Slot next = slotList.get(i);
+            if(
+                current.boundedInterval.end != next.boundedInterval.start ||
+                current.boundedInterval.inclusiveEnd == next.boundedInterval.inclusiveStart
+            ) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Adds an interval slot to the registry. Will snap to microIntervals if required.
      * TODO:
      *   What happens if domain overlaps with an existing Slot domain?
      *      - Should it drop, ignore, or throw exception?
      */
-    public void addSlot(FixedLongInterval domain){
+    public void addSlot(
+        FixedLongInterval domain,
+        boolean expandLeft,
+        boolean expandRight,
+        boolean isLeftSnapInclusive,
+        boolean isRightSnapInclusive,
+        boolean expandToLeftSlot,
+        boolean expandToRightSlot,
+        boolean contractOverlap
+    ){
         if(domain.width == 0)
             throw new IllegalArgumentException("A slot within a registry requires a micro interval with a width > 0.");
-        if(domain.width < microInterval.width)
-            throw new IllegalArgumentException("domain width cannot be less than the micro interval width.");
 
-        //Slot will be added to set list once determining it does not overlap with another set
+        if(slotList.size() == 0){}
+    
     }
 
-    /**
-     * Will add a slot to the registry if available. Will flex appropriately boundries to fit and touch adjacent slots
-     */
-    public void addSlot(
-        long startSlotBound,
-        long endSlotBound,
-        boolean expandIfGap,
-        boolean contractIfoverlap
-    ){
-        if(startSlotBound == endSlotBound)
-            throw new IllegalArgumentException("LongSetRegistry cannot add a slot into registry of 0 width");
+    
 
-        if(slotList.size() == 0){//No possibility of gapping or overlapping slot
-            slotList.add(new Slot(startSlotBound, endSlotBound));
-            isMerged = true;
-            return;
-        }
+    public void addSlot(long point, boolean expandGap){}
 
-        Slot leftSlot = null;
-        Slot rightSlot = null;
+    // /**
+    //  * Will add a slot to the registry if available. Will flex appropriately boundries to fit and touch adjacent slots
+    //  */
+    // public void addSlot(
+    //     long startSlotBound,
+    //     long endSlotBound,
+    //     boolean expandIfGap,
+    //     boolean contractIfoverlap
+    // ){
+    //     if(startSlotBound == endSlotBound)
+    //         throw new IllegalArgumentException("LongSetRegistry cannot add a slot into registry of 0 width");
 
-        if(expandIfGap){
-            //1. Find adjacent slot to the left (if no slot left of start, then skip)
-            //expand to the next slot left (if any). If no slot to the left, skip.
-            //need to compare start to the nearest left slot end slot Boundry endpoint.
+    //     if(slotList.size() == 0){//No possibility of gapping or overlapping slot
+    //         slotList.add(new Slot(startSlotBound, endSlotBound));
+    //         isMerged = true;
+    //         return;
+    //     }
 
-            //2. Find adjacent slot to the right (if no slot right of end, then skip)
-            //expand to the next slot right (if any). If no slot to the right, skip.
-            //need to compare end to the nearest right slot start slot Boundry endpoint.
-        }
+    //     Slot leftSlot = null;
+    //     Slot rightSlot = null;
 
-        if(contractIfoverlap){
-            //similar if any overlap of leftSlot and rightSlot (if there is an adjacent left)
-        }
+    //     if(expandIfGap){
+    //         //1. Find adjacent slot to the left (if no slot left of start, then skip)
+    //         //expand to the next slot left (if any). If no slot to the left, skip.
+    //         //need to compare start to the nearest left slot end slot Boundry endpoint.
 
-        //create slot with updated left and right limits
-    }
+    //         //2. Find adjacent slot to the right (if no slot right of end, then skip)
+    //         //expand to the next slot right (if any). If no slot to the right, skip.
+    //         //need to compare end to the nearest right slot start slot Boundry endpoint.
+    //     }
 
-    public void addSlot(
-        long start,
-        long end
-    ){addSlot(start, end, true, true);}
+    //     if(contractIfoverlap){
+    //         //similar if any overlap of leftSlot and rightSlot (if there is an adjacent left)
+    //     }
+
+    //     //create slot with updated left and right limits
+    // }
+
+    // public void addSlot(
+    //     long start,
+    //     long end
+    // ){addSlot(start, end, false, false);}
 
     public void merge(){
-        
+        for(Slot slot : slotList){
+            if(!slot.doneCoverage.isMerged()) slot.doneCoverage.merge();
+        }
         isMerged = true;
     }
     // public FixedInterval removeSlot(int index){}
@@ -129,15 +159,25 @@ public class LongSetRegistry{
     private class Slot{
         private FixedLongInterval boundedInterval; //The domain, no value can exist outside the bounds of the interval.
         private AlignedLongSet doneCoverage;       //a "truthy" interval. Will never go out of bounded interval.
-        private Slot(long start, long end){
-            boundedInterval = new FixedLongInterval(start, end); //[start, end) inclusive start, exclusive end by default
-            doneCoverage = new AlignedLongSet(microInterval);
+        // private final int maxMicroIntervals;           //number of possible microIntervals within bounded
+
+        private Slot(long start, long end, boolean isInclusiveStart, boolean isInclusiveEnd){
+            doneCoverage = new AlignedLongSet(microInterval); //Used as a tmp normalizer for snapping boundedInterval
+            // doneCoverage.addInterval.
+            boundedInterval = new FixedLongInterval(start, end, isInclusiveStart, isInclusiveEnd);
+            
+            
         }
 
+        private Slot(long start, long end){this(start, end, true, false);}
+
+        public boolean isMerged(){return doneCoverage.isMerged();}
         public boolean isSlotDone(){
             return
                 doneCoverage.getIntervalSegmentCount() == 1 &&
                 FixedLongInterval.equals(boundedInterval, doneCoverage.getInterval(0));
         }
+
+        private void merge(){doneCoverage.merge();}
     }
 }

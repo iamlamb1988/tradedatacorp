@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 26 APR 2026
+ * @since 27 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -285,6 +285,69 @@ public class AlignedLongSet{
             else ++j;
         }
         return false;
+    }
+
+    /**
+     * Returns a snapped interval IAW with this state instance.
+     * If the interval is already snapped, will return the same instance
+     * //TODO: more javadoc elaboration
+     */
+    public FixedLongInterval getSnappedInterval(
+        FixedLongInterval newInterval,
+        boolean expandLeft,
+        boolean expandRight,
+        boolean isLeftSnapInclusive,
+        boolean isRightSnapInclusive
+    ){
+        long dist; //distance from begin or endpoint to next snap
+        long newStart;
+        long newEnd;
+        boolean newLeftInclusive;
+        boolean newRightInclusive;
+
+        dist = Math.floorMod(newInterval.start - offsetMod, microInterval.width);
+        if(dist != 0){
+            if(expandLeft){ //Expand Left on the number line (subtract)
+                newStart = newInterval.start - dist;
+                newLeftInclusive = isLeftSnapInclusive;
+            }else{ //Contract right on the number line (add)
+                newStart = newInterval.start + (microInterval.width - dist);
+                newLeftInclusive = isLeftSnapInclusive;
+            }
+        } else{
+            newStart = newInterval.start;
+            newLeftInclusive = newInterval.inclusiveStart; //unchanged inclusion
+        }
+
+        dist = Math.floorMod(newInterval.end - offsetMod, microInterval.width);
+        if(dist != 0){
+            if(expandRight){ //Expand Right on the number line (add)
+                newEnd = newInterval.end + (microInterval.width - dist);
+                newRightInclusive = isRightSnapInclusive;
+            }else{ //Contract left on the number line (subtract)
+                newEnd = newInterval.end - dist;
+                newRightInclusive = isRightSnapInclusive;
+            }
+        } else{
+            newEnd = newInterval.end;
+            newRightInclusive = newInterval.inclusiveEnd; //unchanged inclusion
+        }
+
+        if(newEnd < newStart || (newEnd == newStart && !(newLeftInclusive && newRightInclusive))) return null;
+
+        if(newStart == newInterval.start &&
+           newEnd == newInterval.end &&
+           newLeftInclusive == newInterval.inclusiveStart &&
+           newRightInclusive == newInterval.inclusiveEnd){
+           return newInterval;
+        }
+
+        return new FixedLongInterval(
+            newStart,
+            newEnd,
+            newLeftInclusive,
+            newRightInclusive
+        );
     }
 
     /**
@@ -717,6 +780,12 @@ public class AlignedLongSet{
         microCount.add((curEnd - curStart) / microInterval.width);
 
         if(write < n) mergeList.subList(write, n).clear();
+        isMerged = true;
+    }
+
+    public void clear(){
+        mergeList.clear();
+        microCount.clear();
         isMerged = true;
     }
 
