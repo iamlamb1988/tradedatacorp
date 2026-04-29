@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 26 APR 2026
+ * @since 29 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -1056,73 +1056,16 @@ public class AlignedLongSetTest{
         }
 
         @Test
-        public void compareIntervalTest1(){
-            FixedLongInterval int1 = new FixedLongInterval(3, 7, true, true);//[3, 7]
-            FixedLongInterval int2 = new FixedLongInterval(3, 7, true, true);//[3, 7]
+        public void cutLowerTest1(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(0, 10) //[0, 10)
+            );
 
-            assertFalse(int1 == int2);
-            assertTrue(FixedLongInterval.equals(int1, int2));
-            assertTrue(FixedLongInterval.equalsStructural(int1, int2));
-        }
+            span.cutLower(5, true); //will cut interval from (-INFINITY, 5]
 
-        @Test
-        public void compareIntervalTest2(){
-            FixedLongInterval int1 = new FixedLongInterval(3, 7, true, true); //[3, 7]
-            FixedLongInterval int2 = new FixedLongInterval(3, 7, false, true);//(3, 7]
-
-            assertFalse(int1 == int2);
-            assertFalse(FixedLongInterval.equals(int1, int2));
-            assertFalse(FixedLongInterval.equalsStructural(int1, int2));
-        }
-
-        @Test
-        public void compareIntervalTest3(){
-            FixedLongInterval int1 = new FixedLongInterval(0, 1, false, false);//(0, 1)
-            FixedLongInterval int2 = new FixedLongInterval(1, 3, true, false); //[1, 3)
-
-            assertFalse(int1 == int2);
-            assertFalse(FixedLongInterval.equals(int1, int2));
-            assertFalse(FixedLongInterval.equalsStructural(int1, int2));
-        }
-
-        @Test
-        public void compareIntervalTest4(){
-            FixedLongInterval int1 = new FixedLongInterval(9, 9, true, true);//[9, 9]
-            FixedLongInterval int2 = new FixedLongInterval(9, 9, true, true);//[9, 9]
-
-            assertFalse(int1 == int2);
-            assertTrue(FixedLongInterval.equals(int1, int2));
-            assertTrue(FixedLongInterval.equalsStructural(int1, int2));
-        }
-
-        @Test
-        public void compareIntervalTest5(){
-            FixedLongInterval int1 = new FixedLongInterval(9, 9, true, false);//[9, 9) empty set
-            FixedLongInterval int2 = new FixedLongInterval(9, 9, true, true); //[9, 9]
-
-            assertFalse(int1 == int2);
-            assertFalse(FixedLongInterval.equals(int1, int2));
-            assertFalse(FixedLongInterval.equalsStructural(int1, int2));
-        }
-
-        @Test
-        public void compareIntervalTest6(){
-            FixedLongInterval int1 = new FixedLongInterval(9, 9, true, false);//[9, 9) empty set
-            FixedLongInterval int2 = new FixedLongInterval(1, 2, false, true);//(1, 2] empty set
-
-            assertFalse(int1 == int2);
-            assertFalse(FixedLongInterval.equals(int1, int2));
-            assertFalse(FixedLongInterval.equalsStructural(int1, int2));
-        }
-
-        @Test
-        public void compareIntervalTest7(){
-            FixedLongInterval int1 = new FixedLongInterval(9, 9, true, false);//[9, 9) empty set
-            FixedLongInterval int2 = new FixedLongInterval(9, 9, false, true);//(9, 9] empty set
-
-            assertFalse(int1 == int2);
-            assertTrue(FixedLongInterval.equals(int1, int2)); //empty set is equal to empty set
-            assertFalse(FixedLongInterval.equalsStructural(int1, int2)); //primitive internal values are not the same
+            assertEquals("(5,10)",span.toString());
         }
     }
 

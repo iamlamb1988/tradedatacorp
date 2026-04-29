@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 28 APR 2026
+ * @since 29 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -18,13 +18,25 @@ public class LongSetRegistryTest{
         assertTrue(regi.isBoundContinuous());
         assertEquals("{}", regi.getBoundryIntervalString());
         assertEquals("{}", regi.getCoverageIntervalString());
+
         assertEquals(0, regi.getSlotCount());
+        assertEquals(0, regi.getMicroIntervalCountInBoundry());
+        assertEquals(0, regi.getMicroIntervalCountCovered());
     }
 
     @Test
     public void oneSlotTest(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
+        regi.addSlot(new FixedLongInterval(3, 6));
 
-        //Need to clearly define addSlot definitions before testing
+        assertFalse(regi.isMerged());
+        assertTrue(regi.isBoundContinuous());
+
+        assertEquals("[3,6)", regi.getBoundryIntervalString());
+        assertEquals("{}", regi.getCoverageIntervalString());
+        assertTrue(regi.isMerged()); //Lazy check, should automerge upon checking intervals
+        assertEquals(1, regi.getSlotCount());
+        assertEquals(3, regi.getMicroIntervalCountInBoundry());
+        assertEquals(0, regi.getMicroIntervalCountCovered());
     }
 }

@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 28 APR 2026
+ * @since 29 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -83,9 +83,25 @@ public class LongSetRegistry{
     /**
      * Returns the mathematical interval string representing the entire domain of this registry state
      */
-    public String getBoundryIntervalString(){return totalBoundry.toString();}
+    public String getBoundryIntervalString(){
+        if(!isMerged) merge();
+        return totalBoundry.toString();
+    }
 
-    public String getCoverageIntervalString(){return totalCoverage.toString();}
+    public String getCoverageIntervalString(){
+        if(!isMerged) merge();
+        return totalCoverage.toString();
+    }
+
+    public long getMicroIntervalCountInBoundry(){
+        if(!isMerged) merge();
+        return totalBoundry.getMicroIntervalCount();
+    }
+
+    public long getMicroIntervalCountCovered(){
+        if(!isMerged) merge();
+        return totalCoverage.getMicroIntervalCount();
+    }
 
     /**
      * Adds an interval slot to the registry. Will snap to microIntervals if required.
@@ -107,11 +123,34 @@ public class LongSetRegistry{
             throw new IllegalArgumentException("A slot within a registry requires a micro interval with a width > 0.");
 
         if(slotList.size() == 0){
-            slotList.add(new Slot(domain.start, domain.end, domain.inclusiveStart, domain.inclusiveEnd));
+            FixedLongInterval snappedDomain = totalBoundry.getSnappedInterval(
+                domain,
+                expandLeft,
+                expandRight,
+                isLeftSnapInclusive,
+                isRightSnapInclusive
+            );
+            slotList.add(new Slot(snappedDomain.start, snappedDomain.end, snappedDomain.inclusiveStart, snappedDomain.inclusiveEnd));
         }
+        //TODO: Handle cases to trim or expand domain based on booleans OR throw exception
         //no overlap or gaps possible, add as normal
         //may need to trim left or right IF overlapped or gapped to existing slot
-        
+        isMerged = false;
+    }
+
+    public void addSlot(
+        FixedLongInterval domain
+    ){
+        addSlot(
+            domain,
+            domain.inclusiveStart,
+            domain.inclusiveEnd,
+            domain.inclusiveStart,
+            domain.inclusiveEnd,
+            true,
+            true,
+            true
+        );
     }
 
     public void addSlot(long point, boolean expandGap){}

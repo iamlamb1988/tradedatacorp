@@ -1,9 +1,10 @@
 /**
  * @author Bruce Lamb
- * @since 28 APR 2026
+ * @since 29 APR 2026
  */
 package tradedatacorp.tools.interval;
 
+import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
@@ -680,6 +681,53 @@ public class AlignedLongSet{
         );
     }
 
+    public void cutLower(long point, boolean isPointInclusive){
+        if(!isMerged) merge();
+        //1. drop all intervals that have an endpoint less than point.
+        Iterator<FixedLongInterval> it = mergeList.iterator();
+        ArrayList<FixedLongInterval> replacementMergeList = new ArrayList<>(mergeList.size()); //elements to add
+        while(it.hasNext()){
+            FixedLongInterval next = it.next();
+            if(next.end < point) mergeList.remove(next);
+            else if(next.start < point){
+                replacementMergeList.add(
+                    new FixedLongInterval(
+                        point,
+                        next.end,
+                        !isPointInclusive,
+                        next.inclusiveEnd
+                    )
+                );
+                it.remove();
+            }else if(next.start == point && isPointInclusive && next.inclusiveStart){
+                replacementMergeList.add(
+                    new FixedLongInterval(
+                        point,
+                        next.end,
+                        false,
+                        next.inclusiveEnd
+                    )
+                );
+                it.remove();
+            }
+        }
+
+        //2. add shortened replacements
+        for(FixedLongInterval intv : replacementMergeList){
+            mergeList.add(intv);
+        }
+
+        if(mergeList.size() == 0){
+            microCount.clear();
+            isMerged = true;
+        }else if(mergeList.size() == 1){
+            microCount.clear();
+            microCount.add(mergeList.get(0).width/microInterval.width);
+            isMerged = true;
+        }else isMerged = false;
+    }
+
+    public void cutUpper(){}
     /**
      * Consolidates {@code mergeList} into a minimal, ordered list of non-overlapping {@link FixedLongInterval}s,
      * merging any intervals that overlap or are adjacent on the number line.
