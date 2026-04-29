@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 27 APR 2026
+ * @since 28 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -288,9 +288,35 @@ public class AlignedLongSet{
     }
 
     /**
-     * Returns a snapped interval IAW with this state instance.
-     * If the interval is already snapped, will return the same instance
-     * //TODO: more javadoc elaboration
+     * Returns the result of snapping {@code newInterval} to this set's micro-interval grid,
+     * without modifying this set. A pure function over the grid phase and step.
+     *
+     * <p>Snap behavior per endpoint mirrors {@link #addInterval}:
+     * <ul>
+     *   <li>Grid-aligned endpoints are kept as-is, preserving their original inclusivity;
+     *       the {@code isLeftSnapInclusive} / {@code isRightSnapInclusive} flags are ignored
+     *       for that endpoint.</li>
+     *   <li>Off-grid endpoints snap outward when the corresponding {@code expand*} flag is
+     *       {@code true}, or inward when {@code false}; their post-snap inclusivity is taken
+     *       from the snap-inclusivity flags.</li>
+     * </ul>
+     *
+     * <p>If the snapped result would be empty (end {@code <} start, or zero-width with at
+     * least one exclusive boundary), this method returns {@code null}. If both endpoints were
+     * already on the grid (so no field changed), the original {@code newInterval} reference
+     * is returned to avoid an unnecessary allocation.
+     *
+     * <p>Complexity: {@code O(1)} — two {@link Math#floorMod} calls and constant-time arithmetic.
+     *
+     * @param newInterval          the interval to snap; must not be {@code null}.
+     * @param expandLeft           {@code true} to snap the start outward (lesser);
+     *                             {@code false} to snap inward (greater).
+     * @param expandRight          {@code true} to snap the end outward (greater);
+     *                             {@code false} to snap inward (lesser).
+     * @param isLeftSnapInclusive  inclusivity assigned to the start when it is off-grid and snapped.
+     * @param isRightSnapInclusive inclusivity assigned to the end when it is off-grid and snapped.
+     * @return the snapped {@link FixedLongInterval}, the original {@code newInterval} if both
+     *         endpoints were already on the grid, or {@code null} if the snapped interval is empty.
      */
     public FixedLongInterval getSnappedInterval(
         FixedLongInterval newInterval,
@@ -384,55 +410,15 @@ public class AlignedLongSet{
         boolean isLeftSnapInclusive,
         boolean isRightSnapInclusive
     ){
-        long dist; //distance from begin or endpoint to next snap
-        long newStart;
-        long newEnd;
-        boolean newLeftInclusive;
-        boolean newRightInclusive;
-
-        dist = Math.floorMod(newInterval.start - offsetMod, microInterval.width);
-        if(dist != 0){
-            if(expandLeft){ //Expand Left on the number line (subtract)
-                newStart = newInterval.start - dist;
-                newLeftInclusive = isLeftSnapInclusive;
-            }else{ //Contract right on the number line (add)
-                newStart = newInterval.start + (microInterval.width - dist);
-                newLeftInclusive = isLeftSnapInclusive;
-            }
-        } else{
-            newStart = newInterval.start;
-            newLeftInclusive = newInterval.inclusiveStart; //unchanged inclusion
-        }
-
-        dist = Math.floorMod(newInterval.end - offsetMod, microInterval.width);
-        if(dist != 0){
-            if(expandRight){ //Expand Right on the number line (add)
-                newEnd = newInterval.end + (microInterval.width - dist);
-                newRightInclusive = isRightSnapInclusive;
-            }else{ //Contract left on the number line (subtract)
-                newEnd = newInterval.end - dist;
-                newRightInclusive = isRightSnapInclusive;
-            }
-        } else{
-            newEnd = newInterval.end;
-            newRightInclusive = newInterval.inclusiveEnd; //unchanged inclusion
-        }
-
-        if(newEnd < newStart || (newEnd == newStart && !(newLeftInclusive && newRightInclusive))) return;
-
-        FixedLongInterval newQuantizedInterval = new FixedLongInterval(
-            newStart,
-            newEnd,
-            newLeftInclusive,
-            newRightInclusive
+        FixedLongInterval snapped = getSnappedInterval(
+            newInterval, expandLeft, expandRight, isLeftSnapInclusive, isRightSnapInclusive
         );
+        if(snapped == null) return;
 
-        mergeList.add(newQuantizedInterval);
+        mergeList.add(snapped);
 
         if(mergeList.size() == 1){
-            microCount.add(Long.valueOf(
-                (newQuantizedInterval.end - newQuantizedInterval.start)/microInterval.width)
-            );
+            microCount.add(snapped.width / microInterval.width);
             isMerged = true;
             return;
         }
@@ -499,6 +485,31 @@ public class AlignedLongSet{
     }
 
     /**
+     * Adds every merged segment of {@code set} to this set, snapping each segment outward to
+     * this set's micro-interval grid via {@link #addInterval(FixedLongInterval)}.
+     *
+     * <p>Each forwarded segment uses {@code expandLeft=true}, {@code expandRight=true} and
+     * preserves the segment's original inclusivity at off-grid endpoints. If {@code set}'s grid
+     * matches this set's grid and phase, the snap is a no-op per segment. {@code set} is merged
+     * first if a merge was pending; the merge of this set is deferred until its next read.
+     *
+     * <p>Self-add ({@code set == this}) is a no-op since a set's union with itself is itself.
+     *
+     * <p>Complexity: {@code O(k)} appends, where {@code k} is {@code set.getIntervalSegmentCount()}
+     * (plus the cost of merging {@code set} if pending). No defensive copy is made of {@code set}'s
+     * segment list. {@link #addInterval} maintains {@code isMerged} and {@code microCount}
+     * consistently across all calls, so no post-loop bookkeeping is required.
+     *
+     * @param set the source set whose segments are added; must not be {@code null}.
+     */
+    public void addSet(AlignedLongSet set){
+        if(this == set) return;
+        if(!set.isMerged) set.merge();
+        final int k = set.mergeList.size();
+        for(int i = 0; i < k; ++i) addInterval(set.mergeList.get(i));
+    }
+
+    /**
      * Quantizes {@code newInterval} to the micro-interval grid and removes its coverage from this set.
      * Triggers a merge first if one is pending, so subtraction operates on a canonical disjoint form.
      *
@@ -537,37 +548,15 @@ public class AlignedLongSet{
         final int n = mergeList.size();
         if(n == 0) return;
 
-        //Quantize endpoints to the grid (same rules as addInterval).
-        long sStart;
-        long sEnd;
-        boolean sLeftInc;
-        boolean sRightInc;
-
-        long dist = Math.floorMod(newInterval.start - offsetMod, microInterval.width);
-        if(dist != 0){
-            sStart = expandLeft
-                ? newInterval.start - dist
-                : newInterval.start + (microInterval.width - dist);
-            sLeftInc = isLeftSnapInclusive;
-        }else{
-            sStart = newInterval.start;
-            sLeftInc = newInterval.inclusiveStart;
-        }
-
-        dist = Math.floorMod(newInterval.end - offsetMod, microInterval.width);
-        if(dist != 0){
-            sEnd = expandRight
-                ? newInterval.end + (microInterval.width - dist)
-                : newInterval.end - dist;
-            sRightInc = isRightSnapInclusive;
-        }else{
-            sEnd = newInterval.end;
-            sRightInc = newInterval.inclusiveEnd;
-        }
-
-        //Strict empty check: zero-width only acts when both sides inclusive (a real point).
-        if(sEnd < sStart) return;
-        if(sEnd == sStart && !(sLeftInc && sRightInc)) return;
+        //Quantize endpoints to the grid (same rules as addInterval). Returns null on empty.
+        FixedLongInterval s = getSnappedInterval(
+            newInterval, expandLeft, expandRight, isLeftSnapInclusive, isRightSnapInclusive
+        );
+        if(s == null) return;
+        final long sStart = s.start;
+        final long sEnd = s.end;
+        final boolean sLeftInc = s.inclusiveStart;
+        final boolean sRightInc = s.inclusiveEnd;
 
         //Binary search for first segment whose end is not strictly left of S.
         int lo = 0;
@@ -783,6 +772,11 @@ public class AlignedLongSet{
         isMerged = true;
     }
 
+    /**
+     * Removes all segments from this set, returning it to the empty state. The micro-interval
+     * grid (phase and step) is preserved, so subsequent {@link #addInterval} calls snap to the
+     * same grid as before.
+     */
     public void clear(){
         mergeList.clear();
         microCount.clear();
