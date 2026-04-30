@@ -31,6 +31,7 @@ import java.util.ArrayList;
  * //TODO: Class still in development and documentation may change.
  */
 public class LongSetRegistry{
+    /** Sentinel empty interval {@code (0,0)} used as a placeholder where an interval reference is required. */
     public static final FixedLongInterval EMPTY_INTERVAL = new FixedLongInterval(0, 0, false, false);
 
     private final FixedLongInterval microInterval;
@@ -43,6 +44,13 @@ public class LongSetRegistry{
 
     private ArrayList<Slot> slotList;     // ordered list of slots
 
+    /**
+     * Constructs an empty registry whose slots all share the given micro-interval grid.
+     *
+     * @param microInterval the grid unit; its {@code start} sets the phase and its {@code width}
+     *                      sets the step size for every slot's coverage. Must have positive width.
+     * @throws IllegalArgumentException if {@code microInterval.width == 0}.
+     */
     public LongSetRegistry(FixedLongInterval microInterval){
         if(microInterval.width == 0)
             throw new IllegalArgumentException("LongSetRegistry requires a micro interval with a width > 0.");
@@ -55,6 +63,12 @@ public class LongSetRegistry{
         isMerged = true;
     }
 
+    /**
+     * Returns {@code true} when the aggregate {@code totalBoundry} and {@code totalCoverage} views
+     * are up to date with the underlying slot list.
+     *
+     * @return {@code true} if no merge is pending; {@code false} if an aggregate refresh is needed.
+     */
     public boolean isMerged(){return isMerged;}
 
     /**
@@ -88,16 +102,35 @@ public class LongSetRegistry{
         return totalBoundry.toString();
     }
 
+    /**
+     * Returns the mathematical interval string representing the union of done coverage across
+     * all slots. Triggers a merge if one is pending.
+     *
+     * @return the merged coverage as a union-of-intervals string (e.g. {@code "[0,5)U[8,11]"}),
+     *         or {@code "{}"} if no slot has any coverage.
+     */
     public String getCoverageIntervalString(){
         if(!isMerged) merge();
         return totalCoverage.toString();
     }
 
+    /**
+     * Returns the total number of micro-interval grid steps spanned by the union of all slot
+     * boundaries. Triggers a merge if one is pending.
+     *
+     * @return aggregate boundary step count; {@code 0} if there are no slots.
+     */
     public long getMicroIntervalCountInBoundry(){
         if(!isMerged) merge();
         return totalBoundry.getMicroIntervalCount();
     }
 
+    /**
+     * Returns the total number of micro-interval grid steps marked as done across all slots.
+     * Triggers a merge if one is pending.
+     *
+     * @return aggregate done-coverage step count; {@code 0} if no slot has any coverage.
+     */
     public long getMicroIntervalCountCovered(){
         if(!isMerged) merge();
         return totalCoverage.getMicroIntervalCount();
@@ -138,6 +171,14 @@ public class LongSetRegistry{
         isMerged = false;
     }
 
+    /**
+     * Convenience overload of
+     * {@link #addSlot(FixedLongInterval, boolean, boolean, boolean, boolean, boolean, boolean, boolean)}
+     * that preserves {@code domain}'s original inclusivity at any off-grid snapped endpoints and
+     * defaults to expanding into adjacent slot gaps and contracting on overlap.
+     *
+     * @param domain the interval defining the slot's window.
+     */
     public void addSlot(
         FixedLongInterval domain
     ){
@@ -153,8 +194,26 @@ public class LongSetRegistry{
         );
     }
 
+    /**
+     * Adds a slot covering the micro-interval cell that contains {@code point}.
+     *
+     * <p><strong>Not yet implemented.</strong>
+     *
+     * @param point     the value whose containing micro-interval cell is intended to become the
+     *                  new slot's domain.
+     * @param expandGap reserved; intended to control whether the new slot extends to fill any
+     *                  gap with an adjacent slot.
+     */
     public void addSlot(long point, boolean expandGap){}
 
+    /**
+     * Recomputes {@code totalBoundry} and {@code totalCoverage} from the current slot list,
+     * forcing a merge on each slot's done coverage if pending. After this call
+     * {@link #isMerged()} returns {@code true}.
+     *
+     * <p>Complexity: {@code O(s + k)} where {@code s} is the slot count and {@code k} is the
+     * total number of segments across all slots' done coverage.
+     */
     public void merge(){
         AlignedLongSet tmpTotalBound = new AlignedLongSet(microInterval);
         AlignedLongSet tmpTotalDone  = new AlignedLongSet(microInterval);
