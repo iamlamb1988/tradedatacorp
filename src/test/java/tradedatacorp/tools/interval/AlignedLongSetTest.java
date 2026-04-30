@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 29 APR 2026
+ * @since 30 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -441,6 +441,214 @@ public class AlignedLongSetTest{
             assertEquals(-2L, quantizedInt.end);
             assertEquals(2L, quantizedInt.width);
             assertEquals(2L, quantizedInt.getWidth());
+        }
+
+        @Test
+        public void cutIntervalTest1(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutLower(4, true); //effectively cut (-INFINITY, 4]
+            assertEquals("(4,7]",span.toString());
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest2(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutUpper(4, true); //effectively cut [4, INFINITY)
+            assertEquals("[2,4)",span.toString());
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest3(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutLower(4, false); //effectively cut (-INFINITY, 4)
+            assertEquals("[4,7]",span.toString());
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest4(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutUpper(4, false); //effectively cut (4, INFINITY)
+            assertEquals("[2,4]",span.toString());
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest5(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutLower(2, true); //effectively cut (-INFINITY, 2]
+            assertEquals("(2,7]",span.toString()); //Touch cut
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest6(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutUpper(7, true); //effectively cut [7, INFINITY)
+            assertEquals("[2,7)",span.toString()); //Touch cut
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest7(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutLower(2, false); //effectively cut (-INFINITY, 2)
+            assertEquals("[2,7]",span.toString()); //No touch cut: NO CHANGE
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest8(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutUpper(7, false); //effectively cut (7, INFINITY)
+            assertEquals("[2,7]",span.toString()); //No touch cut: NO CHANGE
+
+            assertTrue(span.isMerged());
+        }
+
+        @Test
+        public void cutIntervalTest9(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutLower(10, false); //effectively cut (-INFINITY, 10)
+            assertEquals("{}", span.toString()); //clean sweep
+
+            assertTrue(span.isMerged());
+            assertEquals(0, span.getIntervalSegmentCount());
+        }
+
+        @Test
+        public void cutIntervalTest10(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutUpper(1, true); //effectively cut [1, INFINITY)
+            assertEquals("{}",span.toString()); //clean sweep
+
+            assertTrue(span.isMerged());
+            assertEquals(0, span.getIntervalSegmentCount());
+        }
+
+        @Test
+        public void cutIntervalTest11(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutLower(7, true); //effectively cut (-INFINITY, 7]
+            assertEquals("{}", span.toString()); //touch sweep
+
+            assertTrue(span.isMerged());
+            assertEquals(0, span.getIntervalSegmentCount());
+        }
+
+        @Test
+        public void cutIntervalTest12(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            assertEquals(1L, micro.width);
+            assertEquals(1L, micro.getWidth());
+
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2, 7, true, true) //[2, 7]
+            );
+
+            span.cutUpper(2, true); //effectively cut [2, INFINITY)
+            assertEquals("{}", span.toString()); //touch sweep
+
+            assertTrue(span.isMerged());
+            assertEquals(0, span.getIntervalSegmentCount());
         }
     }
 
@@ -1056,16 +1264,66 @@ public class AlignedLongSetTest{
         }
 
         @Test
-        public void cutLowerTest1(){
+        public void cutTest1(){
             FixedLongInterval micro = new FixedLongInterval(0, 1);
             AlignedLongSet span = new AlignedLongSet(
                 micro,
-                new FixedLongInterval(0, 10) //[0, 10)
+                new FixedLongInterval(1, 3), //[1, 3)
+                new FixedLongInterval(7, 10, true, true) //[7, 10]
             );
 
             span.cutLower(5, true); //will cut interval from (-INFINITY, 5]
 
-            assertEquals("(5,10)",span.toString());
+            assertTrue(span.isMerged());
+            assertEquals("[7,10]",span.toString());
+        }
+
+        @Test
+        public void cutTest2(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(1, 3), //[1, 3)
+                new FixedLongInterval(7, 10, true, true) //[7, 10]
+            );
+
+            span.cutUpper(5, false); //will cut interval from (5, INFINITY)
+
+            assertTrue(span.isMerged());
+            assertEquals("[1,3)",span.toString());
+        }
+
+        @Test
+        public void cutTest3(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(1, 3), //[1, 3)
+                new FixedLongInterval(7, 10, true, true) //[7, 10]
+            );
+
+            span.cutLower(8, true); //will cut interval from (-INFINITY, 8]
+
+            assertTrue(span.isMerged());
+            assertEquals("(8,10]",span.toString());
+        }
+
+        @Test
+        public void cutTest4(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            AlignedLongSet span = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(1, 3), //[1, 3)
+                new FixedLongInterval(7, 10, true, true) //[7, 10]
+            );
+
+            span.cutUpper(8, true); //will cut interval from [8, INFINITY)
+
+            assertFalse(span.isMerged()); //Lazy check
+
+            assertEquals("[1,3)U[7,8)",span.toString());
+            assertEquals(2, span.getIntervalSegmentCount());
+            assertTrue(span.isMerged());
         }
     }
 

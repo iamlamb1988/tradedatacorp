@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 29 APR 2026
+ * @since 30 APR 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -688,7 +688,7 @@ public class AlignedLongSet{
         ArrayList<FixedLongInterval> replacementMergeList = new ArrayList<>(mergeList.size()); //elements to add
         while(it.hasNext()){
             FixedLongInterval next = it.next();
-            if(next.end < point) mergeList.remove(next);
+            if(next.end < point) it.remove();
             else if(next.start < point){
                 replacementMergeList.add(
                     new FixedLongInterval(
@@ -717,17 +717,74 @@ public class AlignedLongSet{
             mergeList.add(intv);
         }
 
+        //3. Update merge if simply 0 or 1 size
         if(mergeList.size() == 0){
             microCount.clear();
             isMerged = true;
         }else if(mergeList.size() == 1){
             microCount.clear();
-            microCount.add(mergeList.get(0).width/microInterval.width);
+            long width = mergeList.get(0).width/microInterval.width;
+            if(width != 0) microCount.add(width);
+            else mergeList.clear();
             isMerged = true;
         }else isMerged = false;
     }
 
-    public void cutUpper(){}
+    public void cutUpper(long point, boolean isPointInclusive){
+        if(!isMerged) merge();
+        //1. drop all intervals that have an endpoint less than point.
+        Iterator<FixedLongInterval> it = mergeList.iterator();
+        ArrayList<FixedLongInterval> replacementMergeList = new ArrayList<>(mergeList.size()); //elements to add
+
+        while(it.hasNext()){
+            FixedLongInterval next = it.next();
+            if(next.start > point) it.remove();
+            else if(next.end > point){
+                replacementMergeList.add(
+                    new FixedLongInterval(
+                        next.start,
+                        point,
+                        next.inclusiveStart,
+                        !isPointInclusive
+                    )
+                );
+                it.remove();
+            }else if(next.end == point && isPointInclusive && next.inclusiveEnd){
+                replacementMergeList.add(
+                    new FixedLongInterval(
+                        next.start,
+                        point,
+                        next.inclusiveStart,
+                        false
+                    )
+                );
+                it.remove();
+            }
+        }
+
+        //2. add shortened replacements
+        for(FixedLongInterval intv : replacementMergeList){
+            mergeList.add(intv);
+        }
+
+        //3. Update merge if simply 0 or 1 size
+        for(FixedLongInterval intv : replacementMergeList){
+            mergeList.add(intv);
+        }
+
+        //3. Update merge if simply 0 or 1 size
+        if(mergeList.size() == 0){
+            microCount.clear();
+            isMerged = true;
+        }else if(mergeList.size() == 1){
+            microCount.clear();
+            long width = mergeList.get(0).width/microInterval.width;
+            if(width != 0) microCount.add(width);
+            else mergeList.clear();
+            isMerged = true;
+        }else isMerged = false;
+    }
+
     /**
      * Consolidates {@code mergeList} into a minimal, ordered list of non-overlapping {@link FixedLongInterval}s,
      * merging any intervals that overlap or are adjacent on the number line.
@@ -888,8 +945,8 @@ public class AlignedLongSet{
      */
     @Override
     public String toString(){
-        if(mergeList.size() == 0) return "{}";
         if(!isMerged) merge();
+        if(mergeList.size() == 0) return "{}";
 
         StringBuilder bldr = new StringBuilder();
         bldr.append(mergeList.get(0).toString());
