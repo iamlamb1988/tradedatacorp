@@ -1319,7 +1319,8 @@ public class AlignedLongSetTest{
 
             span.cutUpper(8, true); //will cut interval from [8, INFINITY)
 
-            assertFalse(span.isMerged()); //Lazy check
+            //cutUpper preserves the sorted, disjoint invariant in place; no re-merge is needed.
+            assertTrue(span.isMerged());
 
             assertEquals("[1,3)U[7,8)",span.toString());
             assertEquals(2, span.getIntervalSegmentCount());

@@ -4,7 +4,6 @@
  */
 package tradedatacorp.tools.interval;
 
-import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
@@ -681,108 +680,117 @@ public class AlignedLongSet{
         );
     }
 
+    /**
+     * Removes everything in this set strictly below {@code point} (and {@code point} itself when
+     * {@code isPointInclusive} is {@code true}), leaving only the portion of the set at or above
+     * the cut. Triggers a merge first if one is pending.
+     *
+     * <p>Complexity: {@code O(log n + k)} — a binary search locates the boundary segment, the
+     * dead prefix is dropped in a single contiguous {@link java.util.ArrayList#subList} clear,
+     * and at most one boundary segment is rewritten in place. The list stays sorted and disjoint,
+     * so {@link #isMerged} remains {@code true} and {@link #microCount} is maintained in parallel
+     * without forcing a re-merge on the next read.
+     *
+     * @param point            the cut boundary.
+     * @param isPointInclusive {@code true} if {@code point} itself is part of the cut (removed);
+     *                         {@code false} if {@code point} is preserved in the surviving set.
+     */
     public void cutLower(long point, boolean isPointInclusive){
         if(!isMerged) merge();
-        //1. drop all intervals that have an endpoint less than point.
-        Iterator<FixedLongInterval> it = mergeList.iterator();
-        ArrayList<FixedLongInterval> replacementMergeList = new ArrayList<>(mergeList.size()); //elements to add
-        while(it.hasNext()){
-            FixedLongInterval next = it.next();
-            if(next.end < point) it.remove();
-            else if(next.start < point){
-                replacementMergeList.add(
-                    new FixedLongInterval(
-                        point,
-                        next.end,
-                        !isPointInclusive,
-                        next.inclusiveEnd
-                    )
-                );
-                it.remove();
-            }else if(next.start == point && isPointInclusive && next.inclusiveStart){
-                replacementMergeList.add(
-                    new FixedLongInterval(
-                        point,
-                        next.end,
-                        false,
-                        next.inclusiveEnd
-                    )
-                );
-                it.remove();
-            }
-        }
+        final int n = mergeList.size();
+        if(n == 0) return;
 
-        //2. add shortened replacements
-        for(FixedLongInterval intv : replacementMergeList){
-            mergeList.add(intv);
+        int lo = 0;
+        int hi = n;
+        while(lo < hi){
+            int mid = (lo + hi) >>> 1;
+            FixedLongInterval seg = mergeList.get(mid);
+            boolean drop = seg.end < point ||
+                (seg.end == point && (isPointInclusive || !seg.inclusiveEnd));
+            if(drop) lo = mid + 1;
+            else hi = mid;
         }
+        final int firstSurvivor = lo;
 
-        //3. Update merge if simply 0 or 1 size
-        if(mergeList.size() == 0){
+        if(firstSurvivor == n){
+            mergeList.clear();
             microCount.clear();
             isMerged = true;
-        }else if(mergeList.size() == 1){
-            microCount.clear();
-            long width = mergeList.get(0).width/microInterval.width;
-            if(width != 0) microCount.add(width);
-            else mergeList.clear();
-            isMerged = true;
-        }else isMerged = false;
+            return;
+        }
+
+        FixedLongInterval first = mergeList.get(firstSurvivor);
+        boolean needTruncate = first.start < point ||
+            (first.start == point && isPointInclusive && first.inclusiveStart);
+        if(needTruncate){
+            FixedLongInterval truncated = new FixedLongInterval(
+                point, first.end, !isPointInclusive, first.inclusiveEnd
+            );
+            mergeList.set(firstSurvivor, truncated);
+            microCount.set(firstSurvivor, truncated.width / microInterval.width);
+        }
+
+        if(firstSurvivor > 0){
+            mergeList.subList(0, firstSurvivor).clear();
+            microCount.subList(0, firstSurvivor).clear();
+        }
     }
 
+    /**
+     * Removes everything in this set strictly above {@code point} (and {@code point} itself when
+     * {@code isPointInclusive} is {@code true}), leaving only the portion of the set at or below
+     * the cut. Triggers a merge first if one is pending.
+     *
+     * <p>Complexity: {@code O(log n + k)} — a binary search locates the boundary segment, the
+     * dead suffix is dropped via a single {@link java.util.ArrayList#subList} clear (no element
+     * shift required for tail removal), and at most one boundary segment is rewritten in place.
+     * The list stays sorted and disjoint, so {@link #isMerged} remains {@code true} and
+     * {@link #microCount} is maintained in parallel without forcing a re-merge on the next read.
+     *
+     * @param point            the cut boundary.
+     * @param isPointInclusive {@code true} if {@code point} itself is part of the cut (removed);
+     *                         {@code false} if {@code point} is preserved in the surviving set.
+     */
     public void cutUpper(long point, boolean isPointInclusive){
         if(!isMerged) merge();
-        //1. drop all intervals that have an endpoint less than point.
-        Iterator<FixedLongInterval> it = mergeList.iterator();
-        ArrayList<FixedLongInterval> replacementMergeList = new ArrayList<>(mergeList.size()); //elements to add
+        final int n = mergeList.size();
+        if(n == 0) return;
 
-        while(it.hasNext()){
-            FixedLongInterval next = it.next();
-            if(next.start > point) it.remove();
-            else if(next.end > point){
-                replacementMergeList.add(
-                    new FixedLongInterval(
-                        next.start,
-                        point,
-                        next.inclusiveStart,
-                        !isPointInclusive
-                    )
-                );
-                it.remove();
-            }else if(next.end == point && isPointInclusive && next.inclusiveEnd){
-                replacementMergeList.add(
-                    new FixedLongInterval(
-                        next.start,
-                        point,
-                        next.inclusiveStart,
-                        false
-                    )
-                );
-                it.remove();
-            }
+        int lo = 0;
+        int hi = n;
+        while(lo < hi){
+            int mid = (lo + hi) >>> 1;
+            FixedLongInterval seg = mergeList.get(mid);
+            boolean drop = seg.start > point ||
+                (seg.start == point && (isPointInclusive || !seg.inclusiveStart));
+            if(drop) hi = mid;
+            else lo = mid + 1;
         }
+        final int firstDropped = lo;
 
-        //2. add shortened replacements
-        for(FixedLongInterval intv : replacementMergeList){
-            mergeList.add(intv);
-        }
-
-        //3. Update merge if simply 0 or 1 size
-        for(FixedLongInterval intv : replacementMergeList){
-            mergeList.add(intv);
-        }
-
-        //3. Update merge if simply 0 or 1 size
-        if(mergeList.size() == 0){
+        if(firstDropped == 0){
+            mergeList.clear();
             microCount.clear();
             isMerged = true;
-        }else if(mergeList.size() == 1){
-            microCount.clear();
-            long width = mergeList.get(0).width/microInterval.width;
-            if(width != 0) microCount.add(width);
-            else mergeList.clear();
-            isMerged = true;
-        }else isMerged = false;
+            return;
+        }
+
+        final int lastSurvivor = firstDropped - 1;
+        FixedLongInterval last = mergeList.get(lastSurvivor);
+        boolean needTruncate = last.end > point ||
+            (last.end == point && isPointInclusive && last.inclusiveEnd);
+        if(needTruncate){
+            FixedLongInterval truncated = new FixedLongInterval(
+                last.start, point, last.inclusiveStart, !isPointInclusive
+            );
+            mergeList.set(lastSurvivor, truncated);
+            microCount.set(lastSurvivor, truncated.width / microInterval.width);
+        }
+
+        if(firstDropped < n){
+            mergeList.subList(firstDropped, n).clear();
+            microCount.subList(firstDropped, n).clear();
+        }
     }
 
     /**
