@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 29 APR 2026
+ * @since 8 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -102,6 +102,10 @@ public class LongSetRegistry{
         return totalBoundry.toString();
     }
 
+    public String getSlotBoundIntervalString(int slotIndex){
+        if(!isMerged) merge();
+        return slotList.get(slotIndex).boundedInterval.toString();
+    }
     /**
      * Returns the mathematical interval string representing the union of done coverage across
      * all slots. Triggers a merge if one is pending.
@@ -149,26 +153,83 @@ public class LongSetRegistry{
         boolean isLeftSnapInclusive,
         boolean isRightSnapInclusive,
         boolean expandToLeftSlot,
-        boolean expandToRightSlot,
-        boolean contractOverlap
+        boolean expandToRightSlot
     ){
-        if(domain.width == 0)
-            throw new IllegalArgumentException("A slot within a registry requires a micro interval with a width > 0.");
+        if(domain.width == 0) return;
+
+        FixedLongInterval candidate = totalBoundry.getSnappedInterval(
+            domain,
+            expandLeft,
+            expandRight,
+            isLeftSnapInclusive,
+            isRightSnapInclusive
+        );
 
         if(slotList.size() == 0){
-            FixedLongInterval snappedDomain = totalBoundry.getSnappedInterval(
-                domain,
-                expandLeft,
-                expandRight,
-                isLeftSnapInclusive,
-                isRightSnapInclusive
-            );
-            slotList.add(new Slot(snappedDomain.start, snappedDomain.end, snappedDomain.inclusiveStart, snappedDomain.inclusiveEnd));
+            slotList.add(new Slot(candidate.start, candidate.end, candidate.inclusiveStart, candidate.inclusiveEnd));
+            isMerged = false;
+            return;
         }
-        //TODO: Handle cases to trim or expand domain based on booleans OR throw exception
-        //no overlap or gaps possible, add as normal
-        //may need to trim left or right IF overlapped or gapped to existing slot
-        isMerged = false;
+
+        merge();
+
+        if(totalBoundry.overlaps(candidate)){ //overlap detected
+            AlignedLongSet unslottedRange = new AlignedLongSet(microInterval, candidate);
+            for(Slot s : slotList){unslottedRange.subtractInterval(s.boundedInterval);}
+
+            //add non-overlapping chunks recursively
+            for(FixedLongInterval intv : unslottedRange.getIntervals()){
+                addSlot(
+                    intv,
+                    expandLeft, //disregarded due to perfect snaps
+                    expandRight, //disregarded due to perfect snaps
+                    isLeftSnapInclusive, //disregarded due to perfect snaps
+                    isRightSnapInclusive, //disregarded due to perfect snaps
+                    expandToLeftSlot, //disregarded due to perfect snaps
+                    expandToRightSlot //disregarded due to perfect snaps
+                );
+            }
+
+            isMerged = false;
+        }else{
+            int lo = 0,
+                hi = slotList.size() - 1,
+                m;
+
+            FixedLongInterval left = null,
+                              right = null;
+
+            while(lo <= hi){
+                m = (lo + hi) >>> 1;
+                FixedLongInterval tmp = slotList.get(m).boundedInterval;
+                if(tmp.end <= candidate.start){
+                    lo = (lo == m ? m + 1 : m);
+                    left = tmp; //this COULD be the adjacent left
+                }else if(tmp.start >= candidate.end){
+                    hi = (hi == m ? m - 1 : m);
+                    right = tmp; //this COULD be the adjacent left
+                }
+            }
+
+            long candidateStart = candidate.start, //after re-expansion
+                 candidateEnd = candidate.end;
+
+            boolean candidateInclStart = candidate.inclusiveStart,
+                    candidateInclEnd = candidate.inclusiveEnd;
+
+            if(left != null && expandToLeftSlot){
+                candidateStart = left.end;
+                candidateInclStart = !left.inclusiveEnd;
+            }
+
+            if(right != null && expandToRightSlot){
+                candidateEnd = right.start;
+                candidateInclEnd = !right.inclusiveStart;
+            }
+
+            slotList.add(new Slot(candidateStart, candidateEnd, candidateInclStart, candidateInclEnd));
+            isMerged = false;
+        }
     }
 
     /**
@@ -179,18 +240,15 @@ public class LongSetRegistry{
      *
      * @param domain the interval defining the slot's window.
      */
-    public void addSlot(
-        FixedLongInterval domain
-    ){
+    public void addSlot(FixedLongInterval domain){
         addSlot(
             domain,
             domain.inclusiveStart,
             domain.inclusiveEnd,
             domain.inclusiveStart,
             domain.inclusiveEnd,
-            true,
-            true,
-            true
+            false,
+            false
         );
     }
 
@@ -204,7 +262,21 @@ public class LongSetRegistry{
      * @param expandGap reserved; intended to control whether the new slot extends to fill any
      *                  gap with an adjacent slot.
      */
-    public void addSlot(long point, boolean expandGap){}
+    public void addSlot(long point, boolean expandGap){
+        //TODO
+    }
+
+    public void addSlot(FixedLongInterval domain, boolean expandGap){
+        addSlot(
+            domain,
+            true,
+            true,
+            domain.inclusiveStart,
+            domain.inclusiveEnd,
+            expandGap,
+            expandGap
+        );
+    }
 
     /**
      * Recomputes {@code totalBoundry} and {@code totalCoverage} from the current slot list,
@@ -222,6 +294,8 @@ public class LongSetRegistry{
             tmpTotalBound.addInterval(slot.boundedInterval);
             tmpTotalDone.addSet(slot.doneCoverage);
         }
+
+        slotList.sort((a, b) -> Long.compare(a.boundedInterval.start, b.boundedInterval.start));
 
         totalBoundry = tmpTotalBound;
         totalCoverage = tmpTotalDone;

@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 30 APR 2026
+ * @since 8 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -204,6 +204,25 @@ public class AlignedLongSet{
         if(!isMerged) merge();
         return mergeList.get(index);
     }
+
+    public FixedLongInterval[] getGapIntervalsArray(){
+        if(!isMerged) merge();
+        FixedLongInterval[] gapL = new FixedLongInterval[mergeList.size() - 1];
+
+        for(int i=0; i<gapL.length; ++i){
+            FixedLongInterval left = mergeList.get(i);
+            FixedLongInterval right = mergeList.get(i + 1);
+            gapL[i] = new FixedLongInterval(
+                left.end,
+                right.start,
+                !left.inclusiveEnd,
+                !right.inclusiveStart
+            );
+        }
+        return gapL;
+    }
+
+    public AlignedLongSet getGapSet(){return new AlignedLongSet(microInterval, getGapIntervalsArray());}
 
     /**
      * Returns {@code true} if {@code point} is contained in any merged segment.
@@ -680,6 +699,9 @@ public class AlignedLongSet{
         );
     }
 
+    public void subtractSet(AlignedLongSet set){                        
+        for(FixedLongInterval intv : set.getIntervals()){subtractInterval(intv);}
+    }
     /**
      * Removes everything in this set strictly below {@code point} (and {@code point} itself when
      * {@code isPointInclusive} is {@code true}), leaving only the portion of the set at or above
