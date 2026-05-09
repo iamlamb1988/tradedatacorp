@@ -16,11 +16,11 @@ public class LongSetRegistryTest{
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(3, 7));
         assertTrue(regi.isMerged());
         assertTrue(regi.isBoundContinuous());
-        assertEquals("{}", regi.getBoundryIntervalString());
+        assertEquals("{}", regi.getBoundaryIntervalString());
         assertEquals("{}", regi.getCoverageIntervalString());
 
         assertEquals(0, regi.getSlotCount());
-        assertEquals(0, regi.getMicroIntervalCountInBoundry());
+        assertEquals(0, regi.getMicroIntervalCountInBoundary());
         assertEquals(0, regi.getMicroIntervalCountCovered());
     }
 
@@ -32,11 +32,11 @@ public class LongSetRegistryTest{
         assertFalse(regi.isMerged());
         assertTrue(regi.isBoundContinuous());
 
-        assertEquals("[3,6)", regi.getBoundryIntervalString());
+        assertEquals("[3,6)", regi.getBoundaryIntervalString());
         assertEquals("{}", regi.getCoverageIntervalString());
         assertTrue(regi.isMerged()); //Lazy check, should automerge upon checking intervals
         assertEquals(1, regi.getSlotCount());
-        assertEquals(3, regi.getMicroIntervalCountInBoundry());
+        assertEquals(3, regi.getMicroIntervalCountInBoundary());
         assertEquals(0, regi.getMicroIntervalCountCovered());
     }
 
@@ -47,7 +47,7 @@ public class LongSetRegistryTest{
         regi.addSlot(new FixedLongInterval(1, 2)); //[1, 2)
         //adding 2 slots that touch but do not overlap
 
-        assertEquals("[0,2)", regi.getBoundryIntervalString());
+        assertEquals("[0,2)", regi.getBoundaryIntervalString());
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(2, regi.getSlotCount());
@@ -60,7 +60,7 @@ public class LongSetRegistryTest{
         regi.addSlot(new FixedLongInterval(0, 1)); //[0, 1)
         //adding 2 slots that touch but do not overlap
 
-        assertEquals("[0,2)", regi.getBoundryIntervalString());
+        assertEquals("[0,2)", regi.getBoundaryIntervalString());
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(2, regi.getSlotCount());
@@ -73,7 +73,7 @@ public class LongSetRegistryTest{
         regi.addSlot(new FixedLongInterval(1, 2)); //[1, 2)
         regi.addSlot(new FixedLongInterval(2, 3)); //[2, 3)
 
-        assertEquals("[0,3)", regi.getBoundryIntervalString());
+        assertEquals("[0,3)", regi.getBoundaryIntervalString());
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(3, regi.getSlotCount());
@@ -87,7 +87,7 @@ public class LongSetRegistryTest{
         regi.addSlot(new FixedLongInterval(2, 3)); //[2, 3)
 
         regi.addSlot(new FixedLongInterval(5, 7), false); //[5, 7)
-        assertEquals("[0,3)U[5,7)", regi.getBoundryIntervalString());
+        assertEquals("[0,3)U[5,7)", regi.getBoundaryIntervalString());
         assertFalse(regi.isBoundContinuous());
 
         assertEquals(4, regi.getSlotCount());
@@ -101,7 +101,7 @@ public class LongSetRegistryTest{
         regi.addSlot(new FixedLongInterval(2, 3)); //[2, 3)
 
         regi.addSlot(new FixedLongInterval(5, 7), true); //[5, 7)
-        assertEquals("[0,7)", regi.getBoundryIntervalString()); //only 1 gap, [3, 5) that will be closed
+        assertEquals("[0,7)", regi.getBoundaryIntervalString()); //only 1 gap, [3, 5) that will be closed
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(4, regi.getSlotCount());
@@ -115,7 +115,7 @@ public class LongSetRegistryTest{
         regi.addSlot(new FixedLongInterval(7, 8)); //[7, 8)
 
         regi.addSlot(new FixedLongInterval(1, 3, true, true), false); //[1, 3]
-        assertEquals("[1,3]U[5,8)", regi.getBoundryIntervalString());
+        assertEquals("[1,3]U[5,8)", regi.getBoundaryIntervalString());
         assertFalse(regi.isBoundContinuous());
 
         assertEquals(4, regi.getSlotCount());
@@ -130,11 +130,11 @@ public class LongSetRegistryTest{
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
-        assertEquals("[0,3)U[7,10)", regi.getBoundryIntervalString()); //pre check
+        assertEquals("[0,3)U[7,10)", regi.getBoundaryIntervalString()); //pre check
 
         regi.addSlot(new FixedLongInterval(4, 6, false, false), false); //(4, 6)
         
-        assertEquals("[0,3)U(4,6)U[7,10)", regi.getBoundryIntervalString());
+        assertEquals("[0,3)U(4,6)U[7,10)", regi.getBoundaryIntervalString());
         assertFalse(regi.isBoundContinuous());
 
         assertEquals(3, regi.getSlotCount());
@@ -148,7 +148,7 @@ public class LongSetRegistryTest{
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
-        assertEquals("[0,3)U[7,10)", regi.getBoundryIntervalString()); //pre check
+        assertEquals("[0,3)U[7,10)", regi.getBoundaryIntervalString()); //pre check
 
         regi.addSlot(
             new FixedLongInterval(4, 6, false, false), //[7, 10)
@@ -160,7 +160,7 @@ public class LongSetRegistryTest{
             false //Will not close righward
         );
         
-        assertEquals("[0,6)U[7,10)", regi.getBoundryIntervalString());
+        assertEquals("[0,6)U[7,10)", regi.getBoundaryIntervalString());
         assertFalse(regi.isBoundContinuous());
 
         assertEquals(3, regi.getSlotCount());
@@ -174,7 +174,7 @@ public class LongSetRegistryTest{
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
-        assertEquals("[0,3)U[7,10)", regi.getBoundryIntervalString()); //pre check
+        assertEquals("[0,3)U[7,10)", regi.getBoundaryIntervalString()); //pre check
 
         regi.addSlot(
             new FixedLongInterval(4, 6, false, false), //[7, 10)
@@ -186,7 +186,7 @@ public class LongSetRegistryTest{
             true //Will close gap righward
         );
         
-        assertEquals("[0,3)U(4,10)", regi.getBoundryIntervalString());
+        assertEquals("[0,3)U(4,10)", regi.getBoundaryIntervalString());
         assertFalse(regi.isBoundContinuous());
 
         assertEquals(3, regi.getSlotCount());
@@ -200,7 +200,7 @@ public class LongSetRegistryTest{
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
-        assertEquals("[0,3)U[7,10)", regi.getBoundryIntervalString()); //pre check
+        assertEquals("[0,3)U[7,10)", regi.getBoundaryIntervalString()); //pre check
 
         regi.addSlot(
             new FixedLongInterval(4, 6, false, false), //[7, 10)
@@ -212,7 +212,7 @@ public class LongSetRegistryTest{
             true //Will close gap righward
         );
         
-        assertEquals("[0,10)", regi.getBoundryIntervalString());
+        assertEquals("[0,10)", regi.getBoundaryIntervalString());
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(3, regi.getSlotCount());
@@ -226,14 +226,14 @@ public class LongSetRegistryTest{
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
-        assertEquals("[0,3)U[7,10)", regi.getBoundryIntervalString()); //pre check
+        assertEquals("[0,3)U[7,10)", regi.getBoundaryIntervalString()); //pre check
 
         regi.addSlot(
             new FixedLongInterval(4, 6, false, false), //[4, 6)
             true
         );
         
-        assertEquals("[0,10)", regi.getBoundryIntervalString());
+        assertEquals("[0,10)", regi.getBoundaryIntervalString());
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(3, regi.getSlotCount());
@@ -246,11 +246,11 @@ public class LongSetRegistryTest{
     public void SlotOverlapTest1(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
-        assertEquals("[0,3)", regi.getBoundryIntervalString()); //pre check
+        assertEquals("[0,3)", regi.getBoundaryIntervalString()); //pre check
         assertEquals(1, regi.getSlotCount());
 
         regi.addSlot(new FixedLongInterval(1, 4), false);
-        assertEquals("[0,4)", regi.getBoundryIntervalString());
+        assertEquals("[0,4)", regi.getBoundaryIntervalString());
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(2, regi.getSlotCount());
@@ -262,11 +262,11 @@ public class LongSetRegistryTest{
     public void SlotOverlapTest2(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(1, 7,true, true));
-        assertEquals("[1,7]", regi.getBoundryIntervalString()); //pre check
+        assertEquals("[1,7]", regi.getBoundaryIntervalString()); //pre check
         assertEquals(1, regi.getSlotCount());
 
         regi.addSlot(new FixedLongInterval(-1, 4, false, false), false);
-        assertEquals("(-1,7]", regi.getBoundryIntervalString());
+        assertEquals("(-1,7]", regi.getBoundaryIntervalString());
         assertTrue(regi.isBoundContinuous());
 
         assertEquals(2, regi.getSlotCount());
@@ -279,7 +279,7 @@ public class LongSetRegistryTest{
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(2, 3,true, true));
         regi.addSlot(new FixedLongInterval(5, 8, false, false), false);
-        assertEquals("[2,3]U(5,8)", regi.getBoundryIntervalString());
+        assertEquals("[2,3]U(5,8)", regi.getBoundaryIntervalString());
         assertFalse(regi.isBoundContinuous());
         assertEquals(2, regi.getSlotCount());
 

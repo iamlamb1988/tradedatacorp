@@ -22,7 +22,7 @@ import java.util.ArrayList;
  * covered. When {@code doneCoverage} forms a single contiguous span that exactly covers the slot's
  * full boundary, the slot is considered complete ({@link Slot#isSlotDone()} returns {@code true}).
  *
- * Slots never overlap. Gaps between slots are permitted. {@code totalBoundry} and
+ * Slots never overlap. Gaps between slots are permitted. {@code totalBoundary} and
  * {@code totalCoverage} provide aggregate views across all slots.
  *
  * This class is a general-purpose utility with no dependencies on any other layer of the
@@ -31,14 +31,11 @@ import java.util.ArrayList;
  * //TODO: Class still in development and documentation may change.
  */
 public class LongSetRegistry{
-    /** Sentinel empty interval {@code (0,0)} used as a placeholder where an interval reference is required. */
-    public static final FixedLongInterval EMPTY_INTERVAL = new FixedLongInterval(0, 0, false, false);
-
     private final FixedLongInterval microInterval;
 
     //"merged" status fields: This class is not merged until these fields are accurate and updated
     private boolean isMerged;
-    private AlignedLongSet totalBoundry;  //the boundry across all slots
+    private AlignedLongSet totalBoundary;  //the boundary across all slots
     private AlignedLongSet totalCoverage; //the "truthy" done coverage across all slots
     //END merged status fields
 
@@ -57,14 +54,14 @@ public class LongSetRegistry{
 
         this.microInterval = microInterval;
 
-        totalBoundry = new AlignedLongSet(microInterval);
+        totalBoundary = new AlignedLongSet(microInterval);
         totalCoverage = new AlignedLongSet(microInterval);
         slotList = new ArrayList<>();
         isMerged = true;
     }
 
     /**
-     * Returns {@code true} when the aggregate {@code totalBoundry} and {@code totalCoverage} views
+     * Returns {@code true} when the aggregate {@code totalBoundary} and {@code totalCoverage} views
      * are up to date with the underlying slot list.
      *
      * @return {@code true} if no merge is pending; {@code false} if an aggregate refresh is needed.
@@ -72,7 +69,7 @@ public class LongSetRegistry{
     public boolean isMerged(){return isMerged;}
 
     /**
-     * Return true if each Slot boundry is connected with no gaps.
+     * Return true if each Slot boundary is connected with no gaps.
      * No slots added is considedered a continuous registry.
      */
     public boolean isBoundContinuous(){
@@ -80,8 +77,9 @@ public class LongSetRegistry{
 
         if(!isMerged) merge();
 
-        return totalBoundry.getIntervalSegmentCount() <= 1;
+        return totalBoundary.getIntervalSegmentCount() <= 1;
     }
+
 
     /**
      * Returns the number of registered slots
@@ -91,9 +89,9 @@ public class LongSetRegistry{
     /**
      * Returns the mathematical interval string representing the entire domain of this registry state
      */
-    public String getBoundryIntervalString(){
+    public String getBoundaryIntervalString(){
         if(!isMerged) merge();
-        return totalBoundry.toString();
+        return totalBoundary.toString();
     }
 
     public String getSlotBoundIntervalString(int slotIndex){
@@ -117,9 +115,9 @@ public class LongSetRegistry{
      *
      * @return aggregate boundary step count; {@code 0} if there are no slots.
      */
-    public long getMicroIntervalCountInBoundry(){
+    public long getMicroIntervalCountInBoundary(){
         if(!isMerged) merge();
-        return totalBoundry.getMicroIntervalCount();
+        return totalBoundary.getMicroIntervalCount();
     }
 
     /**
@@ -132,6 +130,8 @@ public class LongSetRegistry{
         if(!isMerged) merge();
         return totalCoverage.getMicroIntervalCount();
     }
+
+    public boolean isSlotDone(int slotIndex){return slotList.get(slotIndex).isSlotDone();}
 
     /**
      * Adds an interval slot to the registry. Will snap to microIntervals if required.
@@ -153,7 +153,7 @@ public class LongSetRegistry{
     ){
         if(domain.width == 0) return;
 
-        FixedLongInterval candidate = totalBoundry.getSnappedInterval(
+        FixedLongInterval candidate = totalBoundary.getSnappedInterval(
             domain,
             expandLeft,
             expandRight,
@@ -220,6 +220,18 @@ public class LongSetRegistry{
         isMerged = false;
     }
 
+    /**
+     * Adds coverage to slots that overlap the slot.
+     * Portion of the set will be ignored if there is no slot that can bind the set.
+     * @param set
+     */
+    public void addCoverage(AlignedLongSet set){
+        //TODO
+        for(Slot s : slotList){
+            //add coverage after chopping set into bounds
+        }
+    }
+
     private int binarySearchInsertPos(long start){
         int lo = 0,
             hi = slotList.size();
@@ -251,20 +263,6 @@ public class LongSetRegistry{
         );
     }
 
-    /**
-     * Adds a slot covering the micro-interval cell that contains {@code point}.
-     *
-     * <p><strong>Not yet implemented.</strong>
-     *
-     * @param point     the value whose containing micro-interval cell is intended to become the
-     *                  new slot's domain.
-     * @param expandGap reserved; intended to control whether the new slot extends to fill any
-     *                  gap with an adjacent slot.
-     */
-    public void addSlot(long point, boolean expandGap){
-        //TODO
-    }
-
     public void addSlot(FixedLongInterval domain, boolean expandGap){
         addSlot(
             domain,
@@ -277,8 +275,13 @@ public class LongSetRegistry{
         );
     }
 
+    public void removeSlot(int slotIndex){
+        slotList.remove(slotIndex);
+        isMerged = false;
+    }
+
     /**
-     * Recomputes {@code totalBoundry} and {@code totalCoverage} from the current slot list,
+     * Recomputes {@code totalBoundary} and {@code totalCoverage} from the current slot list,
      * forcing a merge on each slot's done coverage if pending. After this call
      * {@link #isMerged()} returns {@code true}.
      *
@@ -299,7 +302,7 @@ public class LongSetRegistry{
             tmpTotalDone.addSet(slot.doneCoverage);
         }
 
-        totalBoundry = tmpTotalBound;
+        totalBoundary = tmpTotalBound;
         totalCoverage = tmpTotalDone;
         isMerged = true;
     }
@@ -313,12 +316,10 @@ public class LongSetRegistry{
     private class Slot{
         private FixedLongInterval boundedInterval; //The domain, no value can exist outside the bounds of the interval.
         private AlignedLongSet doneCoverage;       //a "truthy" interval. Will never go out of bounded interval.
-        private final long maxMicroIntervals;      //number of possible microIntervals within bounded
 
         private Slot(long start, long end, boolean isInclusiveStart, boolean isInclusiveEnd){
             boundedInterval = new FixedLongInterval(start, end, isInclusiveStart, isInclusiveEnd);
             doneCoverage = new AlignedLongSet(microInterval); //Used as a tmp normalizer for snapping boundedInterval
-            maxMicroIntervals = boundedInterval.width/microInterval.width;
         }
 
         private Slot(long start, long end){this(start, end, true, false);}
