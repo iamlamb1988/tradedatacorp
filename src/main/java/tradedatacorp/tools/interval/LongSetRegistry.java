@@ -109,6 +109,10 @@ public class LongSetRegistry{
         return totalCoverage.toString();
     }
 
+    public String getSlotCoverageIntervalSring(int slotIndex){
+        return slotList.get(slotIndex).getCoverage().toString();
+    }
+
     /**
      * Returns the total number of micro-interval grid steps spanned by the union of all slot
      * boundaries. Triggers a merge if one is pending.
@@ -226,10 +230,13 @@ public class LongSetRegistry{
      * @param set
      */
     public void addCoverage(AlignedLongSet set){
-        //TODO
-        for(Slot s : slotList){
-            //add coverage after chopping set into bounds
-        }
+        for(Slot s : slotList){s.addCoverage(set);}
+        isMerged = false;
+    }
+
+    public void addCoverage(FixedLongInterval intv){
+        for(Slot s : slotList){s.addCoverage(intv);}
+        isMerged = false;
     }
 
     private int binarySearchInsertPos(long start){
@@ -275,6 +282,16 @@ public class LongSetRegistry{
         );
     }
 
+    public void clearAllCoverage(){
+        for(Slot s : slotList){s.clearCoverage();}
+        totalCoverage.clear();
+    }
+
+    public void clearSlotCoverage(int slotIndex){
+        slotList.get(slotIndex).clearCoverage();
+        isMerged=false;
+    }
+
     public void removeSlot(int slotIndex){
         slotList.remove(slotIndex);
         isMerged = false;
@@ -283,6 +300,7 @@ public class LongSetRegistry{
     /**
      * Recomputes {@code totalBoundary} and {@code totalCoverage} from the current slot list,
      * forcing a merge on each slot's done coverage if pending. After this call
+     * {@code totalCoverage} is always a subset of {@code totalBoundary}
      * {@link #isMerged()} returns {@code true}.
      *
      * <p>{@code slotList} is maintained in sorted order by {@link #addSlot} at insertion time,
@@ -324,13 +342,30 @@ public class LongSetRegistry{
 
         private Slot(long start, long end){this(start, end, true, false);}
 
-        public boolean isMerged(){return doneCoverage.isMerged();}
         public boolean isSlotDone(){
             return
                 doneCoverage.getIntervalSegmentCount() == 1 &&
                 FixedLongInterval.equals(boundedInterval, doneCoverage.getInterval(0));
         }
 
-        private void merge(){doneCoverage.merge();}
+        private AlignedLongSet getCoverage(){
+            if(!doneCoverage.isMerged()) doneCoverage.merge();
+            return doneCoverage;
+        }
+        private void addCoverage(AlignedLongSet set){
+            doneCoverage.addSet(set);
+
+            doneCoverage.cutLower(boundedInterval.start, !boundedInterval.inclusiveStart);
+            doneCoverage.cutUpper(boundedInterval.end, !boundedInterval.inclusiveEnd);
+        }
+
+        private void addCoverage(FixedLongInterval intv){
+            doneCoverage.addInterval(intv);
+
+            doneCoverage.cutLower(boundedInterval.start, !boundedInterval.inclusiveStart);
+            doneCoverage.cutUpper(boundedInterval.end, !boundedInterval.inclusiveEnd);
+        }
+
+        private void clearCoverage(){doneCoverage.clear();}
     }
 }

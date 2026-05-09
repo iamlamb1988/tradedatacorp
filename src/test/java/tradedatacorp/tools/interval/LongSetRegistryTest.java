@@ -126,7 +126,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotGapTest1(){
+    public void slotGapTest1(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
@@ -144,7 +144,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotGapTest2(){
+    public void slotGapTest2(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
@@ -170,7 +170,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotGapTest3(){
+    public void slotGapTest3(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
@@ -196,7 +196,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotGapTest4(){
+    public void slotGapTest4(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
@@ -222,7 +222,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotGapTest5(){
+    public void slotGapTest5(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         regi.addSlot(new FixedLongInterval(7, 10)); //[7, 10)
@@ -243,7 +243,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotOverlapTest1(){
+    public void slotOverlapTest1(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(0, 3)); //[0, 3)
         assertEquals("[0,3)", regi.getBoundaryIntervalString()); //pre check
@@ -259,7 +259,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotOverlapTest2(){
+    public void slotOverlapTest2(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(1, 7,true, true));
         assertEquals("[1,7]", regi.getBoundaryIntervalString()); //pre check
@@ -275,7 +275,7 @@ public class LongSetRegistryTest{
     }
 
     @Test
-    public void SlotOverlapTest3(){
+    public void slotOverlapTest3(){
         LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
         regi.addSlot(new FixedLongInterval(2, 3,true, true));
         regi.addSlot(new FixedLongInterval(5, 8, false, false), false);
@@ -292,5 +292,60 @@ public class LongSetRegistryTest{
         assertEquals("(3,5]", regi.getSlotBoundIntervalString(2));
         assertEquals("(5,8)", regi.getSlotBoundIntervalString(3));
         assertEquals("[8,10]", regi.getSlotBoundIntervalString(4));
+    }
+
+    @Test
+    public void coverageTest1(){
+        LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
+        regi.addSlot(new FixedLongInterval(0, 5));
+        regi.addSlot(new FixedLongInterval(5, 10));
+        assertTrue(regi.isBoundContinuous());
+        assertEquals("[0,10)", regi.getBoundaryIntervalString());
+
+        assertEquals("[0,5)", regi.getSlotBoundIntervalString(0));
+        assertEquals("[5,10)", regi.getSlotBoundIntervalString(1));
+
+        assertEquals("{}", regi.getCoverageIntervalString());
+        assertEquals("{}", regi.getSlotCoverageIntervalSring(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
+
+        //add coverage
+        regi.addCoverage(new FixedLongInterval(3, 3, true, true));
+        assertEquals("{3}", regi.getCoverageIntervalString());
+        assertEquals("{3}", regi.getSlotCoverageIntervalSring(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
+
+        //clear coverage
+        regi.clearAllCoverage();
+        assertEquals("{}", regi.getCoverageIntervalString());
+        assertEquals(2, regi.getSlotCount());
+    }
+
+    @Test
+    public void coverageTest2(){
+        LongSetRegistry regi = new LongSetRegistry(new FixedLongInterval(0, 1));
+        regi.addSlot(new FixedLongInterval(0, 5));
+        regi.addSlot(new FixedLongInterval(5, 10));
+        assertTrue(regi.isBoundContinuous());
+        assertEquals("[0,10)", regi.getBoundaryIntervalString());
+
+        assertEquals("[0,5)", regi.getSlotBoundIntervalString(0));
+        assertEquals("[5,10)", regi.getSlotBoundIntervalString(1));
+
+        assertEquals("{}", regi.getCoverageIntervalString());
+        assertEquals("{}", regi.getSlotCoverageIntervalSring(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
+
+        //add coverage
+        regi.addCoverage(new FixedLongInterval(3, 6, false, true));
+        assertEquals("(3,6]", regi.getCoverageIntervalString());
+        assertEquals("(3,5)", regi.getSlotCoverageIntervalSring(0));
+        assertEquals("[5,6]", regi.getSlotCoverageIntervalSring(1));
+
+        //clear coverage
+        regi.clearSlotCoverage(1); //removing chunk [5,6]
+        assertEquals("(3,5)", regi.getCoverageIntervalString());
+        assertEquals("(3,5)", regi.getSlotCoverageIntervalSring(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
     }
 }

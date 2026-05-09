@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 8 MAY 2026
+ * @since 9 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -25,7 +25,7 @@ import java.util.ArrayList;
  * After merging, {@code microCount} is kept parallel to {@code mergeList}: index {@code i} of
  * {@code microCount} holds the number of micro-interval grid steps spanning {@code mergeList.get(i)}.
  */
-public class AlignedLongSet{
+public class AlignedLongSet implements Cloneable{
     /** The unit grid interval; its width is the snap step and its start sets the grid phase. */
     private FixedLongInterval microInterval;
 
@@ -983,4 +983,7 @@ public class AlignedLongSet{
         for(int i=1; i<mergeList.size(); ++i){bldr.append("U"+mergeList.get(i).toString());}
         return bldr.toString();
     }
+
+    @Override
+    public AlignedLongSet clone(){return new AlignedLongSet(this);}
 }
