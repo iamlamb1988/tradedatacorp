@@ -78,15 +78,9 @@ public class LongSetRegistry{
     public boolean isBoundContinuous(){
         if(slotList.size() <= 1) return true;
 
-        Slot current = slotList.get(0);
-        for(int i=1; i<slotList.size(); ++i){
-            Slot next = slotList.get(i);
-            if(
-                current.boundedInterval.end != next.boundedInterval.start ||
-                current.boundedInterval.inclusiveEnd == next.boundedInterval.inclusiveStart
-            ) return false;
-        }
-        return true;
+        if(!isMerged) merge();
+
+        return totalBoundry.getIntervalSegmentCount() <= 1;
     }
 
     /**
@@ -103,7 +97,6 @@ public class LongSetRegistry{
     }
 
     public String getSlotBoundIntervalString(int slotIndex){
-        if(!isMerged) merge();
         return slotList.get(slotIndex).boundedInterval.toString();
     }
     /**
@@ -142,6 +135,9 @@ public class LongSetRegistry{
 
     /**
      * Adds an interval slot to the registry. Will snap to microIntervals if required.
+     * The slot is inserted at its correct position so {@code slotList} stays sorted
+     * by {@code boundedInterval.start} ascending. On overlap, the candidate is split
+     * against existing slots and each non-overlapping fragment is inserted in order.
      * TODO:
      *   What happens if domain overlaps with an existing Slot domain?
      *      - Should it drop, ignore, or throw exception?
@@ -165,71 +161,74 @@ public class LongSetRegistry{
             isRightSnapInclusive
         );
 
-        if(slotList.size() == 0){
+        int n = slotList.size();
+        if(n == 0){
             slotList.add(new Slot(candidate.start, candidate.end, candidate.inclusiveStart, candidate.inclusiveEnd));
             isMerged = false;
             return;
         }
 
-        merge();
+        int insertPos = binarySearchInsertPos(candidate.start);
 
-        if(totalBoundry.overlaps(candidate)){ //overlap detected
-            AlignedLongSet unslottedRange = new AlignedLongSet(microInterval, candidate);
-            for(Slot s : slotList){unslottedRange.subtractInterval(s.boundedInterval);}
-
-            //add non-overlapping chunks recursively
-            for(FixedLongInterval intv : unslottedRange.getIntervals()){
-                addSlot(
-                    intv,
-                    expandLeft, //disregarded due to perfect snaps
-                    expandRight, //disregarded due to perfect snaps
-                    isLeftSnapInclusive, //disregarded due to perfect snaps
-                    isRightSnapInclusive, //disregarded due to perfect snaps
-                    expandToLeftSlot, //disregarded due to perfect snaps
-                    expandToRightSlot //disregarded due to perfect snaps
-                );
-            }
-
-            isMerged = false;
-        }else{
-            int lo = 0,
-                hi = slotList.size() - 1,
-                m;
-
-            FixedLongInterval left = null,
-                              right = null;
-
-            while(lo <= hi){
-                m = (lo + hi) >>> 1;
-                FixedLongInterval tmp = slotList.get(m).boundedInterval;
-                if(tmp.end <= candidate.start){
-                    lo = (lo == m ? m + 1 : m);
-                    left = tmp; //this COULD be the adjacent left
-                }else if(tmp.start >= candidate.end){
-                    hi = (hi == m ? m - 1 : m);
-                    right = tmp; //this COULD be the adjacent left
-                }
-            }
-
-            long candidateStart = candidate.start, //after re-expansion
-                 candidateEnd = candidate.end;
-
-            boolean candidateInclStart = candidate.inclusiveStart,
-                    candidateInclEnd = candidate.inclusiveEnd;
-
-            if(left != null && expandToLeftSlot){
-                candidateStart = left.end;
-                candidateInclStart = !left.inclusiveEnd;
-            }
-
-            if(right != null && expandToRightSlot){
-                candidateEnd = right.start;
-                candidateInclEnd = !right.inclusiveStart;
-            }
-
-            slotList.add(new Slot(candidateStart, candidateEnd, candidateInclStart, candidateInclEnd));
-            isMerged = false;
+        int overlapStart = insertPos,
+            overlapEnd = insertPos;
+        if(insertPos > 0 && slotList.get(insertPos - 1).boundedInterval.overlaps(candidate)){
+            overlapStart = insertPos - 1;
         }
+        while(overlapEnd < n && slotList.get(overlapEnd).boundedInterval.overlaps(candidate)){
+            ++overlapEnd;
+        }
+
+        if(overlapStart < overlapEnd){
+            AlignedLongSet unslottedRange = new AlignedLongSet(microInterval, candidate);
+            for(int i = overlapStart; i < overlapEnd; ++i){
+                unslottedRange.subtractInterval(slotList.get(i).boundedInterval);
+            }
+
+            int fragInsert = overlapStart;
+            for(FixedLongInterval intv : unslottedRange.getIntervals()){
+                while(fragInsert < slotList.size() && slotList.get(fragInsert).boundedInterval.start < intv.start){
+                    ++fragInsert;
+                }
+                slotList.add(fragInsert, new Slot(intv.start, intv.end, intv.inclusiveStart, intv.inclusiveEnd));
+                ++fragInsert;
+            }
+
+            isMerged = false;
+            return;
+        }
+
+        long candidateStart = candidate.start,
+             candidateEnd = candidate.end;
+
+        boolean candidateInclStart = candidate.inclusiveStart,
+                candidateInclEnd = candidate.inclusiveEnd;
+
+        if(insertPos > 0 && expandToLeftSlot){
+            FixedLongInterval left = slotList.get(insertPos - 1).boundedInterval;
+            candidateStart = left.end;
+            candidateInclStart = !left.inclusiveEnd;
+        }
+
+        if(insertPos < n && expandToRightSlot){
+            FixedLongInterval right = slotList.get(insertPos).boundedInterval;
+            candidateEnd = right.start;
+            candidateInclEnd = !right.inclusiveStart;
+        }
+
+        slotList.add(insertPos, new Slot(candidateStart, candidateEnd, candidateInclStart, candidateInclEnd));
+        isMerged = false;
+    }
+
+    private int binarySearchInsertPos(long start){
+        int lo = 0,
+            hi = slotList.size();
+        while(lo < hi){
+            int m = (lo + hi) >>> 1;
+            if(slotList.get(m).boundedInterval.start < start) lo = m + 1;
+            else hi = m;
+        }
+        return lo;
     }
 
     /**
@@ -283,10 +282,15 @@ public class LongSetRegistry{
      * forcing a merge on each slot's done coverage if pending. After this call
      * {@link #isMerged()} returns {@code true}.
      *
+     * <p>{@code slotList} is maintained in sorted order by {@link #addSlot} at insertion time,
+     * so this method does not re-sort it.
+     *
      * <p>Complexity: {@code O(s + k)} where {@code s} is the slot count and {@code k} is the
      * total number of segments across all slots' done coverage.
      */
     public void merge(){
+        if(isMerged) return;
+
         AlignedLongSet tmpTotalBound = new AlignedLongSet(microInterval);
         AlignedLongSet tmpTotalDone  = new AlignedLongSet(microInterval);
         for(Slot slot : slotList){
@@ -294,8 +298,6 @@ public class LongSetRegistry{
             tmpTotalBound.addInterval(slot.boundedInterval);
             tmpTotalDone.addSet(slot.doneCoverage);
         }
-
-        slotList.sort((a, b) -> Long.compare(a.boundedInterval.start, b.boundedInterval.start));
 
         totalBoundry = tmpTotalBound;
         totalCoverage = tmpTotalDone;
