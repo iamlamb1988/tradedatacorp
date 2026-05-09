@@ -306,14 +306,14 @@ public class LongSetRegistryTest{
         assertEquals("[5,10)", regi.getSlotBoundIntervalString(1));
 
         assertEquals("{}", regi.getCoverageIntervalString());
-        assertEquals("{}", regi.getSlotCoverageIntervalSring(0));
-        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
+        assertEquals("{}", regi.getSlotCoverageIntervalString(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalString(1));
 
         //add coverage
         regi.addCoverage(new FixedLongInterval(3, 3, true, true));
         assertEquals("{3}", regi.getCoverageIntervalString());
-        assertEquals("{3}", regi.getSlotCoverageIntervalSring(0));
-        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
+        assertEquals("{3}", regi.getSlotCoverageIntervalString(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalString(1));
 
         //clear coverage
         regi.clearAllCoverage();
@@ -333,19 +333,19 @@ public class LongSetRegistryTest{
         assertEquals("[5,10)", regi.getSlotBoundIntervalString(1));
 
         assertEquals("{}", regi.getCoverageIntervalString());
-        assertEquals("{}", regi.getSlotCoverageIntervalSring(0));
-        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
+        assertEquals("{}", regi.getSlotCoverageIntervalString(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalString(1));
 
         //add coverage
         regi.addCoverage(new FixedLongInterval(3, 6, false, true));
         assertEquals("(3,6]", regi.getCoverageIntervalString());
-        assertEquals("(3,5)", regi.getSlotCoverageIntervalSring(0));
-        assertEquals("[5,6]", regi.getSlotCoverageIntervalSring(1));
+        assertEquals("(3,5)", regi.getSlotCoverageIntervalString(0));
+        assertEquals("[5,6]", regi.getSlotCoverageIntervalString(1));
 
         //clear coverage
         regi.clearSlotCoverage(1); //removing chunk [5,6]
         assertEquals("(3,5)", regi.getCoverageIntervalString());
-        assertEquals("(3,5)", regi.getSlotCoverageIntervalSring(0));
-        assertEquals("{}", regi.getSlotCoverageIntervalSring(1));
+        assertEquals("(3,5)", regi.getSlotCoverageIntervalString(0));
+        assertEquals("{}", regi.getSlotCoverageIntervalString(1));
     }
 }

@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 8 MAY 2026
+ * @since 9 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -8,36 +8,32 @@ import java.util.ArrayList;
 
 /**
  * A generic coverage tracker for a collection of bounded windows.
- * A Registry instance will contain an ordered list of conceptual slots that are bounded by a {@code FixedLongInterval}.
- * No slot interval will overlap with another slot
- * Withn each slot, will be a {@AlignedLongSet} that will be a subset of the bounded interval for that slot which represents a "done" or "truthy" set for the slot.
- * {@code FixedLongInterval}s and {@AlignedLongSet}s can be added to slots. The Set
- * Applications of this class include timers, and byte tracks.
  *
- * A {@code LongSetRegistry} manages an ordered list of {@link Slot}s. Each slot represents a bounded
- * window at a fixed step resolution defined by {@code microInterval}. All slots share the same
- * {@code microInterval}.
+ * <p>A {@code LongSetRegistry} manages an ordered, non-overlapping list of {@link Slot}s.
+ * Each slot has a {@link FixedLongInterval} {@code boundedInterval} (its domain) and an
+ * {@link AlignedLongSet} {@code doneCoverage} that tracks the "truthy" portion of the
+ * domain marked as covered. Per-slot {@code doneCoverage} is always a subset of that
+ * slot's {@code boundedInterval}.
  *
- * Within each slot, {@code doneCoverage} tracks which portions of the window have been marked as
- * covered. When {@code doneCoverage} forms a single contiguous span that exactly covers the slot's
- * full boundary, the slot is considered complete ({@link Slot#isSlotDone()} returns {@code true}).
+ * <p>All slots share a single {@code microInterval} grid (phase + step). Gaps between
+ * slots are permitted; aggregate views across all slots are exposed via
+ * {@code totalBoundary} and {@code totalCoverage}.
  *
- * Slots never overlap. Gaps between slots are permitted. {@code totalBoundary} and
- * {@code totalCoverage} provide aggregate views across all slots.
+ * <p>A slot is "done" ({@link Slot#isSlotDone()}) when its {@code doneCoverage} is a
+ * single segment mathematically equal to its {@code boundedInterval}.
  *
- * This class is a general-purpose utility with no dependencies on any other layer of the
- * project. It can be used independently for any coverage tracking need.
+ * <p>This class is a general-purpose utility with no dependencies on any other layer of
+ * the project. Applications include timers and byte tracks.
  *
  * //TODO: Class still in development and documentation may change.
  */
 public class LongSetRegistry{
     private final FixedLongInterval microInterval;
 
-    //"merged" status fields: This class is not merged until these fields are accurate and updated
+    //Aggregate views; valid only when isMerged is true. Otherwise an aggregate refresh is pending.
     private boolean isMerged;
-    private AlignedLongSet totalBoundary;  //the boundary across all slots
-    private AlignedLongSet totalCoverage; //the "truthy" done coverage across all slots
-    //END merged status fields
+    private AlignedLongSet totalBoundary; //union of every slot's boundedInterval
+    private AlignedLongSet totalCoverage; //union of every slot's doneCoverage
 
     private ArrayList<Slot> slotList;     // ordered list of slots
 
@@ -70,7 +66,7 @@ public class LongSetRegistry{
 
     /**
      * Return true if each Slot boundary is connected with no gaps.
-     * No slots added is considedered a continuous registry.
+     * No slots added is considered a continuous registry.
      */
     public boolean isBoundContinuous(){
         if(slotList.size() <= 1) return true;
@@ -94,6 +90,12 @@ public class LongSetRegistry{
         return totalBoundary.toString();
     }
 
+    /**
+     * Returns the slot's bounded-interval as a mathematical interval string.
+     *
+     * @param slotIndex position in the ordered slot list.
+     * @return interval string (e.g. {@code "[3,7)"}) for the slot's domain.
+     */
     public String getSlotBoundIntervalString(int slotIndex){
         return slotList.get(slotIndex).boundedInterval.toString();
     }
@@ -109,7 +111,14 @@ public class LongSetRegistry{
         return totalCoverage.toString();
     }
 
-    public String getSlotCoverageIntervalSring(int slotIndex){
+    /**
+     * Returns the slot's done-coverage as a union-of-intervals string. Triggers a per-slot
+     * merge if pending.
+     *
+     * @param slotIndex position in the ordered slot list.
+     * @return coverage string (e.g. {@code "[3,5)U{8}"}); {@code "{}"} if empty.
+     */
+    public String getSlotCoverageIntervalString(int slotIndex){
         return slotList.get(slotIndex).getCoverage().toString();
     }
 
@@ -135,16 +144,35 @@ public class LongSetRegistry{
         return totalCoverage.getMicroIntervalCount();
     }
 
+    /**
+     * Returns {@code true} if the slot's {@code doneCoverage} is a single segment mathematically
+     * equal to its {@code boundedInterval}.
+     *
+     * @param slotIndex position in the ordered slot list.
+     */
     public boolean isSlotDone(int slotIndex){return slotList.get(slotIndex).isSlotDone();}
 
     /**
-     * Adds an interval slot to the registry. Will snap to microIntervals if required.
-     * The slot is inserted at its correct position so {@code slotList} stays sorted
-     * by {@code boundedInterval.start} ascending. On overlap, the candidate is split
-     * against existing slots and each non-overlapping fragment is inserted in order.
-     * TODO:
-     *   What happens if domain overlaps with an existing Slot domain?
-     *      - Should it drop, ignore, or throw exception?
+     * Adds a slot to the registry. The slot's domain is snapped to the {@code microInterval}
+     * grid, then inserted at its sorted position so {@code slotList} stays sorted by
+     * {@code boundedInterval.start} ascending.
+     *
+     * <p>If the snapped candidate overlaps existing slots, it is sliced against those slots'
+     * {@code boundedInterval}s; only the non-overlapping fragments are inserted, and the
+     * {@code expandToLeftSlot} / {@code expandToRightSlot} flags are ignored on this path.
+     * If {@code domain.width == 0} the call is a silent no-op.
+     *
+     * @param domain               the interval defining the slot's window before snapping.
+     * @param expandLeft           {@code true} to snap an off-grid start outward (lesser);
+     *                             {@code false} to snap inward (greater).
+     * @param expandRight          {@code true} to snap an off-grid end outward (greater);
+     *                             {@code false} to snap inward (lesser).
+     * @param isLeftSnapInclusive  inclusivity assigned to the start when it is off-grid and snapped.
+     * @param isRightSnapInclusive inclusivity assigned to the end when it is off-grid and snapped.
+     * @param expandToLeftSlot     when no overlap and a previous slot exists, extend this slot's
+     *                             start leftward to abut the prior slot's end (closing the gap).
+     * @param expandToRightSlot    when no overlap and a next slot exists, extend this slot's end
+     *                             rightward to abut the next slot's start (closing the gap).
      */
     public void addSlot(
         FixedLongInterval domain,
@@ -225,15 +253,24 @@ public class LongSetRegistry{
     }
 
     /**
-     * Adds coverage to slots that overlap the slot.
-     * Portion of the set will be ignored if there is no slot that can bind the set.
-     * @param set
+     * Adds {@code set}'s coverage to every slot whose {@code boundedInterval} overlaps it.
+     * Each slot independently dices the input against its own bounds; portions that fall
+     * outside every slot are silently dropped. Marks the registry's aggregate views as stale.
+     *
+     * @param set the coverage to add.
      */
     public void addCoverage(AlignedLongSet set){
         for(Slot s : slotList){s.addCoverage(set);}
         isMerged = false;
     }
 
+    /**
+     * Adds {@code intv}'s coverage to every slot whose {@code boundedInterval} overlaps it.
+     * Each slot independently dices the input against its own bounds; portions that fall
+     * outside every slot are silently dropped. Marks the registry's aggregate views as stale.
+     *
+     * @param intv the interval to add as coverage.
+     */
     public void addCoverage(FixedLongInterval intv){
         for(Slot s : slotList){s.addCoverage(intv);}
         isMerged = false;
@@ -251,10 +288,10 @@ public class LongSetRegistry{
     }
 
     /**
-     * Convenience overload of
-     * {@link #addSlot(FixedLongInterval, boolean, boolean, boolean, boolean, boolean, boolean, boolean)}
-     * that preserves {@code domain}'s original inclusivity at any off-grid snapped endpoints and
-     * defaults to expanding into adjacent slot gaps and contracting on overlap.
+     * Convenience overload that snaps each off-grid endpoint in the direction that preserves the
+     * original endpoint's set membership: an inclusive endpoint snaps outward (its point stays
+     * inside), an exclusive endpoint snaps inward (its point stays outside). Snap-inclusivity
+     * matches {@code domain}'s original inclusivity. Does not expand into adjacent slot gaps.
      *
      * @param domain the interval defining the slot's window.
      */
@@ -270,6 +307,15 @@ public class LongSetRegistry{
         );
     }
 
+    /**
+     * Convenience overload that snaps both endpoints outward, preserves {@code domain}'s
+     * original inclusivity at off-grid endpoints, and applies {@code expandGap} to both
+     * gap-closing flags.
+     *
+     * @param domain    the interval defining the slot's window.
+     * @param expandGap when {@code true}, the inserted slot is stretched on insertion to abut
+     *                  adjacent slots on either side (closing any gap with no overlap).
+     */
     public void addSlot(FixedLongInterval domain, boolean expandGap){
         addSlot(
             domain,
@@ -282,16 +328,26 @@ public class LongSetRegistry{
         );
     }
 
+    /**
+     * Clears {@code doneCoverage} on every slot. Slot domains and the {@code microInterval}
+     * grid are preserved.
+     */
     public void clearAllCoverage(){
         for(Slot s : slotList){s.clearCoverage();}
         totalCoverage.clear();
     }
 
+    /**
+     * Clears {@code doneCoverage} on the slot at {@code slotIndex}. The slot's domain is preserved.
+     */
     public void clearSlotCoverage(int slotIndex){
         slotList.get(slotIndex).clearCoverage();
         isMerged=false;
     }
 
+    /**
+     * Removes the slot at {@code slotIndex} from the registry, including any coverage it held.
+     */
     public void removeSlot(int slotIndex){
         slotList.remove(slotIndex);
         isMerged = false;
@@ -324,34 +380,32 @@ public class LongSetRegistry{
         totalCoverage = tmpTotalDone;
         isMerged = true;
     }
-    // public FixedInterval removeSlot(int index){}
-
-    //markIntervalDone(FixedInterval interval){...}
-
-    //markSpanDone(AlignedLongSet span){...} //same as markIntervalDone
-
-    //A slot of bounded AlignedLongSet
+    /** A bounded slot whose AlignedLongSet doneCoverage is constrained to its boundedInterval. */
     private class Slot{
         private FixedLongInterval boundedInterval; //The domain, no value can exist outside the bounds of the interval.
         private AlignedLongSet doneCoverage;       //a "truthy" interval. Will never go out of bounded interval.
 
         private Slot(long start, long end, boolean isInclusiveStart, boolean isInclusiveEnd){
             boundedInterval = new FixedLongInterval(start, end, isInclusiveStart, isInclusiveEnd);
-            doneCoverage = new AlignedLongSet(microInterval); //Used as a tmp normalizer for snapping boundedInterval
+            doneCoverage = new AlignedLongSet(microInterval);
         }
 
         private Slot(long start, long end){this(start, end, true, false);}
 
+        /** True iff doneCoverage is a single segment mathematically equal to boundedInterval. */
         public boolean isSlotDone(){
             return
                 doneCoverage.getIntervalSegmentCount() == 1 &&
                 FixedLongInterval.equals(boundedInterval, doneCoverage.getInterval(0));
         }
 
+        /** Returns doneCoverage, forcing a merge first if pending. */
         private AlignedLongSet getCoverage(){
             if(!doneCoverage.isMerged()) doneCoverage.merge();
             return doneCoverage;
         }
+
+        /** Adds set then chops to boundedInterval, keeping doneCoverage a subset of the slot's domain. */
         private void addCoverage(AlignedLongSet set){
             doneCoverage.addSet(set);
 
@@ -359,6 +413,7 @@ public class LongSetRegistry{
             doneCoverage.cutUpper(boundedInterval.end, !boundedInterval.inclusiveEnd);
         }
 
+        /** Adds intv then chops to boundedInterval, keeping doneCoverage a subset of the slot's domain. */
         private void addCoverage(FixedLongInterval intv){
             doneCoverage.addInterval(intv);
 

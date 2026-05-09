@@ -9,21 +9,35 @@ import java.util.ArrayList;
 /**
  * A mathematical set of grid-aligned {@link FixedLongInterval}s backed by a lazy merge list.
  *
- * <p>Each interval added via {@link #addInterval} is first quantized to the micro-interval grid:
- * its start and end are shifted to the nearest grid point (expanded outward or contracted inward,
- * per caller choice). Any interval that quantizes to an empty set is silently dropped.
+ * <p>Each interval added via {@link #addInterval} or {@link #addSet} is first quantized to the
+ * micro-interval grid: its start and end are shifted to the nearest grid point (expanded outward
+ * or contracted inward, per caller choice). Any interval that quantizes to an empty set is
+ * silently dropped.
  *
  * <p>The grid is defined by {@code microInterval}: a {@link FixedLongInterval} whose width is
  * the grid step and whose start anchors the phase via {@code start mod width}.
  * The micro-interval does not need to fall inside any of the added data — it acts purely as
  * a phase reference extending infinitely in both directions.
  *
- * <p>Merging is lazy: it is deferred until the first read of {@link #getIntervalSegmentCount()},
- * {@link #getMicroIntervalCount()}, {@link #getIntervals()}, {@link #getInterval(int)},
- * {@link #contains(long)}, {@link #overlaps(FixedLongInterval)}, or {@link #overlaps(AlignedLongSet)},
- * or until an explicit call to {@link #merge()}.
- * After merging, {@code microCount} is kept parallel to {@code mergeList}: index {@code i} of
- * {@code microCount} holds the number of micro-interval grid steps spanning {@code mergeList.get(i)}.
+ * <p>Operations supported: union ({@link #addInterval}, {@link #addSet}), removal
+ * ({@link #subtractInterval}, {@link #subtractSet}), one-sided truncation
+ * ({@link #cutLower}, {@link #cutUpper}), gap inspection ({@link #getGapIntervalsArray},
+ * {@link #getGapSet}), membership tests ({@link #contains}, {@link #overlaps}),
+ * full reset ({@link #clear}), and structural / mathematical equality
+ * ({@link #equals(AlignedLongSet, AlignedLongSet)}, {@link #equalsStructural}).
+ * Implements {@link Cloneable} via {@link #clone()}.
+ *
+ * <p>Merging is lazy. Only {@code addInterval} and {@code addSet} can leave the set in an
+ * unmerged state; {@code subtractInterval}, {@code subtractSet}, {@code cutLower},
+ * {@code cutUpper}, and {@code clear} preserve the merged invariant. A merge runs implicitly
+ * on the first read of {@link #getIntervalSegmentCount()}, {@link #getMicroIntervalCount()},
+ * {@link #getIntervals()}, {@link #getInterval(int)}, {@link #getGapIntervalsArray()},
+ * {@link #contains(long)}, {@link #overlaps(FixedLongInterval)},
+ * {@link #overlaps(AlignedLongSet)}, or {@link #toString()}, or as the first step of any
+ * subtract / cut call; an explicit {@link #merge()} is also available. After a merge,
+ * {@code microCount} is kept parallel to {@code mergeList}: index {@code i} of
+ * {@code microCount} holds the number of micro-interval grid steps spanning
+ * {@code mergeList.get(i)}.
  */
 public class AlignedLongSet implements Cloneable{
     /** The unit grid interval; its width is the snap step and its start sets the grid phase. */
@@ -205,8 +219,19 @@ public class AlignedLongSet implements Cloneable{
         return mergeList.get(index);
     }
 
+    /**
+     * Returns the gaps between consecutive merged segments as a fresh array. Triggers a merge
+     * if one is pending. Each gap inverts the surrounding segments' boundary inclusivity:
+     * if segment {@code i} ends {@code [..., b)} and segment {@code i+1} starts {@code (b, ...}
+     * the corresponding gap is {@code [b, b]}.
+     *
+     * <p>Returns a zero-length array when the set has zero or one segments.
+     *
+     * @return gap-interval array of length {@code max(0, getIntervalSegmentCount() - 1)}.
+     */
     public FixedLongInterval[] getGapIntervalsArray(){
         if(!isMerged) merge();
+        if(mergeList.isEmpty()) return new FixedLongInterval[0];
         FixedLongInterval[] gapL = new FixedLongInterval[mergeList.size() - 1];
 
         for(int i=0; i<gapL.length; ++i){
@@ -222,6 +247,11 @@ public class AlignedLongSet implements Cloneable{
         return gapL;
     }
 
+    /**
+     * Returns the gaps between consecutive merged segments as a new {@link AlignedLongSet}
+     * sharing this set's micro-interval. Convenience wrapper around
+     * {@link #getGapIntervalsArray()}; an empty set yields an empty gap set.
+     */
     public AlignedLongSet getGapSet(){return new AlignedLongSet(microInterval, getGapIntervalsArray());}
 
     /**
@@ -699,7 +729,15 @@ public class AlignedLongSet implements Cloneable{
         );
     }
 
-    public void subtractSet(AlignedLongSet set){                        
+    /**
+     * Subtracts each merged segment of {@code set} from this set via
+     * {@link #subtractInterval(FixedLongInterval)} (expand-outward, exclusive snap). Triggers
+     * a merge on {@code set} if pending; the snapshot of {@code set}'s merged segments is taken
+     * before iteration, so {@code set == this} is well-defined and empties this set.
+     *
+     * @param set the set to subtract; must not be {@code null}.
+     */
+    public void subtractSet(AlignedLongSet set){
         for(FixedLongInterval intv : set.getIntervals()){subtractInterval(intv);}
     }
     /**
@@ -984,6 +1022,11 @@ public class AlignedLongSet implements Cloneable{
         return bldr.toString();
     }
 
+    /**
+     * Returns a copy of this set. The clone shares the same {@code microInterval} reference and
+     * the same immutable {@link FixedLongInterval} segment objects, but has independent backing
+     * lists. Forces a merge on this set if one is pending.
+     */
     @Override
     public AlignedLongSet clone(){return new AlignedLongSet(this);}
 }
