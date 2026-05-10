@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 25 APR 2026
+ * @since 10 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -105,6 +105,36 @@ public class FixedLongInterval{
 
     /** Returns {@code end - start}; always {@code >= 0}. */
     public long getWidth(){return width;}
+
+    /**
+     * TODO: Clean up verbage
+     * Produces an interval such that the starting value is the smallest possible non-negative
+     * integer that is of the same width. If already normalized, will return the same reference.
+     * The inclusive bounds will be the same as the original.
+     * Ex:
+     * intv1 = [7, 9] -> normalize -> [1, 3]
+     * intv2 = [-1, 3) -> normalize -> [3, 7)
+     * intv3 = (3, 3) -> (0, 0)
+     */
+    public static FixedLongInterval getNormalizedInterval(FixedLongInterval intv){
+        if(intv.width == 0) //SPECIAL CASE: 0 width
+            return intv.start == 0 ?
+                   intv :
+                   new FixedLongInterval(
+                       0, 0,
+                       intv.inclusiveStart, intv.inclusiveEnd
+                   );
+
+        long candidateStart = Math.floorMod(intv.start, intv.width),
+             candidateEnd = candidateStart + intv.width;
+
+        return candidateStart == intv.start && candidateEnd == intv.end ?
+               intv :
+               new FixedLongInterval(
+                   candidateStart, candidateEnd,
+                   intv.inclusiveStart, intv.inclusiveEnd
+               );
+    }
 
     /**
      * Returns {@code true} if {@code point} lies within this interval.

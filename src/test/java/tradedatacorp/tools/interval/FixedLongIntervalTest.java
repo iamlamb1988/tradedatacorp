@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 29 APR 2026
+ * @since 10 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -12,6 +12,43 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
 
 public final class FixedLongIntervalTest{
+    @Test
+    public void normalizeTest1(){
+        FixedLongInterval smallInterval = new FixedLongInterval(7, 9, true, true);
+        FixedLongInterval normalizedInterval = FixedLongInterval.getNormalizedInterval(smallInterval);
+
+        assertEquals("[1,3]",normalizedInterval.toString());
+    }
+
+    @Test
+    public void normalizeTest2(){
+        FixedLongInterval smallInterval = new FixedLongInterval(-1, 3);
+        FixedLongInterval normalizedInterval = FixedLongInterval.getNormalizedInterval(smallInterval);
+
+        assertEquals("[3,7)",normalizedInterval.toString());
+    }
+
+    @Test
+    public void normalizeTest3(){
+        FixedLongInterval smallInterval = new FixedLongInterval(3, 3, false, false);
+        FixedLongInterval normalizedInterval = FixedLongInterval.getNormalizedInterval(smallInterval);
+
+        assertEquals("{}",normalizedInterval.toString());
+        assertEquals(0, normalizedInterval.start);
+        assertEquals(0, normalizedInterval.end);
+        assertFalse(normalizedInterval.inclusiveStart);
+        assertFalse(normalizedInterval.inclusiveEnd);
+    }
+
+    @Test
+    public void normalizeTest4(){
+        FixedLongInterval smallInterval = new FixedLongInterval(0, 0, false, true);
+        FixedLongInterval normalizedInterval = FixedLongInterval.getNormalizedInterval(smallInterval);
+
+        assertEquals("{}",normalizedInterval.toString());
+        assertTrue(smallInterval == normalizedInterval); //should be same reference object
+    }
+
     @Test
     public void smallIntervalDefaultTest(){
         FixedLongInterval smallInterval = new FixedLongInterval(2, 5);

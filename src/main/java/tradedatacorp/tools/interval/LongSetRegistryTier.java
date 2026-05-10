@@ -41,6 +41,27 @@ public class LongSetRegistryTier{
 
     public int getTierCount(){return tierList.size();}
 
+    public void promoteAll(){
+        //TODO: if any tier is potentially covered but any lower tier, it get's promoted.
+        //Will not purge or remove any redundancy upon coverage increase.
+
+        //1. start with 2nd to lowest tier (index tierList.size() - 2)
+        //2. Grab any fully encapsulated increase from each tier (O( (n - 1)! )) //will need to keep checking due to possible unique offsets of each tier
+        //3. 
+    }
+
+    /**
+     * will remove lower tiered slots if fully covered by any higher tier.
+     * 
+     */
+    public void purgeRedundantCoverage(){
+        //TODO: 
+        //1. check if coverage set fully encapsulates a lower tier boundry
+        //   if so, remove the slot (even if not covered)
+
+        //should probably start with tier 0 to n - 1 to save redundant looping.
+    }
+
     public void clearAllCoverage(){
         for(LongSetRegistry r : tierList){r.clearAllCoverage();}
     }
