@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 9 MAY 2026
+ * @since 10 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -380,6 +380,14 @@ public class LongSetRegistry{
         totalCoverage = tmpTotalDone;
         isMerged = true;
     }
+
+    public void clear(){
+        slotList.clear();
+        totalBoundary.clear();
+        totalCoverage.clear();
+        isMerged = true;
+    }
+
     /** A bounded slot whose AlignedLongSet doneCoverage is constrained to its boundedInterval. */
     private class Slot{
         private FixedLongInterval boundedInterval; //The domain, no value can exist outside the bounds of the interval.
