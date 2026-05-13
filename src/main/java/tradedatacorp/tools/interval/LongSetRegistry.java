@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 10 MAY 2026
+ * @since 12 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -56,6 +56,8 @@ public class LongSetRegistry{
         isMerged = true;
     }
 
+    public FixedLongInterval getMicroInterval(){return microInterval;}
+
     /**
      * Returns {@code true} when the aggregate {@code totalBoundary} and {@code totalCoverage} views
      * are up to date with the underlying slot list.
@@ -90,6 +92,11 @@ public class LongSetRegistry{
         return totalBoundary.toString();
     }
 
+    AlignedLongSet getBoundry(){
+        if(!isMerged) merge();
+        return totalBoundary;
+    }
+
     /**
      * Returns the slot's bounded-interval as a mathematical interval string.
      *
@@ -99,6 +106,17 @@ public class LongSetRegistry{
     public String getSlotBoundIntervalString(int slotIndex){
         return slotList.get(slotIndex).boundedInterval.toString();
     }
+
+    public FixedLongInterval getSlotBoundry(int slotIndex){
+        return slotList.get(slotIndex).boundedInterval;
+    }
+
+    public FixedLongInterval getLastSlotBoundry(){
+        return slotList.size() > 0 ?
+               getSlotBoundry(slotList.size() - 1) :
+               null;
+    }
+
     /**
      * Returns the mathematical interval string representing the union of done coverage across
      * all slots. Triggers a merge if one is pending.
@@ -109,6 +127,11 @@ public class LongSetRegistry{
     public String getCoverageIntervalString(){
         if(!isMerged) merge();
         return totalCoverage.toString();
+    }
+
+    AlignedLongSet getCoverage(){
+        if(!isMerged) merge();
+        return totalCoverage;
     }
 
     /**
