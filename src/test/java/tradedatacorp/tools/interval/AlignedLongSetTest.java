@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 30 APR 2026
+ * @since 13 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -649,6 +649,113 @@ public class AlignedLongSetTest{
 
             assertTrue(span.isMerged());
             assertEquals(0, span.getIntervalSegmentCount());
+        }
+    }
+
+    @Nested
+    public class EngulfTests{
+        @Test
+        public void engulfTest1(){
+            FixedLongInterval intv1 = new FixedLongInterval(2,100);
+            AlignedLongSet set = new AlignedLongSet(
+                new FixedLongInterval(0, 2), //microInterval
+                new FixedLongInterval(3, 5),
+                new FixedLongInterval(20, 30)
+            );
+
+            assertTrue(AlignedLongSet.engulfs(intv1, set));
+        }
+
+        @Test
+        public void engulfTest2(){
+            FixedLongInterval intv1 = new FixedLongInterval(2,10);
+            AlignedLongSet set = new AlignedLongSet(
+                new FixedLongInterval(0, 2), //microInterval
+                new FixedLongInterval(3, 5),
+                new FixedLongInterval(20, 30)
+            );
+
+            assertFalse(AlignedLongSet.engulfs(intv1, set));
+            assertFalse(set.engulfs(intv1));
+        }
+
+        @Test
+        public void engulfTest3(){ //same as engulfTest2 except 2 sets are tested instead of fixed interval and set.
+            FixedLongInterval micro = new FixedLongInterval(0, 2);
+            AlignedLongSet set1 = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(2,10)
+            );
+
+            AlignedLongSet set2 = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(3, 5),
+                new FixedLongInterval(20, 30)
+            );
+
+            assertFalse(set1.engulfs(set2));
+            assertFalse(set2.engulfs(set1));
+        }
+
+        @Test
+        public void engulfTest4(){
+            FixedLongInterval intv1 = new FixedLongInterval(0, 9999);
+            AlignedLongSet set = new AlignedLongSet(
+                new FixedLongInterval(0, 1),
+                new FixedLongInterval(3, 5),
+                new FixedLongInterval(20, 30),
+                new FixedLongInterval(100, 200),
+                new FixedLongInterval(300, 4000)
+            );
+
+            assertTrue(AlignedLongSet.engulfs(intv1, set));
+        }
+
+        @Test
+        public void engulfTest5(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            AlignedLongSet set1 = new AlignedLongSet( //the first subintervals covers the entire set2
+                micro,
+                new FixedLongInterval(0,9999),
+                new FixedLongInterval(15000, 200000)
+            );
+
+            AlignedLongSet set2 = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(3, 5),
+                new FixedLongInterval(20, 30),
+                new FixedLongInterval(100, 200),
+                new FixedLongInterval(300, 4000)
+            );
+
+            assertEquals("[0,9999)U[15000,200000)", set1.toString());
+            assertEquals("[3,5)U[20,30)U[100,200)U[300,4000)", set2.toString());
+
+            assertTrue(set1.engulfs(set2));
+            assertFalse(set2.engulfs(set1));
+        }
+
+        @Test
+        public void engulfTest6(){
+            FixedLongInterval micro = new FixedLongInterval(0, 1);
+            AlignedLongSet set1 = new AlignedLongSet( //both subintervals cover all 3 set2 sub intervals
+                micro,
+                new FixedLongInterval(0,10, true, true),
+                new FixedLongInterval(50, 100)
+            );
+
+            AlignedLongSet set2 = new AlignedLongSet(
+                micro,
+                new FixedLongInterval(1, 8),
+                new FixedLongInterval(51, 60),
+                new FixedLongInterval(80, 90)
+            );
+
+            assertEquals("[0,10]U[50,100)", set1.toString());
+            assertEquals("[1,8)U[51,60)U[80,90)", set2.toString());
+
+            assertTrue(set1.engulfs(set2));
+            assertFalse(set2.engulfs(set1));
         }
     }
 

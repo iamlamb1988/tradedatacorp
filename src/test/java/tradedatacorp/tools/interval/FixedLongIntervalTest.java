@@ -377,4 +377,57 @@ public final class FixedLongIntervalTest{
             assertFalse(int2.overlaps(int1));
         }
     }
+
+    @Nested
+    public class TestsForEngulf{
+        @Test
+        public void engulfTest1(){
+            FixedLongInterval engulfer = new FixedLongInterval(0, 10);
+            FixedLongInterval intv = new FixedLongInterval(2, 8);
+
+            assertTrue(engulfer.engulfs(intv));
+            assertFalse(intv.engulfs(engulfer));
+        }
+
+        @Test
+        public void engulfTest2(){
+            FixedLongInterval intv1 = new FixedLongInterval(0, 6);
+            FixedLongInterval intv2 = new FixedLongInterval(2, 8);
+
+            assertFalse(intv1.engulfs(intv2));
+            assertFalse(intv2.engulfs(intv1));
+        }
+
+        @Test
+        public void engulfTest3(){
+            FixedLongInterval intv1 = new FixedLongInterval(1, 3, true, true);
+            FixedLongInterval intv2 = new FixedLongInterval(1, 3, false, false);
+
+            assertTrue(intv1.engulfs(intv2));
+            assertFalse(intv2.engulfs(intv1));
+        }
+
+        @Test
+        public void engulfTest4(){
+            FixedLongInterval intv1 = new FixedLongInterval(1, 3, false, false);
+            FixedLongInterval intv2 = new FixedLongInterval(1, 3, false, false);
+
+            assertTrue(FixedLongInterval.equals(intv1, intv2)); //if they are equal, they both engulf
+            assertTrue(intv1.engulfs(intv2));
+            assertTrue(intv2.engulfs(intv1));
+        }
+
+        @Test
+        public void engulfTest5(){
+            FixedLongInterval intv1 = new FixedLongInterval(9, 9, false, true);
+            FixedLongInterval intv2 = new FixedLongInterval(3, 3, true, false);
+
+            assertTrue(FixedLongInterval.equals(intv1, intv2)); //if they are equal, they both engulf
+            assertEquals("{}", intv1.toString());
+            assertEquals("{}", intv1.toString());
+
+            assertTrue(intv1.engulfs(intv2));
+            assertTrue(intv2.engulfs(intv1));
+        }
+    }
 }

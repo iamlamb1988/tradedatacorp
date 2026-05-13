@@ -164,6 +164,14 @@ public class AlignedLongSet implements Cloneable{
      */
     public boolean isMerged(){return isMerged;}
 
+    public boolean isEmpty(){
+        if(mergeList.size() == 0) return true;
+        for(FixedLongInterval intv : mergeList){
+            if(!intv.isEmpty) return false;
+        }
+        return true;
+    }
+
     /**
      * Returns the total number of micro-interval grid steps covered across all merged segments.
      * Triggers a merge if one is pending.
@@ -267,6 +275,111 @@ public class AlignedLongSet implements Cloneable{
             if(i.contains(point)) return true;
         }
         return false;
+    }
+
+    /**
+     * Returns {@code true} if every merged segment of {@code set} is fully covered by some
+     * merged segment of this set. Triggers a merge on both sides if pending.
+     *
+     * <p>Empty {@code set} is always engulfed; a self-engulf ({@code set == this}) short-circuits
+     * to {@code true}.
+     *
+     * <p>Complexity: {@code O(m + n)} two-pointer sweep with an {@code O(1)} bounding-box reject
+     * in both directions. Both lists are sorted and disjoint after merge, so the candidate
+     * engulfer in {@code this} only ever advances forward as we walk {@code set}.
+     *
+     * @param set the candidate set; must not be {@code null}.
+     * @return {@code true} iff this set fully covers {@code set}.
+     */
+    public boolean engulfs(AlignedLongSet set){
+        if(this == set) return true;
+        if(!isMerged) merge();
+        if(!set.isMerged) set.merge();
+
+        final int m = mergeList.size();
+        final int n = set.mergeList.size();
+        if(n == 0) return true;
+        if(m == 0) return false;
+
+        //O(1) bounding-box reject: this' outer span must enclose set's outer span.
+        if(set.mergeList.get(0).start < mergeList.get(0).start) return false;
+        if(set.mergeList.get(n - 1).end > mergeList.get(m - 1).end) return false;
+
+        int i = 0;
+        for(int j = 0; j < n; ++j){
+            FixedLongInterval b = set.mergeList.get(j);
+            while(i < m && mergeList.get(i).end < b.start) ++i;
+            if(i == m) return false;
+            if(!mergeList.get(i).engulfs(b)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns {@code true} if every point in {@code intv} is covered by some merged segment of
+     * this set. Triggers a merge first if one is pending.
+     *
+     * <p>An empty {@code intv} is always engulfed. After merge, segments are sorted and disjoint,
+     * so the at-most-one segment whose {@code start <= intv.start} is found via binary search and
+     * the inclusivity check is delegated to {@link FixedLongInterval#engulfs}.
+     *
+     * <p>Complexity: {@code O(log n)} after the merge cost.
+     *
+     * @param intv the candidate interval; must not be {@code null}.
+     * @return {@code true} iff this set fully covers {@code intv}.
+     */
+    public boolean engulfs(FixedLongInterval intv){
+        if(intv.isEmpty) return true;
+        if(!isMerged) merge();
+        final int n = mergeList.size();
+        if(n == 0) return false;
+
+        int lo = 0;
+        int hi = n - 1;
+        int idx = -1;
+        while(lo <= hi){
+            int mid = (lo + hi) >>> 1;
+            if(mergeList.get(mid).start <= intv.start){
+                idx = mid;
+                lo = mid + 1;
+            }else{
+                hi = mid - 1;
+            }
+        }
+        if(idx < 0) return false;
+        return mergeList.get(idx).engulfs(intv);
+    }
+
+    /**
+     * Returns {@code true} if the contiguous {@code intvEngulfer} contains every point in
+     * {@code set}. Triggers a merge on {@code set} if pending.
+     *
+     * <p>Because {@code intvEngulfer} is a single contiguous interval, it engulfs the whole set
+     * iff it spans from at-or-before {@code set}'s first segment start to at-or-after
+     * {@code set}'s last segment end — interior segments and gaps fall inside automatically.
+     * Empty {@code set} is trivially engulfed; an empty {@code intvEngulfer} engulfs only an
+     * empty {@code set}.
+     *
+     * <p>Complexity: {@code O(1)} after {@code set}'s merge.
+     *
+     * <p>Note the reversed argument convention compared with {@link #engulfs(FixedLongInterval)}:
+     * here the first argument is the engulfer and the second is the candidate.
+     *
+     * @param intvEngulfer the contiguous interval to test as the engulfer; must not be {@code null}.
+     * @param set          the candidate set to be engulfed; must not be {@code null}.
+     * @return {@code true} iff {@code intvEngulfer} fully covers {@code set}.
+     */
+    public static boolean engulfs(FixedLongInterval intvEngulfer, AlignedLongSet set){
+        if(!set.isMerged) set.merge();
+        final int n = set.mergeList.size();
+        if(n == 0) return true;
+        if(intvEngulfer.isEmpty) return false;
+
+        FixedLongInterval first = set.mergeList.get(0);
+        FixedLongInterval last = set.mergeList.get(n - 1);
+
+        return (intvEngulfer.start <  first.start || (intvEngulfer.start == first.start && (intvEngulfer.inclusiveStart || !first.inclusiveStart))) &&
+               (intvEngulfer.end   >  last.end    || (intvEngulfer.end   == last.end    && (intvEngulfer.inclusiveEnd   || !last.inclusiveEnd  )));
     }
 
     /**

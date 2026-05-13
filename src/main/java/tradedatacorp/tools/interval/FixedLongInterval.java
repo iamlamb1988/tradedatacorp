@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 10 MAY 2026
+ * @since 12 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -177,6 +177,29 @@ public class FixedLongInterval{
         }
 
         return true;
+    }
+
+    /**
+     * Returns {@code true} if this interval contains every point in {@code intv}.
+     *
+     * <p>Empty-set semantics: an empty {@code intv} is always engulfed (the empty set is a subset
+     * of every set). An empty {@code this} engulfs only an empty {@code intv}.
+     *
+     * <p>Boundary inclusivity: when {@code start == intv.start}, {@code this} covers
+     * {@code intv}'s left edge if either {@code this} is inclusive there or {@code intv} is
+     * exclusive there. The right boundary follows the symmetric rule.
+     *
+     * <p>Complexity: {@code O(1)}.
+     *
+     * @param intv the candidate interval; must not be {@code null}.
+     * @return {@code true} iff {@code this} fully contains {@code intv}.
+     */
+    public boolean engulfs(FixedLongInterval intv){
+        if(intv.isEmpty) return true;
+        if(isEmpty) return false;
+        return
+            (start < intv.start || start == intv.start && (inclusiveStart || !intv.inclusiveStart)) &&
+            (end > intv.end || end == intv.end && (inclusiveEnd || !intv.inclusiveEnd));
     }
 
     /**

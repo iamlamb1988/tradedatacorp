@@ -145,21 +145,29 @@ public class LongSetRegistryTier{
     //TODO Will add Coverage to highest possible tier.
     //May be slower and complex
     //Will not purge nor remove any redundant coverage from lesser tiers
-    public void addCoverage(FixedLongInterval intv){}
+    public void addCoverage(FixedLongInterval intv){
+        
+    }
 
     //TODO Will add Coverage to highest possible tier.
     //May be slower and complex
     //Will not purge nor remove any redundant coverage from lesser tiers
-    public void addCoverage(AlignedLongSet set){}
-
-    //TODO Add coverage to a specific tier, even if redundant upon a higher tier (promote will remove redundant coverage) (purge will remove slots that are fully covered)
-    public void addCoverage(int tierIndex, FixedLongInterval intv){
+    public void addCoverage(AlignedLongSet set){
 
     }
 
     //TODO Add coverage to a specific tier, even if redundant upon a higher tier (promote will remove redundant coverage) (purge will remove slots that are fully covered)
-    public void addCoverage(int tierIndex, AlignedLongSet set){
+    public void addCoverage(int tierIndex, FixedLongInterval intv){
+        LongSetRegistry r = tierList.get(tierIndex);
+        r.addCoverage(intv);
+        isMerged = false;
+    }
 
+    //TODO Add coverage to a specific tier, even if redundant upon a higher tier (promote will remove redundant coverage) (purge will remove slots that are fully covered)
+    public void addCoverage(int tierIndex, AlignedLongSet set){
+        LongSetRegistry r = tierList.get(tierIndex);
+        r.addCoverage(set);
+        isMerged = false;
     }
 
     //TODO: Will add coverage to lowest Tier
