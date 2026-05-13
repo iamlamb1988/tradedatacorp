@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 12 MAY 2026
+ * @since 13 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -80,6 +80,11 @@ public class LongSetRegistryTier{
         return totalCoverage.toString();
     }
 
+    public String getTierCoverageIntervalString(int tierIndex){
+        if(!isMerged) merge();
+        return tierList.get(tierIndex).getCoverage().toString();
+    }
+
     public String getTierBoundaryIntervalString(int tierIndex){
         if(!isMerged) merge();
         return tierList.get(tierIndex).getBoundary().toString();
@@ -142,9 +147,12 @@ public class LongSetRegistryTier{
         appendSlotWidthToRegistry(tierIndex, width, true, false);
     }
 
-    //TODO Will add Coverage to highest possible tier.
-    //May be slower and complex
-    //Will not purge nor remove any redundant coverage from lesser tiers
+    /**
+     * Will add Coverage to highest possible encapsulating tier.
+     * Will ignore lower tiers if covered at a higher tier.
+     * Will not merge but add to totalCoverage lazily
+     * @param intv
+     */
     public void addCoverage(FixedLongInterval intv){
         
     }
