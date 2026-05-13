@@ -68,6 +68,8 @@ public class LongSetRegistryTier{
 
     public int getTierCount(){return tierList.size();}
 
+    public int getTierSlotCount(int tierIndex){return tierList.get(tierIndex).getSlotCount();}
+
     public String getBoundaryIntervalString(){
         if(!isMerged) merge();
         return totalBoundary.toString();
@@ -113,9 +115,7 @@ public class LongSetRegistryTier{
      * Adds a new tier to the end of this registry (will have the lowest merit)
      * 
      */
-    public void addTier(){
-        tierList.add(new LongSetRegistry(microInterval));
-    }
+    public void addTier(){tierList.add(new LongSetRegistry(microInterval));}
 
     public void addTier(int newIndex){
         tierList.add(newIndex, new LongSetRegistry(microInterval));
@@ -140,6 +140,33 @@ public class LongSetRegistryTier{
 
     public void appendSlotWidthToRegistry(int tierIndex, long width){
         appendSlotWidthToRegistry(tierIndex, width, true, false);
+    }
+
+    //TODO Will add Coverage to highest possible tier.
+    //May be slower and complex
+    //Will not purge nor remove any redundant coverage from lesser tiers
+    public void addCoverage(FixedLongInterval intv){}
+
+    //TODO Will add Coverage to highest possible tier.
+    //May be slower and complex
+    //Will not purge nor remove any redundant coverage from lesser tiers
+    public void addCoverage(AlignedLongSet set){}
+
+    //TODO Add coverage to a specific tier, even if redundant upon a higher tier (promote will remove redundant coverage) (purge will remove slots that are fully covered)
+    public void addCoverage(int tierIndex, FixedLongInterval intv){
+
+    }
+
+    //TODO Add coverage to a specific tier, even if redundant upon a higher tier (promote will remove redundant coverage) (purge will remove slots that are fully covered)
+    public void addCoverage(int tierIndex, AlignedLongSet set){
+
+    }
+
+    //TODO: Will add coverage to lowest Tier
+    //Should be a fast operation that will get consolidated upon a promotion method call
+    //Equivalent to addCoverage(tierList.size() -1, myNewSet)
+    public void addCoverageLowTier(){
+
     }
 
     public void merge(){
