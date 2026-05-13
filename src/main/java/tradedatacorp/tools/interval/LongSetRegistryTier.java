@@ -80,7 +80,7 @@ public class LongSetRegistryTier{
 
     public String getTierBoundaryIntervalString(int tierIndex){
         if(!isMerged) merge();
-        return tierList.get(tierIndex).getBoundry().toString();
+        return tierList.get(tierIndex).getBoundary().toString();
     }
 
     public String getTierSlotBoundaryIntervalString(int tierIndex, int slotIndex){
@@ -130,7 +130,7 @@ public class LongSetRegistryTier{
         if(tierList.size() == 0) return; //Should this throw an error?
 
         LongSetRegistry endR = tierList.get(tierList.size() - 1);
-        FixedLongInterval endBoundry = endR.getLastSlotBoundry();
+        FixedLongInterval endBoundry = endR.getLastSlotBoundary();
 
         endR.addSlot(
             new FixedLongInterval(endBoundry.end, width + endBoundry.end, isInclusiveStart, isInclusiveEnd),
@@ -145,7 +145,7 @@ public class LongSetRegistryTier{
     public void merge(){
         for(LongSetRegistry r : tierList){
             r.merge();
-            totalBoundary.addSet(r.getBoundry());
+            totalBoundary.addSet(r.getBoundary());
             totalBoundary.merge();
 
             totalCoverage.addSet(r.getCoverage());

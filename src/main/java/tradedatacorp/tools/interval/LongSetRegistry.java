@@ -92,7 +92,7 @@ public class LongSetRegistry{
         return totalBoundary.toString();
     }
 
-    AlignedLongSet getBoundry(){
+    AlignedLongSet getBoundary(){
         if(!isMerged) merge();
         return totalBoundary;
     }
@@ -107,13 +107,13 @@ public class LongSetRegistry{
         return slotList.get(slotIndex).boundedInterval.toString();
     }
 
-    public FixedLongInterval getSlotBoundry(int slotIndex){
+    public FixedLongInterval getSlotBoundary(int slotIndex){
         return slotList.get(slotIndex).boundedInterval;
     }
 
-    public FixedLongInterval getLastSlotBoundry(){
+    public FixedLongInterval getLastSlotBoundary(){
         return slotList.size() > 0 ?
-               getSlotBoundry(slotList.size() - 1) :
+               getSlotBoundary(slotList.size() - 1) :
                null;
     }
 
