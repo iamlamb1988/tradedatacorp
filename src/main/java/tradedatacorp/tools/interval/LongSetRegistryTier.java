@@ -103,7 +103,7 @@ public class LongSetRegistryTier{
      */
     public void purgeRedundantCoverage(){
         //TODO: 
-        //1. check if coverage set fully encapsulates a lower tier boundry
+        //1. check if coverage set fully encapsulates a lower tier boundary
         //   if so, remove the slot (even if not covered)
 
         //should probably start with tier 0 to n - 1 to save redundant looping.
@@ -130,10 +130,10 @@ public class LongSetRegistryTier{
         if(tierList.size() == 0) return; //Should this throw an error?
 
         LongSetRegistry endR = tierList.get(tierList.size() - 1);
-        FixedLongInterval endBoundry = endR.getLastSlotBoundary();
+        FixedLongInterval endBoundary = endR.getLastSlotBoundary();
 
         endR.addSlot(
-            new FixedLongInterval(endBoundry.end, width + endBoundry.end, isInclusiveStart, isInclusiveEnd),
+            new FixedLongInterval(endBoundary.end, width + endBoundary.end, isInclusiveStart, isInclusiveEnd),
             true
         );
     }
