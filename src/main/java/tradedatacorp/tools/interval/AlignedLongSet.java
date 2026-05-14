@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 9 MAY 2026
+ * @since 14 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -378,8 +378,8 @@ public class AlignedLongSet implements Cloneable{
         FixedLongInterval first = set.mergeList.get(0);
         FixedLongInterval last = set.mergeList.get(n - 1);
 
-        return (intvEngulfer.start <  first.start || (intvEngulfer.start == first.start && (intvEngulfer.inclusiveStart || !first.inclusiveStart))) &&
-               (intvEngulfer.end   >  last.end    || (intvEngulfer.end   == last.end    && (intvEngulfer.inclusiveEnd   || !last.inclusiveEnd  )));
+        return (intvEngulfer.start < first.start || (intvEngulfer.start == first.start && (intvEngulfer.inclusiveStart || !first.inclusiveStart))) &&
+               (intvEngulfer.end > last.end || (intvEngulfer.end == last.end && (intvEngulfer.inclusiveEnd || !last.inclusiveEnd)));
     }
 
     /**
@@ -665,7 +665,7 @@ public class AlignedLongSet implements Cloneable{
      * @param set the source set whose segments are added; must not be {@code null}.
      */
     public void addSet(AlignedLongSet set){
-        if(this == set) return;
+        if(set == null || this == set) return;
         if(!set.isMerged) set.merge();
         final int k = set.mergeList.size();
         for(int i = 0; i < k; ++i) addInterval(set.mergeList.get(i));

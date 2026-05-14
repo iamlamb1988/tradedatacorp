@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 13 MAY 2026
+ * @since 14 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -11,6 +11,7 @@ import java.util.ArrayList;
  * The purpose of this class is track overlaping tiers Registries.
  * Ideally, the tier with the highest merit (Registry index 0) is the final overlapping tier of completion. This is optional.
  * The higher the tier (lower the index), the more precedence it takes.
+ * Every amount of coverage will be in increments of the microInterval provided at construction.
  * 
  * There will be methods that will promote coverage from lower tiers to highest possible tiers,
  * purge and remove slots from lower redundant tiers.
@@ -151,12 +152,56 @@ public class LongSetRegistryTier{
      * Will add Coverage to highest possible encapsulating tier.
      * Will ignore lower tiers if covered at a higher tier.
      * Will not merge but add to totalCoverage lazily
+     * Any coverage that is less than the microUnit will be dropped. Example: single point {7}
+     * will be dropped due to a width of 0 which is less than the smallest possible micro unit.
      * @param intv
      */
-    public void addCoverage(FixedLongInterval intv){
-        
+    public void addCoverage(
+        FixedLongInterval intv,
+        boolean expandLeft,
+        boolean expandRight,
+        boolean isLeftSnapInclusive,
+        boolean isRightSnapInclusive){
+
+        AlignedLongSet baseCoverage = new AlignedLongSet(
+            totalCoverage.getSnappedInterval(
+                intv,
+                expandLeft,
+                expandRight,
+                isLeftSnapInclusive,
+                isRightSnapInclusive
+            )
+        );
+
+        AlignedLongSet[] cumulativeCoverageRef = new AlignedLongSet[tierList.size()];
+
+        //add coverage cumulatively (O(n!))
+        int lastTierIndex = tierList.size() - 1;
+
+        //weak tier coverage
+        cumulativeCoverageRef[lastTierIndex] = tierList.get(lastTierIndex).getCoverage();
+
+        //obtain cumulative coverage from all tiers. Max tier 0 "should" be equivalent of total coverage
+        for(int i=lastTierIndex - 1; i>=0 ; --i){
+            AlignedLongSet current = cumulativeCoverageRef[i];
+            current = tierList.get(i).getCoverage();
+            current.addSet(cumulativeCoverageRef[i + 1]);
+        }
+
+        //create coverage slot references
+
+
+        //Top down base coverage addition (O(n))
+        for(int i=0; i<cumulativeCoverageRef.length; ++i){
+            AlignedLongSet current = cumulativeCoverageRef[i];
+            current.addSet(baseCoverage);
+            //Drop coverage slots that are fully engulfed by upperTier slots
+        }
     }
 
+    public void addCoverage(FixedLongInterval intv){
+        addCoverage(intv, false, false, intv.inclusiveStart, intv.inclusiveEnd);
+    }
     //TODO Will add Coverage to highest possible tier.
     //May be slower and complex
     //Will not purge nor remove any redundant coverage from lesser tiers

@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 12 MAY 2026
+ * @since 14 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -77,7 +77,6 @@ public class LongSetRegistry{
 
         return totalBoundary.getIntervalSegmentCount() <= 1;
     }
-
 
     /**
      * Returns the number of registered slots

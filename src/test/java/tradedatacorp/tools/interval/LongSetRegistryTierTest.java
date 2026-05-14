@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 12 MAY 2026
+ * @since 14 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -175,10 +175,10 @@ public class LongSetRegistryTierTest{
         //Check coverage
         // total coverage will be [2,7]
         // For each individual tier ONLY fully covered slots at the highest tier possible tier will be added.
-        assertEquals("[2,7]", tierRegi.getCoverageIntervalString());
+        assertEquals("[2,7)", tierRegi.getCoverageIntervalString());//NOTE: the drop, the 7th slot is [6,7), the inclusive endings will match the slot coverage.
         assertEquals("[3,6)", tierRegi.getTierCoverageIntervalString(0));
         assertEquals("[2,4)", tierRegi.getTierCoverageIntervalString(1));
-        assertEquals("[6,7]", tierRegi.getTierCoverageIntervalString(2));//Because this is the lowest tier the {7}, which is NOT full coverage will be added here.
+        assertEquals("[6,7)", tierRegi.getTierCoverageIntervalString(2));
     }
 
     @Test
@@ -186,9 +186,10 @@ public class LongSetRegistryTierTest{
         LongSetRegistryTier tierRegi = genThreeTierExample();
         //Add specific coverage to mid tier
         tierRegi.addCoverage(1, new FixedLongInterval(7, 7, true, true));
+        //This {7} will fail to add because it's width (0) is less than it's microInterval
 
         assertEquals("{}", tierRegi.getTierCoverageIntervalString(0));
-        assertEquals("{7}", tierRegi.getTierCoverageIntervalString(1));
+        assertEquals("{}", tierRegi.getTierCoverageIntervalString(1));
         assertEquals("{}", tierRegi.getTierCoverageIntervalString(2));
     
         //Add coverage
@@ -197,9 +198,9 @@ public class LongSetRegistryTierTest{
         //Check coverage
         // total coverage will be [2,7]
         // For each individual tier ONLY fully covered slots at the highest tier possible tier will be added.
-        assertEquals("[2,7]", tierRegi.getCoverageIntervalString());
+        assertEquals("[2,7)", tierRegi.getCoverageIntervalString()); //NOTE: the drop, the 7th slot is [6,7), the inclusive endings will match the slot coverage.
         assertEquals("[3,6)", tierRegi.getTierCoverageIntervalString(0));
-        assertEquals("[2,4)U{7}", tierRegi.getTierCoverageIntervalString(1));
-        assertEquals("[6,7]", tierRegi.getTierCoverageIntervalString(2));//Because this is the lowest tier the {7}, which is NOT full coverage will be added here.
+        assertEquals("[2,4)", tierRegi.getTierCoverageIntervalString(1));
+        assertEquals("[6,7)", tierRegi.getTierCoverageIntervalString(2));
     }
 }
