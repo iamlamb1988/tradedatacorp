@@ -128,6 +128,10 @@ public class LongSetRegistry{
         return totalCoverage.toString();
     }
 
+    /**
+     * 
+     * @return Total done coverage set
+     */
     AlignedLongSet getCoverage(){
         if(!isMerged) merge();
         return totalCoverage;
@@ -142,6 +146,10 @@ public class LongSetRegistry{
      */
     public String getSlotCoverageIntervalString(int slotIndex){
         return slotList.get(slotIndex).getCoverage().toString();
+    }
+
+    public AlignedLongSet getSlotCoverage(int slotIndex){
+        return slotList.get(slotIndex).getCoverage();
     }
 
     /**
@@ -367,6 +375,10 @@ public class LongSetRegistry{
         isMerged=false;
     }
 
+    public void completeSlotCoverage(int slotIndex){
+        slotList.get(slotIndex).completeCoverage();
+    }
+
     /**
      * Removes the slot at {@code slotIndex} from the registry, including any coverage it held.
      */
@@ -449,6 +461,11 @@ public class LongSetRegistry{
 
             doneCoverage.cutLower(boundedInterval.start, !boundedInterval.inclusiveStart);
             doneCoverage.cutUpper(boundedInterval.end, !boundedInterval.inclusiveEnd);
+        }
+
+        private void completeCoverage(){
+            doneCoverage.clear();
+            doneCoverage.addInterval(boundedInterval);
         }
 
         private void clearCoverage(){doneCoverage.clear();}

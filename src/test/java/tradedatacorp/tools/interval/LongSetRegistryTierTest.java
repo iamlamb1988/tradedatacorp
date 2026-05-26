@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 14 MAY 2026
+ * @since 25 MAY 2026
  */
 package tradedatacorp.tools.interval;
 

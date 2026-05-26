@@ -1,6 +1,6 @@
 /**
  * @author Bruce Lamb
- * @since 14 MAY 2026
+ * @since 25 MAY 2026
  */
 package tradedatacorp.tools.interval;
 
@@ -149,6 +149,67 @@ public class LongSetRegistryTier{
     }
 
     /**
+     * Increases a (tier,slot) pair's coverage to complete
+     * 
+     * O(n) time. O(n) + O(1) <- clears coverage list then adds is's own interval 
+     * @param tierIndex
+     * @param slotIndex
+     */
+    public void completeSlotCoverage(int tierIndex, int slotIndex){
+        tierList.get(tierIndex).completeSlotCoverage(slotIndex);
+    }
+
+    //This is a helper function
+    private void dropCascadingCoverage(ArrayList<ArrayList<AlignedLongSet>> slottedCoverageLists, int rootTierIndex, int rootSlotIndex){
+        ArrayList<AlignedLongSet> rootTierRegi = slottedCoverageLists.get(rootTierIndex);
+
+        AlignedLongSet rootSlot = rootTierRegi.get(rootSlotIndex);
+        rootTierRegi.remove(rootSlotIndex);
+
+        // Lower Tier Check
+        int nextTierIndex = rootTierIndex + 1;
+        if(nextTierIndex >= rootTierIndex) return;
+
+        ArrayList<AlignedLongSet> nextTier;
+        AlignedLongSet topTierSlot;
+
+        //remove all cascading tiers based from root level
+        for(int i=nextTierIndex; i<slottedCoverageLists.size(); ++i){
+            nextTier = slottedCoverageLists.get(i);
+
+            int j=0;
+            while(j<nextTier.size()){
+                topTierSlot = nextTier.get(j);
+                if(rootSlot.engulfs(topTierSlot)){
+                    nextTier.remove(j);
+                }else ++j;
+            }
+        }
+    }
+
+    //Helper function to toggle off elgibility for lesser tiers on addCoverage() function
+    private void disableElgibility(boolean[][] elgibilityCheckList, AlignedLongSet set, int rootTierIndex){
+        if(rootTierIndex > tierList.size()) return;
+
+        //disable all slots engulfed by interval at this root tier index and all lower indexes
+        for(int i=rootTierIndex; i<tierList.size(); ++i){
+            LongSetRegistry tierRegistry = tierList.get(i);
+            for(int j=0; j<tierRegistry.getSlotCount(); ++j){
+                if(!elgibilityCheckList[i][j]) continue;
+                FixedLongInterval slotInterval = tierRegistry.getSlotBoundary(j);
+                if(set.engulfs(slotInterval)){
+                    elgibilityCheckList[i][j] = false;
+                    disableElgibility(
+                        elgibilityCheckList,
+                        new AlignedLongSet(microInterval, slotInterval),
+                        rootTierIndex+1
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * Will add Coverage to highest possible encapsulating tier.
      * Will ignore lower tiers if covered at a higher tier.
      * Will not merge but add to totalCoverage lazily
@@ -163,7 +224,8 @@ public class LongSetRegistryTier{
         boolean isLeftSnapInclusive,
         boolean isRightSnapInclusive){
 
-        AlignedLongSet baseCoverage = new AlignedLongSet(
+        //0. set up variables
+        AlignedLongSet baseCoverage = new AlignedLongSet( //new coverage to be added
             totalCoverage.getSnappedInterval(
                 intv,
                 expandLeft,
@@ -173,35 +235,63 @@ public class LongSetRegistryTier{
             )
         );
 
-        AlignedLongSet[] cumulativeCoverageRef = new AlignedLongSet[tierList.size()];
 
-        //add coverage cumulatively (O(n!))
-        int lastTierIndex = tierList.size() - 1;
+        int tierCount = tierList.size();
+        int lastTierIndex = tierCount - 1;
+        AlignedLongSet[] cascadingCoverageSets = new AlignedLongSet[tierList.size()]; //each tier will absorb coverage from all lower tiers
+        AlignedLongSet totalNewCoverage;
 
-        //weak tier coverage
-        cumulativeCoverageRef[lastTierIndex] = tierList.get(lastTierIndex).getCoverage();
+        LongSetRegistry topTier = tierList.get(0);
 
-        //obtain cumulative coverage from all tiers. Max tier 0 "should" be equivalent of total coverage
-        for(int i=lastTierIndex - 1; i>=0 ; --i){
-            AlignedLongSet current = cumulativeCoverageRef[i];
-            current = tierList.get(i).getCoverage();
-            current.addSet(cumulativeCoverageRef[i + 1]);
+        boolean[][] elgibilityCoverArray = new boolean[tierCount][]; //tmp variable to track elgible slots to prevent redundancy.
+        //All elemets are initialized to true and parallel with <tier, slots>. Initializled at steps 1.1 and 1.2 to prevent additional loops
+
+        //1. obtain all current coverage slots cumulatively (O(n!)) prior to adding base coverage
+
+        //1.1 Obtain lowest tier
+        {
+            LongSetRegistry weakestRegistry = tierList.get(lastTierIndex);
+            boolean[] weakestElgibilityArray = elgibilityCoverArray[lastTierIndex] = new boolean[weakestRegistry.getSlotCount()];
+            cascadingCoverageSets[lastTierIndex] = weakestRegistry.getCoverage();
+            for(int i=0; i<weakestElgibilityArray.length; ++i) weakestElgibilityArray[i] = true;
         }
 
-        //create coverage slot references
+        //1.2 get remaining indexes
+        //Skip last tier because the weakest tier does have any lower tiers to absorb
+        for(int i=tierCount-2; i>=0; --i){ 
+            AlignedLongSet currentCascadingCoverage = cascadingCoverageSets[i] = new AlignedLongSet(microInterval);
+            LongSetRegistry currentRegistry = tierList.get(i);
+            boolean[] currentElgibilityArray = elgibilityCoverArray[i] = new boolean[currentRegistry.getSlotCount()];
+            for(int j=0; j<currentElgibilityArray.length; ++j) currentElgibilityArray[j] = true;
 
-
-        //Top down base coverage addition (O(n))
-        for(int i=0; i<cumulativeCoverageRef.length; ++i){
-            AlignedLongSet current = cumulativeCoverageRef[i];
-            current.addSet(baseCoverage);
-            //Drop coverage slots that are fully engulfed by upperTier slots
+            currentCascadingCoverage.addSet(currentRegistry.getCoverage()); //Add current level coverage
+            currentCascadingCoverage.addSet(tierList.get(i+1).getCoverage()); //Add previous level cascading coverage
         }
+
+        //2 set total coverage including base
+        totalNewCoverage = new AlignedLongSet(intv);
+        totalNewCoverage.addSet(baseCoverage);
+        totalNewCoverage.addSet(topTier.getCoverage());
+
+        //3. Add elgible coverage from strongest tier to weakest tier.
+        //3.1 Check all slots in strongest tier
+        for(int i=0; i<topTier.getSlotCount(); ++i){
+            FixedLongInterval currentSlotBoundry = topTier.getSlotBoundary(i);
+            if(totalNewCoverage.engulfs(currentSlotBoundry)){
+                topTier.completeSlotCoverage(i);
+                disableElgibility(elgibilityCoverArray, totalNewCoverage, 0);
+            }
+        }
+
+        //3.2 Check all slot in remaining sub tiers
+        //TODO: Continue here;
+
     }
 
     public void addCoverage(FixedLongInterval intv){
         addCoverage(intv, false, false, intv.inclusiveStart, intv.inclusiveEnd);
     }
+
     //TODO Will add Coverage to highest possible tier.
     //May be slower and complex
     //Will not purge nor remove any redundant coverage from lesser tiers
