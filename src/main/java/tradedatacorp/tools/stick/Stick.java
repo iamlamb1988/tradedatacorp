@@ -1,3 +1,6 @@
+/**
+ * @author Bruce Lamb
+ */
 package tradedatacorp.tools.stick;
 
 /**

@@ -12,32 +12,32 @@ package tradedatacorp.tools.stick.primitive;
  * Unlike the US stockmarket the most decimal points a value may need is 4 or 5. A different CandleStick implementation may be needed for US Stocks.
  */
 public class CandleStickFixedDouble implements StickDouble{
-    /** 
+    /**
      * The UTC time in milliseconds. The amount of milliseconds since 1 JAN 1970.
      */
     public final long UTC;
 
-    /** 
+    /**
      * The price value of the first trade execution within this timeframe.
      */
     public final double O;
 
-    /** 
+    /**
      * The price value of the highest execution within this timeframe.
      */
     public final double H;
 
-    /** 
+    /**
      * The price value of the lowest execution within this timeframe.
      */
     public final double L;
 
-    /** 
+    /**
      * The price value of the last trade execution within this timeframe.
      */
     public final double C;
 
-    /** 
+    /**
      * The number of units that have been exchanged within this timeframe.
      */
     public final double V;
@@ -72,7 +72,7 @@ public class CandleStickFixedDouble implements StickDouble{
     /**
      * Returns the UTC timestamp (milliseconds) of closing value.
      * @return The UTC timestamp (milliseconds) of the closing value of this stick. The number millisieconds that has elapsed since 1 JAN 1970.
-     * Also indicates the Greenwich Mean Time (GMT) zone or Zulu time. 
+     * Also indicates the Greenwich Mean Time (GMT) zone or Zulu time.
      */
     @Override
     public long getUTC(){return UTC;}

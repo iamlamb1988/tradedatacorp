@@ -1,10 +1,13 @@
 /**
  * @author Bruce Lamb
- * @since 21 MAY 2024
+ * @since 10 SEP 2025
  */
 package tradedatacorp.warehouse;
 
-public interface WarehouseStorer{
-	public Object storeOne(Object validData);
-	public Object store(Object validDataCollection);
+import java.util.Collection;
+
+public interface WarehouseStorer<SingleT, ResultT>{
+    public ResultT storeOne(SingleT validData);
+    public ResultT store(SingleT[] validDataCollection);
+    public ResultT store(Collection<SingleT> validDataCollection);
 }
